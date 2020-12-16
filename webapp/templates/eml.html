@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+  <style>
+    {{ eml_css }}
+  </style>
+
+  <script>
+    const g = {
+      rid: '{{ rid }}',
+      {#row_count: {{ row_count }},#}
+      {#col_list: JSON.parse('{{ col_list | tojson }}'),#}
+      {#cat_col_map: new Map(JSON.parse('{{ cat_list | tojson }}')),#}
+    };
+  </script>
+
+{% endblock %}
+
+{% block body %}
+
+  {#t1: {{ t1 }}#}
+
+  <div class='eml-xml'>
+    {{ eml_html | safe }}
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  {#  <script src='/static/subset.js'></script>#}
+{% endblock %}

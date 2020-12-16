@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+  <script>
+    const g = {
+      rid: {{ rid }},
+    entity_tup: JSON.parse('{{ entity_tup | tojson }}'),
+    };
+  </script>
+
+  <link rel="stylesheet" href="/static/spinner.css" crossorigin='anonymous'>
+
+{% endblock %}
+
+{% block header_all %}{% endblock %}
+{% block navbar %}{% endblock %}
+
+{% block body %}
+
+  <div id='generate-msg'>
+    <button id='generate'>Generate CSV profile (may take several minutes)</button>
+  </div>
+
+  <div id='spinner-msg' style='display: none;'>
+    <p>Generating profile...</p>
+
+    <div class="spinner circles">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+
+    <div id='counter-msg'>
+    </div>
+
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src='/static/profile_generate.js'></script>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+  <script>
+    const g = {
+      rid: '{{ rid }}',
+    };
+  </script>
+
+  <link rel="stylesheet" href="/static/css/spinner.css" crossorigin='anonymous'>
+
+{% endblock %}
+
+{% block body %}
+
+  {#  <h2>Plot</h2>#}
+  {##}
+  {#  <div class='indent'>#}
+  {##}
+  {#    <ul>#}
+  {#      <li>#}
+  {#        Select the X and Y axis to plot.#}
+  {#      </li>#}
+  {#    </ul>#}
+  {##}
+  {#  </div>#}
+
+  <h3>
+    X/Y Plot
+  </h3>
+
+  <div class='widgets'>
+    <ul>
+      <li>
+        Select the X and Y axis to plot.
+      </li>
+    </ul>
+
+    <div class='dex-2-2'>
+      <div>
+        <label for='x-col'>X</label>
+        <select id="x-col" name='x-col' class='dex-dropdown'>
+          {% for col_str in cols %}
+            <option value='{{ col_str.1 }}'>{{ col_str.0 }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for='y-col'>Y</label>
+        <select id="y-col" name='y-col' class='dex-dropdown'>
+          {% for col_str in cols %}
+            <option value='{{ col_str.1 }}'>{{ col_str.0 }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class='widgets'>
+    <button id='plot'>Plot</button>
+  </div>
+
+  <div class='widgets'>
+    <div id='plot-container'></div>
+
+    <div id='spinner-msg' style='display: none;'>
+
+      <p>Generating plot...</p>
+
+      <div class="spinner circles">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+
+      <div id='counter-msg'>
+      </div>
+
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src='/static/plot.js'></script>
+  <script>
+    $('#nav_plot').addClass('active')
+  </script>
+
+{% endblock %}

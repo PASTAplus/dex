@@ -1,2 +1,3 @@
-# EDI Data Explorer /dex/
-Explore data tables to produce new data tables
+# Dex - Data Explorer
+
+Explore and subset tabular data.

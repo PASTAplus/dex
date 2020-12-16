@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+  <script>
+    const g = {
+      rid: '{{ rid }}',
+      iframe_src: '{{ iframe_src }}',
+    };
+  </script>
+
+  <link rel="stylesheet" href="/static/spinner.css" crossorigin='anonymous'>
+
+{% endblock %}
+
+{% block body %}
+  <iframe id='profile' src='{{ iframe_src }}' width='100%'></iframe>
+{% endblock %}
+
+{% block scripts %}
+{#  <script src='/static/iframeSizer.min.js'></script>#}
+  <script src='/static/profile.js'></script>
+  <script>
+    $('#nav_profile').addClass('active')
+  </script>
+{% endblock %}

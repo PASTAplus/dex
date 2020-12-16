@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+  <style>
+    body {
+      font-family: 'Consolas', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+    }
+  </style>
+
+  <script>
+  </script>
+
+{% endblock %}
+
+{% block header_all %}
+    <h1>Dex - Data Explorer</h1>
+    <h1>
+      {% block header %}{% endblock %}
+    </h1>
+    <h2>Explore and subset tabular data</h2>
+{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block body %}
+
+  {#  https://dex.edirepository.org/#}
+
+  <a href='/dex/profile/https%3A%2F%2Fpasta-d.lternet.edu%2Fpackage%2Fdata%2Feml%2Fknb-lter-ble%2F9%2F1%2F0be92831cb9e173a828416a954778598'>
+    pkg
+  </a>
+
+{#  <div class='index-csv-list'>#}
+{#    {% for csv_tup in csv_list %}#}
+{#      <div>#}
+{#        {{ '{:,}'.format(csv_tup.1) }}#}
+{#      </div>#}
+{#      <div>#}
+{#        {{ csv_tup.0 }}#}
+{#      </div>#}
+{#      <div>#}
+{#        <a href='dex/profile/{{ csv_tup.0 }}'>open</a>#}
+{#      </div>#}
+{#      <div>#}
+{#        {{ csv_tup.2 }}#}
+{#      </div>#}
+{#    {% endfor %}#}
+{#  </div>#}
+{% endblock %}
