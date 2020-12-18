@@ -24,7 +24,7 @@ body {
     /*line-height: unset;*/
 
     /*     font-size: unset; */
-/*     line-height: unset; */
+    /*     line-height: unset; */
 
     /*padding: 1rem 0;*/
 
@@ -46,13 +46,12 @@ body {
 }
 
 
-
 /*
 Vertical spacing for top-level blocks.
 Remember: Vertical margins auto-collapse while padding does not.
 */
 ul, .result-msg {
-    margin: 1.5rem 0;
+    margin: 2.5rem 0;
 }
 
 
@@ -141,8 +140,21 @@ p {
 }
 
 label.stack-item {
-/*     padding: .5rem 0 0 0; */
+    /*     padding: .5rem 0 0 0; */
 }
+
+
+/* Grid */
+
+.grid-2-col {
+    display: grid;
+    grid-template-columns: repeat(2, min-content);
+    grid-gap: 1rem 1rem;
+}
+.grid-item {
+
+}
+
 
 .data-url {
     /* width: 100rem; */
@@ -173,14 +185,14 @@ label select, label input {
 /* .select2-container, */
 /* .select2-hidden-accessible, */
 /* .select2-search--inline, */
-select
-{
+select {
     min-width: 25rem;
 }
 
 .line-inner {
     width: 100%;
 }
+
 /* Labels above boxes instead of to the left. */
 .line-inner > label {
     /* display: flex; */
@@ -351,9 +363,11 @@ table.dataTable tbody th, table.dataTable tbody td {
     padding: .3rem 0 .3rem 2rem;
     white-space: nowrap;
 }
+
 .datatable td:empty {
     background-color: #e0e0e0;
 }
+
 .datatable td:empty:before {
     top: 0;
     left: 0;
@@ -388,12 +402,12 @@ input[type="checkbox"] {
 
 /* Remove empty toolbars */
 #columns-table > thead, #columns-table_wrapper .fg-toolbar {
-/*     visibility: collapse; */
+    /*     visibility: collapse; */
 
 }
 
 .select2-results__option {
-	padding-top: 0;
+    padding-top: 0;
     padding-bottom: 0;
 }
 
@@ -411,3 +425,16 @@ iframe {
     height: 1500em;
     border: 0;
 }
+
+/* Loading... */
+
+#loading-outer {
+    display: flex;
+    flex-direction: column;
+}
+
+#download #loading-outer {
+    width: 50rem;
+}
+
+
