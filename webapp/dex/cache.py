@@ -141,7 +141,9 @@ def load_hdf(cache_path, key):
         return pd.read_hdf(cache_path, key)
     except AttributeError:
         # https://github.com/pandas-dev/pandas/issues/31199
-        log.debug(f'Cannot read cached HDF. Discarding it. cache_path="{cache_path}"')
+        log.debug(
+            f'Cannot read cached HDF. Discarding it. cache_path="{cache_path}"'
+        )
         cache_path.unlink()
         raise KeyError
     except OSError:
@@ -186,7 +188,7 @@ def get_cache_path(rid, key, obj_type, mkdir=False):
     data_url = db.get_data_url(rid)
     cache_path = pathlib.Path(
         flask.current_app.config["CACHE_ROOT_DIR"],
-        filesystem.get_safe_lossy_path(data_url),
+        filesystem.get_safe_lossy_path_element(data_url),
         f"{key}.{obj_type}",
     )
     log.debug(f"cache_path: {rid} {key} {obj_type} -> {cache_path}")
