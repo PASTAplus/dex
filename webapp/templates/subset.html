@@ -100,7 +100,7 @@
       Columns:
       <select id="col-filter" multiple='multiple' size='30' class='form-control'>
         {% for col_str in ref_col_list %}
-          <option value='{{ loop.index }}'>{{ col_str }}</option>
+          <option value='{{ loop.index0 }}'>{{ col_str }}</option>
         {% endfor %}
       </select>
     </label>

@@ -2,7 +2,6 @@ import datetime
 import json
 import logging
 import pprint
-import time
 
 import flask
 import maya
@@ -15,21 +14,22 @@ import dex.eml_cache
 
 log = logging.getLogger(__name__)
 
-subset_blueprint = flask.Blueprint("subset", __name__, url_prefix="/dex/subset")
+subset_blueprint = flask.Blueprint(
+    "subset", __name__, url_prefix="/dex/subset"
+)
+
+
 # dex = flask.Blueprint('dex', __name__, url_prefix='/dex')
 
 
 @subset_blueprint.route("/<rid>", methods=["GET", "POST"])
 def subset(rid):
-    # rid = db.get_entity(rid)
     if flask.request.method == "POST":
         return download(rid, flask.request.form)
 
     csv_df = dex.csv_cache.get_full_csv(rid)
     # The first page of results for the CSV browser
     browser_df = csv_df.iloc[:10]
-
-    test = dex.csv_cache.get_categorical_columns(rid)
 
     return flask.render_template(
         "subset.html",
@@ -63,16 +63,16 @@ def download(rid, form_dict):
     log.debug(pprint.pformat({"rid": rid, "filter_dict": filter_dict}))
 
     csv_df = dex.csv_cache.get_full_csv(rid)
+    unfiltered_row_count = len(csv_df)
 
     # Filter rows
     a, b = map(lambda x: x - 1, filter_dict["row_filter"])
-    if a > 0 or b < len(csv_df) - 1:
+    if a > 0 or b < unfiltered_row_count - 1:
         log.debug(f"Filtering by rows: {a} - {b}")
         csv_df = csv_df[a : b + 1]
 
     # Filter by category
     cat_dict = filter_dict["cat_map"]
-    pprint.pprint(cat_dict)
 
     # col_idx = int(filter_dict['category-col-dropdown'])
     # if col_idx != -1:
@@ -83,32 +83,70 @@ def download(rid, form_dict):
     #     ]
 
     # Filter by date range
-    date_col = int(filter_dict["date-dropdown"])
-    if date_col != -1:
-        start_date = datetime.datetime.strptime(
-            filter_dict["date-picker-start"], "%Y-%m-%d"
-        )
-        end_date = datetime.datetime.strptime(
-            filter_dict["date-picker-end"], "%Y-%m-%d"
-        )
+    date_filter = filter_dict["date_filter"]
+    col_idx, start_str, end_str = (
+        date_filter['col_idx'],
+        date_filter['start'],
+        date_filter['end'],
+    )
+    if col_idx == -1:
+        log.debug(f'Date range filter not specified')
+    else:
+        start_date, end_date = [
+            datetime.datetime.strptime(v, "%Y-%m-%d") if v else None
+            for v in (start_str, end_str)
+        ]
         log.debug(
-            f"Filtering by date range: {start_date.isoformat()} - {end_date.isoformat()}"
+            f'Filtering by date range: '
+            f'{start_date.isoformat() if start_date else "<unset>"} - '
+            f'{end_date.isoformat() if end_date else "<unset>"}'
         )
+        if start_date or end_date:
+            csv_df.iloc[:, col_idx] = pd.to_datetime(
+                csv_df.iloc[:, col_idx].apply(str),
+                infer_datetime_format=True,
+                errors='ignore',
+            )
+            # csv_df.iloc[:, col_idx] = pd.tz_localize(None)
 
-        csv_df[date_col] = pd.to_datetime(
-            csv_df[date_col].apply(str), infer_datetime_format=True
-        )
-
-        # datetime_dt = dex.csv_cache.get_datetime_columns(rid)
-
-        csv_df = csv_df[[(start_date <= x <= end_date) for x in csv_df[date_col]]]
+        if start_date and end_date:
+            csv_df = csv_df[
+                [
+                    (start_date <= x.tz_localize(None) <= end_date)
+                    for x in csv_df.iloc[:, col_idx]
+                ]
+            ]
+        elif start_date:
+            csv_df = csv_df[
+                [
+                    (start_date <= x.tz_localize(None))
+                    for x in csv_df.iloc[:, col_idx]
+                ]
+            ]
+        elif end_date:
+            csv_df = csv_df[
+                [
+                    (x.tz_localize(None) <= end_date)
+                    for x in csv_df.iloc[:, col_idx]
+                ]
+            ]
 
     # Filter columns
-    col_list = json.loads(filter_dict["col-arr"])
+    col_list = filter_dict["col_filter"]
     if col_list:
         log.debug(f'Filtering by columns: {", ".join(map(str, col_list))}')
         # col_name_list = [csv_df.columns[c] for c in col_list]
         csv_df = csv_df.iloc[:, col_list]
+
+    log.debug(
+        f'Subset created successfully. '
+        f'unfiltered_row_count={unfiltered_row_count} '
+        f'subset_row_count={len(csv_df)}'
+    )
+
+    # Simulate large obj/slow server
+    # import time
+    # time.sleep(5)
 
     return flask.Response(
         csv_df.to_csv(),
@@ -170,7 +208,8 @@ def csv_fetch(rid):
     if search_str:
         search_str = search_str.lower()
         select_list = [
-            any([(search_str in str(r).lower()) for r in s]) for s in csv_df.values
+            any([(search_str in str(r).lower()) for r in s])
+            for s in csv_df.values
         ]
         csv_df = csv_df[select_list]
 
@@ -187,7 +226,9 @@ def csv_fetch(rid):
         )
 
     # Get the requested page of results (selected with the [1], [2]... buttons).
-    csv_df = csv_df[start_int : len(csv_df) if not row_count else start_int + row_count]
+    csv_df = csv_df[
+        start_int : len(csv_df) if not row_count else start_int + row_count
+    ]
 
     # csv_df = csv_df.set_index('Name').sort_index(ascending=is_ascending)
     # csv_df = csv_df.sort_values(
@@ -265,8 +306,11 @@ def fetch_category(rid, col_idx):
     res_list = res_list.sort_values(na_position="last")
     res_list = res_list.fillna("-")
     res_list = res_list.to_list()
+
     # Simulate large obj/slow server
-    time.sleep(2)
+    # import time
+    # time.sleep(5)
+
     return json.dumps(res_list)
 
 
