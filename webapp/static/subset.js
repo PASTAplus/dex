@@ -71,57 +71,39 @@ $(document).ready(
       });
       update_row_filter_msg();
 
-
       // Post a form without triggering a reload (not supported by regular form post).
       async function post_form(v)
       {
-        const v_json = JSON.stringify(v);
-
-
-
-
-
-        return;
-
-
-
-
-
-
+        let filename = (
+            `${g.entity_tup.scope_str}.` +
+            `${g.entity_tup.identifier_int}.` +
+            `${g.entity_tup.version_int}.csv`
+        );
         fetch(`#`, {
           mode: 'no-cors',
           method: 'POST',
-          body: v_json,
+          body: JSON.stringify(v),
           cache: "no-cache",
         })
             .then(async (response) => {
-              // alert(1);
-              // mode="no-cors" causes the body of the response to be unavailable, so we can only check status.
-              // if (response.ok) {
-              // await set_busy();
-              // } else {
-              //     await set_error();
-              // }
+              // mode="no-cors" causes the body of the response to be unavailable, so we can only
+              // check status.
+              if (response.ok) {
+                // TODO: Use stream instead.
+                download(await response.blob(), filename, 'text/csv');
+                // $(".space-top").Destroy();
+              }
+              else {
+                throw `Error ${response.status}: ${await response.text()}`;
+              }
             })
             .catch(async (error) => {
-              console.error(`error=${error.toString()}`)
+              console.error(`Creating subset failed with error: ${error.toString()}`)
+              window.document.write(error);
             });
         // Prevent form submit
         return false;
       }
-
-
-      // async function post_form(v)
-      // {
-      //   let form_el = $(
-      //       `<form method='post' action='#'>` +
-      //       `<input name='download' value='${JSON.stringify(v)}'/>` +
-      //       `</form>`
-      //   );
-      //   let el = $(document.body).append(form_el);
-      //   el.submit();
-      //   el.remove();
-      // }
 
       // CSV browser
 
@@ -162,7 +144,7 @@ $(document).ready(
       {
         let col_idx = parseInt($('#time-period-filter').val());
         if (col_idx === -1) {
-          return;
+          return {col_idx: col_idx, start: null, end: null};
         }
         try {
           $.datepicker.parseDate('yy-mm-dd', $("#time-period-start").val());
@@ -171,10 +153,14 @@ $(document).ready(
         catch {
           throw (
               'To create this subset, please ensure that the dates in the ' +
-              'Time Period Filter are on the form "YYYY-MM-DD", or clear the filter.'
+              'Time Period Filter are on the form "YYYY-MM-DD".'
           )
         }
-        return {start: $("#time-period-start").val(), end: $("#time-period-end").val()};
+        return {
+          col_idx: col_idx,
+          start: $("#time-period-start").val(),
+          end: $("#time-period-end").val()
+        };
       }
 
       async function update_time_period_filter(col_el)
@@ -546,12 +532,13 @@ $(document).ready(
 
         let sel_el = block_el.find('.select2-search');
         // noinspection JSUnresolvedFunction
-        await sel_el.LoadingDots();
+        sel_el.Loading();
 
         // val_el.append(`<option>Processing...</option>`);
         // val_el.select(0);
 
-        let response = await fetch(`/dex/subset/fetch-category/${g.pkg_id}/${col_idx}`);
+        let response = await fetch(`/dex/subset/fetch-category/${g.rid}/${col_idx}`);
+        sel_el.Destroy();
 
         // If response is not ok, show the Flask exception page when debugging, else what the server sent.
         if (response.status !== 200) {
@@ -567,7 +554,7 @@ $(document).ready(
         // };
 
         // noinspection JSUnresolvedFunction
-        await sel_el.LoadingDots('');
+        // await sel_el.Loading();
 
 
         // sel_el.data('select2').selection.placeholder.text = 'test4';
@@ -755,23 +742,25 @@ $(document).ready(
 
       $("#download").click(async () => {
         let subset_dict;
-        try {
-          subset_dict = await get_subset_dict();
-        }
-        catch (e) {
-          alert(e);
-          return;
-        }
+        // try {
+        subset_dict = await get_subset_dict();
+        // }
+        // catch (e) {
+        //   alert(e);
+        //   return;
+        // }
+        // $(".space-top").Loading("Creating CSV subset");
+        $("#download").Loading("Creating CSV subset");
         await post_form(subset_dict);
       });
 
       async function get_subset_dict()
       {
         return {
+          date_filter: await get_time_period_filter(),
           col_filter: await get_col_filter(),
           row_filter: await get_row_filter(),
           cat_map: [...(await get_cat_filter())],
-          date_filter: await get_time_period_filter(),
         };
       }
 
@@ -786,7 +775,7 @@ $(document).ready(
       // Return array of column indexes for selected columns
       async function get_selected_arr(sel_el)
       {
-        return sel_el.find('option:selected').toArray().map(item => item.value);
+        return sel_el.find('option:selected').toArray().map(item => parseInt(item.value));
       }
 
       // Color scheme
