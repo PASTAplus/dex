@@ -3,24 +3,28 @@
 {% block head %}
 
   <script>
-    const g = {
-      rid: '{{ rid }}',
-      iframe_src: '{{ iframe_src }}',
-    };
+  const g = {
+    rid: '{{ rid }}',
+    entity_tup: JSON.parse('{{ entity_tup | tojson }}'),
+    is_cached: {{ is_cached }}
+  };
   </script>
-
-  <link rel="stylesheet" href="/static/spinner.css" crossorigin='anonymous'>
 
 {% endblock %}
 
+{% block header_all %}{% endblock %}
+
 {% block body %}
-  <iframe id='profile' src='{{ iframe_src }}' width='100%'></iframe>
+  <p id='generate-msg'>
+  </p>
+
+  <iframe id='profile' width='100%' src='/dex/profile/doc/{{ rid }}'></iframe>
+
 {% endblock %}
 
 {% block scripts %}
-{#  <script src='/static/iframeSizer.min.js'></script>#}
   <script src='/static/profile.js'></script>
-  <script>
-    $('#nav_profile').addClass('active')
-  </script>
+  {#<script>#}
+  {#  $('#nav_profile').addClass('active')#}
+  {#</script>#}
 {% endblock %}

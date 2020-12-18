@@ -16,7 +16,9 @@ import dex.cache
 
 log = logging.getLogger(__name__)
 
-profile_blueprint = flask.Blueprint("profile", __name__, url_prefix="/dex/profile")
+profile_blueprint = flask.Blueprint(
+    "profile", __name__, url_prefix="/dex/profile"
+)
 
 
 @profile_blueprint.route("/<rid>")
@@ -59,7 +61,9 @@ def render_profile(rid):
         flask.current_app.config["PYTHON_BIN"],
         csv_path.resolve().as_posix(),
     ]
-    log.debug("Running: {}".format(" ".join([shlex.quote(s) for s in cmd_list])))
+    log.debug(
+        "Running: {}".format(" ".join([shlex.quote(s) for s in cmd_list]))
+    )
     start_ts = time.time()
     html_bytes = subprocess.check_output(cmd_list)
     webapp.perf.set(f"{rid}/profile-sec", time.time() - start_ts)
