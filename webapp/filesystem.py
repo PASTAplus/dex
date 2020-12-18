@@ -27,7 +27,9 @@ def get_safe_reversible_path(*path_list):
         To get get the original string from the path, see :func:`get_original_path`.
     """
     # noinspection PyTypeChecker
-    return os.path.join(*[get_safe_reversible_path_element(p) for p in path_list])
+    return os.path.join(
+        *[get_safe_reversible_path_element(p) for p in path_list]
+    )
 
 
 def get_safe_reversible_path_element(s):
@@ -75,7 +77,7 @@ def get_safe_lossy_path(*path_list):
     """Like :func:`get_safe_reversible_path`, but generates a string that is not
     reversible, instead prioritizing readability.
     """
-    return os.path.join(*[get_original_path_element(p) for p in path_list])
+    return os.path.join(*[get_safe_lossy_path_element(p) for p in path_list])
 
 
 def create_missing_directories_for_file(file_path):
@@ -124,7 +126,9 @@ def abs_path_from_base(base_path, rel_path):
     # noinspection PyProtectedMember,PyUnresolvedReferences
     return os.path.abspath(
         os.path.join(
-            os.path.dirname(sys._getframe(1).f_code.co_filename), base_path, rel_path
+            os.path.dirname(sys._getframe(1).f_code.co_filename),
+            base_path,
+            rel_path,
         )
     )
 
@@ -142,7 +146,9 @@ def abs_path(rel_path):
     """
     # noinspection PyProtectedMember,PyUnresolvedReferences
     return os.path.abspath(
-        os.path.join(os.path.dirname(sys._getframe(1).f_code.co_filename), rel_path)
+        os.path.join(
+            os.path.dirname(sys._getframe(1).f_code.co_filename), rel_path
+        )
     )
 
 

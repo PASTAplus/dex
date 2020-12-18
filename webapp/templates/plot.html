@@ -3,12 +3,10 @@
 {% block head %}
 
   <script>
-    const g = {
-      rid: '{{ rid }}',
-    };
+  const g = {
+    rid: '{{ rid }}',
+  };
   </script>
-
-  <link rel="stylesheet" href="/static/css/spinner.css" crossorigin='anonymous'>
 
 {% endblock %}
 
@@ -30,59 +28,48 @@
     X/Y Plot
   </h3>
 
-  <div class='widgets'>
+  <div class='instructions'>
     <ul>
       <li>
         Select the X and Y axis to plot.
       </li>
     </ul>
+  </div>
 
-    <div class='dex-2-2'>
-      <div>
-        <label for='x-col'>X</label>
-        <select id="x-col" name='x-col' class='dex-dropdown'>
+  <div class='widgets'>
+    <div class='cat-filter-block grid-2-col'>
+      <div class='grid-item'>
+        <label class='stack-item ' for='x-col'>X:</label>
+      </div>
+      <div class='grid-item'>
+        <select id="x-col" name='x-col' class='form-control'>
           {% for col_str in cols %}
             <option value='{{ col_str.1 }}'>{{ col_str.0 }}</option>
           {% endfor %}
         </select>
       </div>
-      <div>
-        <label for='y-col'>Y</label>
-        <select id="y-col" name='y-col' class='dex-dropdown'>
+      <div class='grid-item'>
+        <label class='stack-item ' for='y-col'>Y:</label>
+      </div>
+      <div class='grid-item'>
+        <select id="y-col" name='y-col' class='form-control'>
           {% for col_str in cols %}
             <option value='{{ col_str.1 }}'>{{ col_str.0 }}</option>
           {% endfor %}
         </select>
       </div>
-    </div>
-  </div>
-
-  <div class='widgets'>
-    <button id='plot'>Plot</button>
-  </div>
-
-  <div class='widgets'>
-    <div id='plot-container'></div>
-
-    <div id='spinner-msg' style='display: none;'>
-
-      <p>Generating plot...</p>
-
-      <div class="spinner circles">
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
-
-      <div id='counter-msg'>
-      </div>
 
     </div>
+    <div class='cat-filter-list stack'></div>
+    <p></p>
+  </div>
+
+  <div class='space-top'>
+    <button id='plot' class='btn btn-primary'>Plot</button>
+  </div>
+
+  <div>
+    <button id='testy' class='btn btn-primary'>Test</button>
   </div>
 
 {% endblock %}
@@ -90,7 +77,7 @@
 {% block scripts %}
   <script src='/static/plot.js'></script>
   <script>
-    $('#nav_plot').addClass('active')
+  $('#nav_plot').addClass('active')
   </script>
 
 {% endblock %}
