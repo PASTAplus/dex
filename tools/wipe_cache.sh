@@ -11,3 +11,4 @@ rm sqlite.db
 sqlite3 < create_db.sql sqlite.db
 
 echo Success!
+
