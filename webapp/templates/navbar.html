@@ -4,7 +4,7 @@
       <div class="navbar-header">
         <table>
           <td width="5%"></td>
-          <td><a onclick="nav_save.click();" href="/eml/"><img style="width: 32px; width: 32px;" src="/static/assets/EDI-logo-300DPI_5.png"></a></td>
+          <td><a href="/eml/"><img style="width: 32px; width: 32px;" src="/static/assets/EDI-logo-300DPI_5.png"></a></td>
           <td width="5%"></td>
           <td>
             <button aria-controls="navbar" aria-expanded="false"
@@ -15,7 +15,7 @@
               <span class="icon-bar"></span>
               <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" onclick="nav_save.click();" href="/">Dex&nbsp;-&nbsp;Data&nbsp;Explorer</a>
+            <a class="navbar-brand" href="/">Dex&nbsp;-&nbsp;Data&nbsp;Explorer</a>
           </td>
         </table>
       </div>
@@ -42,8 +42,11 @@
           <li><a id='nav_eml' class="nav-item nav-link" href="/dex/eml/{{ rid }}">EML</a></li>
         </ul>
 
-        <ul class="nav navbar-nav navbar-right navbar-brand">
-          <li>Package ID: {{ entity_tup.scope_str }}.{{ entity_tup.identifier_int }}.{{ entity_tup.version_int }}
+        <ul class="nav navbar-nav navbar-right">
+          <li>
+            <a href='{{ entity_tup.data_url }}' class="nav-item nav-link" style='font-size: 18px;'>
+              Package ID: {{ entity_tup.scope_str }}.{{ entity_tup.identifier_int }}.{{ entity_tup.version_int }}
+            </a>
           </li>
         </ul>
       </div>
@@ -75,8 +78,6 @@
     }
     nav_check.on("click", function () {
       if (hidden_check.length) {
-
-
         hidden_check.click();
       }
     })
@@ -96,6 +97,10 @@
       }
     })
   });
+
+  {#<a onclick="nav_save.click();" href="/eml/"><img style="width: 32px; width: 32px;" src="/static/assets/EDI-logo-300DPI_5.png"></a>#}
+  {#<a class="navbar-brand" onclick="nav_save.click();" href="/">Dex&nbsp;-&nbsp;Data&nbsp;Explorer</a>#}
+
   </script>
 
   <script src="//code.jquery.com/jquery-1.12.4.js"></script>

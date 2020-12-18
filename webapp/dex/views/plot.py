@@ -53,7 +53,10 @@ def profile(rid):
             pass
 
     return flask.render_template(
-        "plot.html", rid=rid, entity_tup=db.get_entity_as_dict(rid), cols=sel_list
+        "plot.html",
+        rid=rid,
+        entity_tup=db.get_entity_as_dict(rid),
+        cols=sel_list,
     )
 
     # unique_list = sorted(csv_df[col_name].unique().tolist())

@@ -2,6 +2,20 @@ let seconds;
 
 $(document).ready(function () {
 
+
+  // $("#testy").click(async function () {
+  //   // alert('1');
+  //   // let plot_el = $('#plot-container');
+  //   let el = $("#testydiv");
+  //
+  //   el.Loading();
+  //   setTimeout(function() {el.Destroy()}, 5000);
+  //   // alert('2');
+  //
+  //
+  // });
+  //
+
   $("#plot").click(async function () {
     let plot_el = $('#plot-container');
 
@@ -40,6 +54,5 @@ $(document).ready(function () {
     // document.write(await response.text());
     // $('#profile').src = `/dex/profile/profile-fetch/${g.rid}`
     // $('#profile').load(function(){$(this).height($(this).contents().outerHeight());});
-
   });
 });

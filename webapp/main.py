@@ -40,8 +40,12 @@ log = logging.getLogger(__name__)
 app = flask.Flask(
     __name__,
     static_url_path="/static/",
-    static_folder=(pathlib.Path(__file__).parent / "static").resolve().as_posix(),
-    template_folder=(pathlib.Path(__file__).parent / "templates").resolve().as_posix(),
+    static_folder=(pathlib.Path(__file__).parent / "static")
+    .resolve()
+    .as_posix(),
+    template_folder=(pathlib.Path(__file__).parent / "templates")
+    .resolve()
+    .as_posix(),
 )
 
 app.config.from_object("webapp.config")
@@ -59,7 +63,9 @@ def register_redirect_handler():
     def handle_redirect_to_index(_):
         return flask.redirect("/", 302)
 
-    app.register_error_handler(dex.util.RedirectToIndex, handle_redirect_to_index)
+    app.register_error_handler(
+        dex.util.RedirectToIndex, handle_redirect_to_index
+    )
 
 
 @app.before_request
@@ -90,9 +96,7 @@ def index():
         )
     )
     return flask.render_template(
-        "get_data_url.html",
-        rid=None,
-        entity_tup=None,
+        "get_data_url.html", rid=None, entity_tup=None,
     )
 
 
@@ -103,7 +107,7 @@ def index2(csv_url):
     log.debug(f"rid={rid}")
     e = rid
     dex.csv_cache.download_full_csv(csv_url, rid)
-    return flask.redirect(f"/dex/subset/{rid}")
+    return flask.redirect(f"/dex/profile/{rid}")
 
 
 @app.route("/download", methods=["POST"])
@@ -113,7 +117,7 @@ def download():
     log.debug(f"rid={rid}")
     e = rid
     dex.csv_cache.download_full_csv(data_url, rid)
-    return flask.redirect(f"/dex/subset/{rid}")
+    return flask.redirect(f"/dex/profile/{rid}")
 
 
 if __name__ == "__main__":

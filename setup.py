@@ -33,9 +33,7 @@ setup(
     license=full_license,
     packages=find_packages(where="webapp"),
     include_package_data=True,
-    exclude_package_data={
-        "": ["settings.py, properties.py, config.py"],
-    },
+    exclude_package_data={"": ["settings.py, properties.py, config.py"],},
     package_dir={"": "webapp"},
     python_requires=">3.8.*",
     install_requires=[
@@ -45,9 +43,7 @@ setup(
         "pandas >= 1.0.3",
     ],
     entry_points={"console_scripts": ["press=dex.press:main"]},
-    classifiers=[
-        "License :: OSI Approved :: Apache Software License",
-    ],
+    classifiers=["License :: OSI Approved :: Apache Software License",],
 )
 
 

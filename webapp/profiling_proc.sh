@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Wrap the profiling Python script to prevent the PyCharm debugger from attempting to attach, which causes the debugger to crashes.
+# Wrap the profiling Python script to prevent the PyCharm debugger from attempting to attach, which causes the debugger to crash.
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
 

@@ -72,16 +72,8 @@ log = logging.getLogger(__name__)
 
 # Default start and end datetimes used in the UI if the EML lists one or more datetime
 # columns, but no datetime ranges.
-FALLBACK_START_DATETIME = datetime.datetime(
-    2000,
-    1,
-    1,
-)
-FALLBACK_END_DATETIME = datetime.datetime(
-    2040,
-    1,
-    1,
-)
+FALLBACK_START_DATETIME = datetime.datetime(2000, 1, 1,)
+FALLBACK_END_DATETIME = datetime.datetime(2040, 1, 1,)
 
 
 def first(el, xpath):
@@ -112,14 +104,20 @@ def get_datetime_columns(rid):
     default_dt = get_default_start_end_datetime_range(rid)
     # attributeList/attribute contains descriptions of the columns in the CSV
     dt_col_list = []
-    for i, attr_el in enumerate(data_table_el.xpath(".//attributeList/attribute")):
+    for i, attr_el in enumerate(
+        data_table_el.xpath(".//attributeList/attribute")
+    ):
         if first(attr_el, ".//storageType/text()") not in ("dateTime", "date"):
             continue
         dt_format_str = first(
             attr_el, "//measurementScale/dateTime/formatString/text()"
         )
-        begin_dt = get_iso_date_time(first(attr_el, ".//beginDate/calendarDate/text()"))
-        end_dt = get_iso_date_time(first(attr_el, ".//endDate/calendarDate/text()"))
+        begin_dt = get_iso_date_time(
+            first(attr_el, ".//beginDate/calendarDate/text()")
+        )
+        end_dt = get_iso_date_time(
+            first(attr_el, ".//endDate/calendarDate/text()")
+        )
         dt_col_list.append(
             dict(
                 col_idx=i,
@@ -159,7 +157,9 @@ def get_default_start_end_datetime_range(rid):
 def _find_data_table(rid):
     el = get_eml_tree(rid)
     for data_table_el in el.xpath(".//dataTable"):
-        data_url = data_table_el.xpath(".//physical//distribution/online/url/text()")
+        data_url = data_table_el.xpath(
+            ".//physical//distribution/online/url/text()"
+        )
         if not data_url:
             continue
         rid = dex.pasta.parse_pasta_data_url(data_url[0])
@@ -174,7 +174,9 @@ def get_eml_highlighted_html(rid):
     html_formatter = pygments.formatters.HtmlFormatter(style=EML_STYLE_NAME)
     xml_str = get_eml_xml(rid)
     return (
-        pygments.highlight(xml_str, pygments.lexers.XmlLexer(), html_formatter),
+        pygments.highlight(
+            xml_str, pygments.lexers.XmlLexer(), html_formatter
+        ),
         html_formatter.get_style_defs(".highlight"),
     )
 
