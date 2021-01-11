@@ -74,6 +74,8 @@ $(document).ready(
       // Post a form without triggering a reload (not supported by regular form post).
       async function post_form(v)
       {
+        $("#download-container").Loading("Creating CSV subset");
+
         let filename = (
             `${g.entity_tup.scope_str}.` +
             `${g.entity_tup.identifier_int}.` +
@@ -91,14 +93,15 @@ $(document).ready(
               if (response.ok) {
                 // TODO: Use stream instead.
                 download(await response.blob(), filename, 'text/csv');
-                // $(".space-top").Destroy();
+                $("#download-container").Destroy();
               }
               else {
                 throw `Error ${response.status}: ${await response.text()}`;
               }
+              $("#download-container").Destroy();
             })
             .catch(async (error) => {
-              console.error(`Creating subset failed with error: ${error.toString()}`)
+              // console.error(`Creating subset failed with error: ${error.toString()}`)
               window.document.write(error);
             });
         // Prevent form submit
@@ -251,12 +254,6 @@ $(document).ready(
         return await get_selected_arr(col_filter_el);
       }
 
-      // Return array of selected columns
-      // async function get_col_filter_str() {
-      //   return $('#col-filter option:selected').toArray().map(item => item.text);
-      // }
-
-      // $('input[name=multiselect_col-filter]').on('change', ev => {
       col_filter_el.on('change', async () => {
         await update_col_filter_msg();
       }).trigger('change');
@@ -337,34 +334,17 @@ $(document).ready(
         let block_el = await get_cat_block(ev);
         await fetch_and_fill_cat_select(block_el);
         await update_cat_filter_cat(ev);
-
-        // let {_col_el, val_el} = await get_block_select_el(block_el);
-        // val_el.data('select2').selection.placeholder.text = 'test4';
-        // val_el.trigger("change");
-
-        // await remove_inactive_cat_blocks();
-        // let free_list = await get_free_col_list();
-        // if (await is_all_in_use()) {
-        //   await add_remaining(new Set(free_list));
-        // }
-        // await update_cat_filter_msg();
       }
 
-      async function update_cat_filter_cat(_ev)
+      async function update_cat_filter_cat(ev)
       {
-        await remove_inactive_cat_blocks();
-        let free_list = await get_free_col_list();
-        if (await is_all_in_use()) {
-          await add_remaining(new Set(free_list));
+        await remove_inactive_cat_blocks(ev);
+        if ((await is_all_in_use())) {
+          await add_remaining(new Set(g.cat_col_map.keys()));
         }
+        await update_disabled_columns(ev);
         await update_cat_filter_msg();
       }
-
-      // async function update_cat_filter_blocks(ev) {
-      //   console.dir({fn: 'update_cat_filter'});
-      //   let block_el = await get_cat_block(ev);
-      //   await add_remaining(new Set(g.cat_col_map.keys()));
-      // }
 
       async function update_cat_filter_msg(_ev)
       {
@@ -384,7 +364,7 @@ $(document).ready(
           return;
         }
 
-        console.debug(`add_remaining() colIdxSet=${[...Array.from(col_idx_set)]}`)
+        // console.debug(`add_remaining() colIdxSet=${[...Array.from(col_idx_set)]}`)
 
         let filterFragment = filterTemplate.clone();
         let col_el = filterFragment.find('.cat-col');
@@ -407,24 +387,23 @@ $(document).ready(
       // Remove inactive cat blocks
       async function remove_inactive_cat_blocks()
       {
-        console.debug('remove_inactive_cat_blocks()');
+        // console.debug('remove_inactive_cat_blocks()');
 
         let delete_list = [];
 
         let i = 0;
         for (let block_el of cat_list_el.find('.cat-filter-block')) {
           block_el = $(block_el);
-          console.dir(block_el);
           let focusedOrHasFocused = block_el[0].matches(':focus-within');
           if (focusedOrHasFocused) {
-            console.debug(`${i} skipped: Has focus`);
+            // console.debug(`${i} skipped: Has focus`);
           }
           else if (await is_in_use(block_el)) {
-            console.debug(`${i} skipped: Is in use`);
+            // console.debug(`${i} skipped: Is in use`);
           }
           else {
             delete_list.push(block_el)
-            console.debug(`${i} removed`);
+            // console.debug(`${i} removed`);
           }
           ++i;
         }
@@ -437,7 +416,7 @@ $(document).ready(
 
       function _assert(assert_bool)
       {
-        console.assert(assert_bool);
+        // console.assert(assert_bool);
         if (!assert_bool) {
           throw Error('err')
         }
@@ -449,7 +428,6 @@ $(document).ready(
         let sel_list = await get_sel_list();
         let sel_set = new Set(sel_list.map(x => x.col_idx));
         let free_col_list = [...full_set].filter(x => !sel_set.has(x));
-        console.dir({fn: 'get_free_col_list', free_col_list: free_col_list});
         return free_col_list;
       }
 
@@ -458,7 +436,8 @@ $(document).ready(
         let sel_list = [];
         for (let block_el of cat_list_el.find('.cat-filter-block')) {
           block_el = $(block_el);
-          sel_list.push(await get_block_sel(block_el));
+          let sel_dict = await get_block_sel(block_el);
+          sel_list.push(sel_dict);
         }
         return sel_list;
       }
@@ -534,9 +513,6 @@ $(document).ready(
         // noinspection JSUnresolvedFunction
         sel_el.Loading();
 
-        // val_el.append(`<option>Processing...</option>`);
-        // val_el.select(0);
-
         let response = await fetch(`/dex/subset/fetch-category/${g.rid}/${col_idx}`);
         sel_el.Destroy();
 
@@ -548,36 +524,12 @@ $(document).ready(
           return
         }
 
-        // $.fn.setSelect2Placeholder = function (placeholder) {
-        //   $(this).data('select2').selection.placeholder.text = placeholder;
-        //   $(this).trigger("change");
-        // };
-
-        // noinspection JSUnresolvedFunction
-        // await sel_el.Loading();
-
-
-        // sel_el.data('select2').selection.placeholder.text = 'test4';
-        // sel_el.trigger("change");
-
-        // val_el.data('select2').selection.placeholder.text = 'test4';
-        // val_el.trigger("change");
-
-
-        // $placeholder: $(this).closest('.cat-filter-block').find('.cat-col').val(),
-        //     $(this).select2.
-        //
-
         val_el.empty();
 
         let category_arr = await response.json();
         if (!category_arr.length) {
-          val_el.append(`<option value='-1'>Column is not categorical</option>`);
           return;
         }
-        // else {
-        //   val_el.append(`<option value='-1'>Select one or more categories</option>`);
-        // }
 
         let cat_map = new Map();
 
@@ -591,25 +543,24 @@ $(document).ready(
         col_to_cat_dict.set(col_idx, cat_map);
       }
 
-      // Get the div element that is the root of the block which has the column and
-      // category select elements, one of which triggered {ev}.
+      // Get the div element that is the root of the block which has the column and category select
+      // elements, one of which triggered {ev}.
       async function get_cat_block(ev)
       {
         let el = $(ev.target);
-        let block_el = el.closest('.cat-filter-block')
-        console.assert(block_el);
+        let block_el = await el.closest('.cat-filter-block')
+        // console.assert(block_el);
         return block_el;
       }
 
       // Get the cat-col and cat-val select elements that are children of {cat-filter-block}.
       async function get_block_select_el(block_el)
       {
-        console.assert(block_el.hasClass('cat-filter-block'));
+        // console.assert(block_el.hasClass('cat-filter-block'));
         let d = {
           col_el: await block_el.find('.cat-col'),
           val_el: await block_el.find('.cat-val'),
         }
-        // console.dir({fn: 'get_block_select_el', d});
         return d;
       }
 
@@ -635,6 +586,36 @@ $(document).ready(
         };
       }
 
+
+      async function update_disabled_columns(ev)
+      {
+        let col_sel_set = await get_col_sel_set();
+        for (let block_el of cat_list_el.find('.cat-filter-block')) {
+          let sel_dict = await get_block_select_el($(block_el));
+          sel_dict.col_el.find('option').removeAttr("disabled");
+          let selected_col_idx = parseInt(sel_dict.col_el.val());
+          sel_dict.col_el.find('option').each(function () {
+            let opt_val = parseInt($(this).val());
+            if (opt_val !== -1
+                && opt_val !== selected_col_idx
+                && col_sel_set.has(opt_val)) {
+              $(this).attr("disabled", "disabled");
+            }
+          });
+        }
+      }
+
+      // Get set of columns selected in all blocks except for one block (the one we
+      // are working on).
+      async function get_col_sel_set()
+      {
+        let col_set = new Set();
+        for (let sel_dict of await get_sel_list()) {
+          col_set.add(sel_dict.col_idx);
+        }
+        return col_set;
+      }
+
       // Return True if both column and categories have been selected in all existing blocks.
       async function is_all_in_use()
       {
@@ -651,12 +632,10 @@ $(document).ready(
       {
         let {col_idx, cat_set} = await get_block_sel(block_el);
         return col_idx >= 0 && cat_set.size;
-        // return (col_idx === -1 || -1 in cat_set || !cat_set.size);
       }
 
-      // select2 doesn't handle dynamic create and destroy. To avoid confusing select2, we need
-      // to destroy them all and register them all after dynamically creating the base select
-      // elements.
+      // select2 doesn't handle dynamic create and destroy. To avoid confusing select2, we need to
+      // destroy and re-register all of them after dynamically creating the base select elements.
       async function destroy_all_select2()
       {
         $('.cat-col').each(function (_) {
@@ -675,62 +654,43 @@ $(document).ready(
 
       async function create_all_select2()
       {
+        let cat_el = $('.cat-col');
+        let val_el = $('.cat-val');
         // noinspection JSUnresolvedFunction
-        $('.cat-col').select2({
+        cat_el.select2({
           width: '30em',
-          placeholder: 'test1a',
         });
 
-        for (let e of $('.cat-val')) {
-          let i = $(e).closest('.cat-filter-block').find('.cat-col :selected').val()
-          let s = parseInt(i) === -1 ? '' : 'Select one or more categories';
-          // let q = $(e).closest('.cat-filter-block').find('.cat-col').find(':selected').text();
+        for (let e of val_el) {
           $(e).select2({
             width: '30em',
-            placeholder: s,
           });
         }
+      }
 
-        // noinspection JSUnresolvedFunction
-        // $('.cat-val').select2({
-        //   width: '30em',
-        //   placeholder: async function () {
-        //     return 'qwr';
-        //     // alert(this);
-        //     // $(this).closest('.cat-filter-block').find('.cat-col').val()
-        //   },
-        //   // let {_col_el, val_el} = await get_block_select_el(block_el);
-        //
-        //   // placeholder: 'Select one or more categories',
-        //   // placeholder: $(this).closest('.cat-filter-block').find('.cat-col').val(),
-        //
-        // });
-
-        // // noinspection JSUnresolvedFunction
-        // $('.cat-val').select2({
-        //   width: '30em',
-        //   placeholder: async function () {
-        //     return 'qwr';
-        //     // alert(this);
-        //     // $(this).closest('.cat-filter-block').find('.cat-col').val()
-        //   },
-        //   // let {_col_el, val_el} = await get_block_select_el(block_el);
-        //
-        //   // placeholder: 'Select one or more categories',
-        //   // placeholder: $(this).closest('.cat-filter-block').find('.cat-col').val(),
-        //
-        // });
+      async function update_placeholder(ev)
+      {
+        let block_el = await get_cat_block(ev);
+        let {col_el, val_el} = await get_block_select_el(block_el);
+        let {col_idx, cat_set} = await get_block_sel(block_el)
+        let select2_args = {width: '30em'};
+        if (col_idx >= 0 && !cat_set.size) {
+          select2_args['placeholder'] = 'Click to select';
+        }
+        val_el.select2(select2_args);
       }
 
       // Handle all changes in the category filter(s)
-
       // We use event delegation with cat_list_el as the static parent to automatically
       // attach events to the dynamically created column and category select elements.
       $(cat_list_el).on('change', '.cat-col', async (ev) => {
-        await update_cat_filter_col(ev)
+        // console.error(cat_list_el.find('.cat-filter-block').length);
+        await update_cat_filter_col(ev);
+        await update_placeholder(ev);
         ev.stopImmediatePropagation();
         return false;
       });
+
       $(cat_list_el).on('change', '.cat-val', async (ev) => {
         await update_cat_filter_cat(ev)
         ev.stopImmediatePropagation();
@@ -742,15 +702,7 @@ $(document).ready(
 
       $("#download").click(async () => {
         let subset_dict;
-        // try {
         subset_dict = await get_subset_dict();
-        // }
-        // catch (e) {
-        //   alert(e);
-        //   return;
-        // }
-        // $(".space-top").Loading("Creating CSV subset");
-        $("#download").Loading("Creating CSV subset");
         await post_form(subset_dict);
       });
 
