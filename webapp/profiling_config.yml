@@ -65,20 +65,20 @@ missing_diagrams:
 
 correlations:
   pearson:
-    calculate: True
+    calculate: False
     warn_high_correlations: True
     threshold: 0.9
   spearman:
-    calculate: True
+    calculate: False
     warn_high_correlations: False
   kendall:
-    calculate: True
+    calculate: False
     warn_high_correlations: False
   phi_k:
-    calculate: True
+    calculate: False
     warn_high_correlations: False
   cramers:
-    calculate: True
+    calculate: False
     warn_high_correlations: True
     threshold: 0.9
   # Deprecated: do not use
@@ -90,7 +90,7 @@ correlations:
 # Bivariate / Pairwise relations
 interactions:
   targets: [ ]
-  continuous: True
+  continuous: False
 
 # For categorical
 categorical_maximum_correlation_distinct: 100
