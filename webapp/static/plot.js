@@ -26,7 +26,9 @@ $(document).ready(function () {
     // let $ = jQuery.noConflict();
 
     // $(this).css("display", "none");
-    $('#spinner-msg').css("display", "block");
+    // $('#spinner-msg').css("display", "block");
+
+    plot_el.Loading('Generating plot');
 
     seconds = 0;
     let h = setInterval(function () {
@@ -40,10 +42,9 @@ $(document).ready(function () {
     let response = await fetch(`/bokeh/xy-plot/${g.rid}/${x}/${y}`);
     let data = await response.json();
 
+    plot_el.Destroy();
+
     Bokeh.embed.embed_item(data, 'plot-container');
-
-
-    $('#spinner-msg').css("display", "none");
 
     clearInterval(h);
 

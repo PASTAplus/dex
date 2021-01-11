@@ -85,31 +85,33 @@ li {
 
 /* table/ */
 
-table {
-    /* margin: 1em 1em 1em 1em; */
-    /* border-collapse: collapse; */
-    /* white-space: nowrap; */
-    /* border: none; */
+
+
+table.sample-csv-list {
+     margin: 1em 1em 1em 1em;
+     border-collapse: collapse;
+     white-space: nowrap;
+     border: none;
 }
 
-tr {
-    /* border: none; */
-    /* margin: 0em 0em 0em 0em; */
+table.sample-csv-list tr {
+     border: none;
+     margin: 0em 0em 0em 0em;
 }
 
 
-td {
-    /* margin: 0em 0em 0em 0em; */
-    /* padding: 0 1em 0 0; */
-    /* border: none; */
+table.sample-csv-list td {
+     margin: 0em 0em 0em 0em;
+     padding: 0 1em 0 0;
+     border: none;
 }
 
-th {
-    /* font-weight: bold; */
-    /* margin: 0em 0em 0em 0em; */
-    /* padding: 0 1em 0 0; */
-    /* text-align: left; */
-    /* border: none; */
+table.sample-csv-list th {
+     font-weight: bold;
+     margin: 0em 0em 0em 0em;
+     padding: 0 1em 0 0;
+     text-align: left;
+     border: none;
 }
 
 /* */
@@ -420,9 +422,17 @@ input[type="checkbox"] {
 }
 
 iframe {
-    width: 100%;
-    min-width: 100%;
-    height: 1500em;
+    /*width: 100%;*/
+    /*min-width: 100%;*/
+
+    /*width: 100%;*/
+    /*min-width: 100%;*/
+
+    width: 100vw;
+    min-width: 100vw;
+    /*height: 100vh;*/
+    height: 1000em;
+
     border: 0;
 }
 
@@ -437,4 +447,14 @@ iframe {
     width: 50rem;
 }
 
+.dex-space {
+    padding-top: 2rem;
+}
 
+/*.select2-selection__rendered :before {*/
+/*    padding-left: 1rem;*/
+/*    width: 100%;*/
+/*    font-size: 100%;*/
+/*    opacity: 50%;*/
+/*    content: '( Click to select categories )';*/
+/*}*/

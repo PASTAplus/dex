@@ -45,7 +45,8 @@
         <ul class="nav navbar-nav navbar-right">
           <li>
             <a href='{{ entity_tup.data_url }}' class="nav-item nav-link" style='font-size: 18px;'>
-              Package ID: {{ entity_tup.scope_str }}.{{ entity_tup.identifier_int }}.{{ entity_tup.version_int }}
+              {% set pkd_id = [entity_tup.scope_str, entity_tup.identifier_int, entity_tup.version_int] | join('.') %}
+              Package ID: {{ pkd_id }}
             </a>
           </li>
         </ul>

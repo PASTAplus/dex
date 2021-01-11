@@ -23,18 +23,18 @@ $(document).ready(function () {
     // Calling "Loading()" on an element starts the animation and adds a new function,
     // "Destroy()" (described above) to the element.
     $.fn.Destroy = function () {
-      StopAnim($(this)[0]);
+      _stop_anim(this[0]);
     }
     return this.each(function () {
-      StartAnim(this, msg_str);
+      _start_anim(this, msg_str);
     })
   };
 });
 
 // Replace any existing contents in the element with the new, animated message. Keep
 // the old content, for use in Destroy().
-// $.StartAnim = function (host_el, msg_str) {
-function StartAnim(host_el, msg_str) {
+// $._start_anim = function (host_el, msg_str) {
+function _start_anim(host_el, msg_str) {
   let g = Object;
   host_el.g = g;
   g.origHtml = host_el.innerHTML;
@@ -50,8 +50,8 @@ function StartAnim(host_el, msg_str) {
   update(g);
 }
 
-// $.StopAnim = function (host_el) {
-function StopAnim(host_el) {
+// $._stop_anim = function (host_el) {
+function _stop_anim(host_el) {
   clearInterval(host_el.g.interval_handle);
   host_el.innerHTML = host_el.g.origHtml;
 }

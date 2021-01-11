@@ -132,7 +132,8 @@ def xy_plot(rid, x_col_idx, y_col_idx):
     # fig.line(x.to_list(), y.to_list(),  color='#000000')
     plot_json = json.dumps(bokeh.embed.json_item(fig))
 
-    # Test behavior for slow plot
-    # time.sleep(10)
+    # Simulate large obj/slow server
+    # import time
+    # time.sleep(5)
 
     return plot_json

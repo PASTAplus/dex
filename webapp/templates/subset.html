@@ -153,9 +153,9 @@
   <div class='instructions'>
     <ul>
       {% if cat_col_map != [] %}
-        <li>
-          Select a column containing categories and select one or more of the categories to apply this filter.
-        </li>
+        <li>Select a column containing categories and select one or more of the categories to apply this filter.</li>
+        <li>To remove a column from the filter, set it back to 'Filter not applied', or remove the selected categories.</li>
+        <li>Leaving a column unselected is equivalent to selecting it and all its categories</li>
       {% else %}
         <li>
           Filter unavailable: This CSV does not appear to contain any categorical data.
@@ -171,7 +171,11 @@
 
   {#<div class='instructions'></div>#}
   <div class='space-top'>
-    <button id='download' class='btn btn-primary'>Download</button>
+    <p>
+    <div id='download-container'>
+      <button id='download' class='btn btn-primary'>Download</button>
+    </div>
+    <p>
   </div>
 
   <template id='category-filter-template'>
@@ -183,11 +187,15 @@
     <div class='cat-filter-block'>
       <label class='stack-item '>
         Column:
-        <select class='cat-col form-control'></select>
+        <select class='cat-col form-control'>
+          {#<option disabled selected value></option>#}
+        </select>
       </label>
       <label class='stack-item '>
         Categories:
-        <select class='cat-val form-control' multiple></select>
+        <select class='cat-val form-control' multiple>
+          {#<option disabled selected value></option>#}
+        </select>
       </label>
     </div>
   </template>
