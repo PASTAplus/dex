@@ -34,29 +34,31 @@ def profile(rid):
     dt_col_dict = dex.eml_cache.get_datetime_columns_as_dict(rid)
     dt_col_set = set(dt_col_dict.keys())
 
-    sel_list = []
+    sel_list_x = []
+    sel_list_y = []
+
     for i, col_name in enumerate(desc_df.columns):
         c = desc_df.iloc[:, i]
         if i in dt_col_set:
-            sel_list.append(
-                (
-                    f'{col_name} (Time Series, {dt_col_dict[i]["begin_dt"]} - {dt_col_dict[i]["end_dt"]})',
-                    i,
-                )
-            )
+            sel_str = f'{col_name} (Time Series, {dt_col_dict[i]["begin_dt"]} - {dt_col_dict[i]["end_dt"]})'
+            sel_list_x.append((sel_str, i))
         elif c.dtype == numpy.number:
-            sel_list.append(
-                (f'{col_name} (min={c["min"]:.02f} max={c["max"]:.02f})', i)
-            )
+            sel_str = f'{col_name} (min={c["min"]:,.02f} max={c["max"]:,.02f})'
+            sel_list_x.append((sel_str, i))
+            sel_list_y.append((sel_str, i))
         else:
-            # Skip categorical data
+            # Skip categorical data. TODO: Do we want to include categories if they're numerical, and so can be plotted?
             pass
+            # sel_str = f'{col_name} (Categorical)'
+            # sel_list_x.append((sel_str, i))
+            # sel_list_y.append((sel_str, i))
 
     return flask.render_template(
         "plot.html",
         rid=rid,
         entity_tup=db.get_entity_as_dict(rid),
-        cols=sel_list,
+        cols_x=sel_list_x,
+        cols_y=sel_list_y,
     )
 
     # unique_list = sorted(csv_df[col_name].unique().tolist())
