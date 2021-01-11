@@ -7,7 +7,7 @@ import sqlite3
 import flask
 
 import dex.pasta
-import dex.util
+import dex.exc
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ def get_db():
     return db
 
 
-def query_db(query, args=(), one=False):
+def query_db(query, args=(), one=False, db=None):
     """Query and return rows.
     Typically used for select queries.
 
@@ -52,7 +52,7 @@ def query_db(query, args=(), one=False):
         one (bool): True: If the query does not return exactly one row, raise OneError.
           If it does return one row, return it as a namedtuple.
     """
-    cur = get_db().execute(query, args)
+    cur = (db or get_db()).execute(query, args)
     try:
         rv = cur.fetchall()
     finally:
@@ -72,11 +72,11 @@ def query_db(query, args=(), one=False):
     return rv
 
 
-def query_id(query, args=()):
+def query_id(query, args=(), db=None):
     """Query with automatic commit and return last row ID.
     Typically used for insert and update queries.
     """
-    connection = get_db()
+    connection = db or get_db()
     try:
         cur = connection.execute(query, args)
         # rv = cur.fetchall()
@@ -88,16 +88,33 @@ def query_id(query, args=()):
 
 
 def add_entity(data_url):
-    """Parse the data_url into package elements, stores the elements and return the id of the new row."""
-    entity_tup = dex.pasta.parse_pasta_data_url(data_url)
-    return query_id(
-        """
-        replace into entity
-        (data_url, base_url, scope, identifier, version, entity) 
-        values (?, ?, ?, ?, ?, ?)
-    """,
-        entity_tup,
-    )
+    """Parse the data_url into package elements, stores the elements and return the id
+    of the new row.
+    """
+    entity_tup = dex.pasta.get_entity_tup(data_url)
+
+    # 'replace into' causes the id to increase, which could break existing URLs. We want
+    # the id to remain constant, so have to do things in a bit of a cumbersome way here.
+    connection = get_db()
+    try:
+        row_id = query_db(
+            """select id from entity e where data_url = ?""",
+            (entity_tup.data_url,),
+            db=connection,
+        )
+        if row_id:
+            return row_id[0].id
+        return query_id(
+            """
+            insert into entity
+            (data_url, base_url, scope, identifier, version, entity) 
+            values (?, ?, ?, ?, ?, ?)
+            """,
+            entity_tup,
+            db=connection,
+        )
+    finally:
+        connection.commit()
 
 
 def get_entity(row_id):
@@ -111,7 +128,7 @@ def get_entity(row_id):
             one=True,
         )
     except OneError:
-        raise dex.util.RedirectToIndex(f"Unknown Package")
+        raise dex.exc.RedirectToIndex(f"Unknown Package")
     entity_tup = dex.pasta.EntityTup(*row_tup)
     log.debug(f'get_entity() row_id={row_id} entity_tup="{entity_tup}"')
     return entity_tup
