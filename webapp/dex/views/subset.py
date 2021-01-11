@@ -19,9 +19,6 @@ subset_blueprint = flask.Blueprint(
 )
 
 
-# dex = flask.Blueprint('dex', __name__, url_prefix='/dex')
-
-
 @subset_blueprint.route("/<rid>", methods=["GET", "POST"])
 def subset(rid):
     if flask.request.method == "POST":

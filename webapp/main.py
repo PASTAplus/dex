@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-
+import re
 import sys
+import urllib.parse
 
 sys.path.append("/home/pasta/dex/webapp")
 sys.path.append("/home/pasta/dex")
 
 import os
+import dex.pasta
 
 os.environ.setdefault("FLASK_ENV", "production")
 os.environ.setdefault("FLASK_DEBUG", "0")
@@ -18,7 +20,7 @@ import pathlib
 import db
 import dex.cache
 import dex.csv_cache
-import dex.util
+import dex.exc
 import webapp.bokeh_server.views
 import webapp.dex.views.eml
 import webapp.dex.views.plot
@@ -64,7 +66,7 @@ def register_redirect_handler():
         return flask.redirect("/", 302)
 
     app.register_error_handler(
-        dex.util.RedirectToIndex, handle_redirect_to_index
+        dex.exc.RedirectToIndex, handle_redirect_to_index
     )
 
 
@@ -88,35 +90,52 @@ def favicon():
     )
 
 
-@app.route("/")
-def index():
+@app.route("/", methods=["GET"])
+def index_get():
     log.info(
         "template root: {}".format(
             (pathlib.Path(__file__).parent / "templates").resolve().as_posix()
         )
     )
+
+    csv_list = sorted(
+        [
+            {
+                'scope_str': scope_str,
+                'id_str': id_str,
+                'ver_str': ver_str,
+                'entity_str': entity_str,
+                # 'pkg_id': len(p.suffix),
+                # 'pkg_id': p.parent.name + '.' + p.name,
+                # 'size': int(123),
+                'size': p.stat().st_size,
+                # 'status': get_status(p.name),
+                'status': '',
+            }
+            for (p, scope_str, id_str, ver_str, entity_str) in (
+                ([p2] + p2.parent.name.split('.') + [p2.name])
+                for p2 in app.config['CSV_ROOT_DIR'].glob('**/*')
+                if p2.is_file() and len(p2.suffix) == 0
+            )
+        ],
+        key=lambda d: -d['size'],
+    )
+
     return flask.render_template(
-        "get_data_url.html", rid=None, entity_tup=None,
+        'get_data_url.html', rid=None, entity_tup=None, csv_list=csv_list
     )
 
 
-@app.route("/<path:csv_url>")
-def index2(csv_url):
-    # data_url = flask.request.form['csv_url']
-    rid = db.add_entity(csv_url)
-    log.debug(f"rid={rid}")
-    e = rid
-    dex.csv_cache.download_full_csv(csv_url, rid)
-    return flask.redirect(f"/dex/profile/{rid}")
-
-
-@app.route("/download", methods=["POST"])
-def download():
-    data_url = flask.request.form["data_url"]
+@app.route("/sample/<path:data_url>", methods=["GET"])
+def sample_get(data_url):
     rid = db.add_entity(data_url)
-    log.debug(f"rid={rid}")
-    e = rid
-    dex.csv_cache.download_full_csv(data_url, rid)
+    return flask.redirect(f'/dex/profile/{rid}')
+
+
+@app.route("/", methods=["POST"])
+def index_post():
+    data_url = flask.request.form['data_url']
+    rid = db.add_entity(data_url)
     return flask.redirect(f"/dex/profile/{rid}")
 
 

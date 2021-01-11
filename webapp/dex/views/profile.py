@@ -8,6 +8,7 @@ import flask
 import db
 import webapp.perf
 import dex.cache
+import dex.csv_tmp
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +23,9 @@ def profile(rid):
         "profile.html",
         rid=rid,
         entity_tup=db.get_entity_as_dict(rid),
-        is_cached='true' if dex.cache.is_cached(rid, "profile", "html") else 'false',
+        is_cached=(
+            'true' if dex.cache.is_cached(rid, "profile", "html") else 'false'
+        ),
     )
 
 
@@ -30,12 +33,28 @@ def profile(rid):
 def doc(rid):
     if not dex.cache.is_cached(rid, "profile", "html"):
         render_profile(rid)
-    return flask.send_file(dex.cache.get_cache_path(rid, "profile", "html"))
+
+    def generate():
+        with dex.cache.open_file(rid, 'profile', 'html') as f:
+            while True:
+                b = f.read(flask.current_app.config["CHUNK_SIZE_BYTES"])
+                if not b:
+                    break
+                yield b
+
+        # return flask.send_file(f, mimetype='text/html')
+        # return flask.Response(flask.stream_with_context(f), status=200, mimetype='text/html')
+
+    return flask.Response(
+        flask.stream_with_context(generate()), status=200, mimetype='text/html'
+    )
 
 
 @dex.cache.disk("profile", "html")
 def render_profile(rid):
-    csv_path = dex.cache.get_cache_path(rid, "full", "csv")
+    csv_path = dex.csv_tmp.get_data_path_by_row_id(rid)
+    # csv_path = dex.cache.get_cache_path(rid, "full", "csv")
+
     cmd_list = [
         # For debugging in PyCharm, run pandas-profiling in a separate process. The
         # python process is wrapped in a shell script to prevent the debugger from
