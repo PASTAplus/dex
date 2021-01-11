@@ -12,3 +12,7 @@ class DexError(werkzeug.exceptions.HTTPException):
 
 class EMLError(DexError):
     pass
+
+
+class CacheError(DexError):
+    pass

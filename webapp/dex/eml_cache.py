@@ -13,9 +13,10 @@ import requests
 import logging
 
 import db
+import dex.csv_tmp
 import dex.pasta
 import dex.cache
-import dex.util
+import dex.exc
 
 """
 * default:
@@ -162,10 +163,10 @@ def _find_data_table(rid):
         )
         if not data_url:
             continue
-        rid = dex.pasta.parse_pasta_data_url(data_url[0])
+        rid = dex.pasta.get_entity_tup(data_url[0])
         if rid == rid:
             return data_table_el
-    raise dex.util.EMLError(f'Missing DataTable in EML. rid="{rid}"')
+    raise dex.exc.EMLError(f'Missing DataTable in EML. rid="{rid}"')
 
 
 # noinspection PyUnresolvedReferences
@@ -189,11 +190,13 @@ def get_eml_xml(rid):
 
 @dex.cache.disk("eml", "etree")
 def get_eml_tree(rid):
-    data_url = db.get_data_url(rid)
-    eml_url = dex.pasta.pasta_data_to_eml_url(data_url)
-    response = requests.get(eml_url)
-    response.raise_for_status()
-    return lxml.etree.parse(io.BytesIO(response.text.encode("utf-8")))
+    eml_path = dex.csv_tmp.get_eml_path_by_row_id(rid)
+    # data_url = db.get_data_url(rid)
+    # eml_url = dex.pasta.pasta_data_to_eml_url(data_url)
+    # response = requests.get(eml_url)
+    # response.raise_for_status()
+    # return lxml.etree.parse(io.BytesIO(response.text.encode("utf-8")))
+    return lxml.etree.parse(eml_path.as_posix())
 
 
 def pretty_print_fragment(el):

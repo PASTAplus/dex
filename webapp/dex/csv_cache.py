@@ -1,46 +1,59 @@
 import csv
 import logging
+import re
 import time
 
 import clevercsv
 import flask
 import pandas as pd
 
+import db
+import dex.csv_tmp
 import dex.eml_cache
 import dex.cache
 import dex.pasta
-import dex.util
+import dex.exc
 
 log = logging.getLogger(__name__)
 
 
-def download_full_csv(data_url, rid):
-    """Download or load CSV from disk cache.
-
-    This shares the same cache key as get_full_csv().
-    """
-    log.debug(f"Downloading CSV: {data_url}")
-
-    with dex.cache.lock(rid, "full", "df"):
-        df_path = dex.cache.get_cache_path(rid, "full", "df")
-        if df_path.exists():
-            return
-        with dex.cache.lock(rid, "full", "csv"):
-            csv_path = dex.cache.get_cache_path(rid, "full", "csv", mkdir=True)
-            if not csv_path.exists():
-                dex.pasta.download_data_entity(csv_path, data_url)
-            df = _load_csv_to_df(csv_path)
-            dex.cache.save_hdf(df_path, "full", df)
-        # return df
-    # return rid
+# @dex.cache.disk("full", "csv", is_source_obj=True)
+# def get_csv_path(rid):
+#     data_url = db.get_entity(rid).data_url
+#     log.debug(f"Downloading CSV: {data_url}")
+#     with dex.cache.open_file(rid, 'csv', 'path', for_write=True) as f:
+#         dex.pasta.download_data_entity(f, data_url)
+#     return dex.cache.get_cache_path(rid, 'csv', 'path')
 
 
-@dex.cache.disk("full", "df", is_source_obj=True)
+# def download_full_csv(data_url, rid):
+#     """Download or load CSV from disk cache.
+#
+#     This shares the same cache key as get_full_csv().
+#     """
+#     log.debug(f"Downloading CSV: {data_url}")
+#
+#     with dex.cache.lock(rid, "full", "df"):
+#         df_path = dex.cache.get_cache_path(rid, "full", "df")
+#         if df_path.exists():
+#             return
+#         with dex.cache.lock(rid, "full", "csv"):
+#             csv_path = dex.cache.get_cache_path(rid, "full", "csv", mkdir=True)
+#             if not csv_path.exists():
+#                 dex.pasta.download_data_entity(csv_path, data_url)
+#             df = _load_csv_to_df(csv_path)
+#             df.to_hdf(df_path, re.sub("[^a-z0-9]", "full", "_"), mode="w")
+#         # return df
+#     # return rid
+
+
+
+# @dex.cache.disk("full", "df")
 def get_full_csv(rid, **csv_arg_dict):
     try:
         return _load_csv_to_df(rid, **csv_arg_dict)
     except FileNotFoundError:
-        raise dex.util.RedirectToIndex()
+        raise dex.exc.RedirectToIndex()
 
 
 @dex.cache.disk("head", "df")
@@ -148,17 +161,18 @@ def get_categorical_columns(rid):
 
 #
 
-
-def _load_csv_to_df(csv_path, **csv_arg_dict):
+def _load_csv_to_df(rid, **csv_arg_dict):
     """Read CSV file to DataFrame.
 
-    This uses CleverCSV to determine the dialect of the CSV, but then reads it with
-    the standard csv module to save time.
+    This uses CleverCSV to determine the dialect of the CSV, then reads it with the
+    standard csv module to save time.
     """
+    csv_path = dex.csv_tmp.get_data_path_by_row_id(rid)
+
     dialect = detect_dialect(csv_path)
     skip_rows = _find_header_row(csv_path)
     log.info(f"skip_rows: {skip_rows}")
-    log.info("pandas.read_csv start")
+    log.info(f"pandas.read_csv start: {csv_path}")
     start_ts = time.time()
 
     csv_arg_dict.pop("skiprows", None)
