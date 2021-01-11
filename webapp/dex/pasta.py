@@ -1,17 +1,49 @@
 #!/usr/bin/env python
 
-""""""
+"""Utilities for interacting with the PASTA Restful API"""
+
 import collections
 import logging
+import pathlib
 import re
 import shutil
 
+import flask
 import requests
+
+# (
+DATA_RX_TUP = re.compile(
+    r"""
+    (?P<base_url>https://pasta(?:-d)?.lternet.edu/package)
+    /data/eml/
+    (?P<scope_str>[^/]+)/
+    (?P<id_str>\d+)/
+    (?P<ver_str>\d+)/
+    (?P<entity_str>[a-f0-9A-F]{32,})
+    $
+    """,
+    re.VERBOSE,
+)
+# ,
+# re.compile(
+#     r"""
+# (?P<base_url>file://.*/)
+# (?P<scope_str>[^.]+)\.
+# (?P<id_str>\d+)\.
+# (?P<ver_str>\d+)/
+# (?P<entity_str>[a-f0-9A-F]{32,})
+# (?:\.xz)?
+# $
+# """,
+#     re.VERBOSE,
+# ),
+# )
+
 
 log = logging.getLogger(__name__)
 
-BASE_URL = "https://pasta.lternet.edu/package"
-
+# PASTA_BASE_URL = 'https://pasta.lternet.edu/package'
+PASTA_BASE_URL = "https://pasta-d.lternet.edu/package"
 
 # logging.getLogger('requests').setLevel(logging.INFO)
 # logging.getLogger('urllib3').setLevel(logging.INFO)
@@ -29,11 +61,18 @@ EntityTup = collections.namedtuple(
 )
 
 
-def download_data_entity(dst_path, data_url):
+def download_data_entity(file_obj, data_url):
     """Download a data entity directly to disk"""
     with requests.get(data_url, stream=True) as r:
-        with dst_path.open("wb") as f:
-            shutil.copyfileobj(r.raw, f)
+        r.raise_for_status()
+        shutil.copyfileobj(r.raw, file_obj)
+
+
+# def download_data_entity(dst_path, data_url):
+#     """Download a data entity directly to disk"""
+#     with requests.get(data_url, stream=True) as r:
+#         with dst_path.open("wb") as f:
+#             shutil.copyfileobj(r.raw, f)
 
 
 def iterate_all_objects():
@@ -49,19 +88,19 @@ def iterate_all_objects():
 
 
 def get_scope_list():
-    response = requests.get(f"{BASE_URL}/eml")
+    response = requests.get(f"{PASTA_BASE_URL}/eml")
     response.raise_for_status()
     return response.text.splitlines()
 
 
 def get_pkgid_list(scope_str):
-    response = requests.get(f"{BASE_URL}/eml/{scope_str}")
+    response = requests.get(f"{PASTA_BASE_URL}/eml/{scope_str}")
     response.raise_for_status()
     return map(int, response.text.splitlines())
 
 
 def get_revid_list(scope_str, pkgid_int):
-    response = requests.get(f"{BASE_URL}/eml/{scope_str}/{pkgid_int}")
+    response = requests.get(f"{PASTA_BASE_URL}/eml/{scope_str}/{pkgid_int}")
     response.raise_for_status()
     return map(int, response.text.splitlines())
 
@@ -83,38 +122,81 @@ def get_solr(**query_dict):
         )
 
     """
-    response = requests.get(f"{BASE_URL}/search/eml", query_dict)
+    response = requests.get(f"{PASTA_BASE_URL}/search/eml", query_dict)
     response.raise_for_status()
     return response.text
 
 
-def pasta_data_to_eml_url(data_url):
-    """Get the URL to the EML that includes metadata for the given data object
-
-    Example:
-        Data URL:
-        https://pasta-d.lternet.edu/package/data/eml/knb-lter-ble/9/1/0be92831cb9e173a828416a954778598
-
-        -> EML path:
-        https://pasta-d.lternet.edu/package/metadata/eml/knb-lter-ble/9/1
+def get_eml_url(entity_tup):
+    """Get the URL to the EML that includes metadata for the given data object. E.g.,
+       Data URL: https://pasta-d.lternet.edu/package/data/eml/knb-lter-ble/9/1/0be92831cb9e173a828416a954778598
+    -> EML path: https://pasta-d.lternet.edu/package/metadata/eml/knb-lter-ble/9/1
     """
-    e = parse_pasta_data_url(data_url)
-    return (
-        f"{e.base_url}/metadata/eml/{e.scope_str}/"
-        f"{e.identifier_int}/{e.version_int}"
+    return '/'.join(
+        [entity_tup.base_url, 'metadata', 'eml', get_pkg_id(entity_tup, '/')]
     )
 
 
-def parse_pasta_data_url(data_url):
-    m = re.match(
-        r"(?P<base_url>https://pasta(?:-d)?.lternet.edu/package)/data/eml/"
-        r"(?P<scope_str>[^/]+)/(?P<id_str>\d+)/(?P<ver_str>\d+)/"
-        r"(?P<entity_str>[a-f0-9A-F]{32,})$",
-        data_url,
+def get_eml_path(entity_tup):
+    """Get the path at which a local copy of the data object at data_url will be stored
+    if it exists. E.g.,
+       Data URL: https://pasta-d.lternet.edu/package/data/eml/knb-lter-ble/9/1/0be92831cb9e173a828416a954778598
+    -> EML file path: /pasta/data/backup/data1/knb-lter-ble.9.1/Level-1-EML.xml
+    """
+    return pathlib.Path(
+        flask.current_app.config["CSV_ROOT_DIR"],
+        get_pkg_id(entity_tup),
+        'Level-1-EML.xml',
+    ).resolve()
+
+
+def get_data_url(entity_tup):
+    """Get the URL to the object on PASTA given the Package ID. E.g.,
+       Package ID: knb-lter-ble.9.1.0be92831cb9e173a828416a954778598
+    -> Data URL: https://pasta-d.lternet.edu/package/data/eml/knb-lter-ble/9/1/0be92831cb9e173a828416a954778598
+    """
+    return '/'.join(
+        [
+            entity_tup.base_url,
+            'data',
+            'eml',
+            get_pkg_id(entity_tup, "/", entity=True),
+        ]
     )
-    if not m:
-        raise Exception(f'Invalid PASTA Data URL: "{data_url}"')
-    d = dict(m.groupdict())
-    d["identifier_int"] = int(d.pop("id_str"))
-    d["version_int"] = int(d.pop("ver_str"))
-    return EntityTup(data_url=data_url, **d)
+
+
+def get_data_path(entity_tup):
+    """Get the path at which a local copy of the data object at data_url will be stored
+    if it exists. E.g.,
+       Data URL: https://pasta-d.lternet.edu/package/data/eml/knb-lter-ble/9/1/0be92831cb9e173a828416a954778598
+    -> File path: /pasta/data/backup/data1/knb-lter-ble.9.1/0be92831cb9e173a828416a954778598
+    """
+    return pathlib.Path(
+        flask.current_app.config["CSV_ROOT_DIR"],
+        get_pkg_id(entity_tup, entity=True),
+    ).resolve()
+
+
+def get_pkg_id(entity_tup, sep_str='.', entity=False):
+    t = entity_tup
+    return '/'.join((
+        sep_str.join((
+            str(x)
+            for x in (t.scope_str, t.identifier_int, t.version_int)
+        )),
+        *((t.entity_str,) if entity else ()),
+    ))
+
+
+def get_entity_tup(data_url):
+    # for rx in DATA_RX_TUP:
+    m = DATA_RX_TUP.match(data_url)
+    if m:
+        d = dict(m.groupdict())
+        d["identifier_int"] = int(d.pop("id_str"))
+        d["version_int"] = int(d.pop("ver_str"))
+        return EntityTup(data_url=data_url, **d)
+    raise Exception(f'Not a valid Data or File URL/URI: "{data_url}"')
+
+# def get_entity_tup_by_row_id(rid):
+#     data_url = db.get_data_url(rid)
