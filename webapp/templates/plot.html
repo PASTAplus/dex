@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+                                   {% extends 'base.html' %}
 
 {% block head %}
 
@@ -11,18 +11,6 @@
 {% endblock %}
 
 {% block body %}
-
-  {#  <h2>Plot</h2>#}
-  {##}
-  {#  <div class='indent'>#}
-  {##}
-  {#    <ul>#}
-  {#      <li>#}
-  {#        Select the X and Y axis to plot.#}
-  {#      </li>#}
-  {#    </ul>#}
-  {##}
-  {#  </div>#}
 
   <h3>
     X/Y Plot
@@ -43,7 +31,7 @@
       </div>
       <div class='grid-item'>
         <select id="x-col" name='x-col' class='form-control'>
-          {% for col_str in cols %}
+          {% for col_str in cols_x %}
             <option value='{{ col_str.1 }}'>{{ col_str.0 }}</option>
           {% endfor %}
         </select>
@@ -53,7 +41,7 @@
       </div>
       <div class='grid-item'>
         <select id="y-col" name='y-col' class='form-control'>
-          {% for col_str in cols %}
+          {% for col_str in cols_y %}
             <option value='{{ col_str.1 }}'>{{ col_str.0 }}</option>
           {% endfor %}
         </select>
@@ -68,8 +56,8 @@
     <button id='plot' class='btn btn-primary'>Plot</button>
   </div>
 
-  <div>
-    <button id='testy' class='btn btn-primary'>Test</button>
+  <div class='widgets'>
+    <div id='plot-container'></div>
   </div>
 
 {% endblock %}
