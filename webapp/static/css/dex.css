@@ -339,9 +339,9 @@ h2.data-entity {
 /* Buttons */
 
 #download, #plot {
-    font-size: 2.5rem;
-    margin: 1.5rem 0 3rem 0;
-
+    font-size: 2.0rem;
+    margin: 1.5rem 0 1.5rem 0;
+    padding: .5rem 1rem .3rem 1rem;
     /* border-width: .2rem; */
     /* border-style: solid; */
     /* border-color: #a0a0a0; */
@@ -451,10 +451,10 @@ iframe {
     padding-top: 2rem;
 }
 
-/*.select2-selection__rendered :before {*/
-/*    padding-left: 1rem;*/
-/*    width: 100%;*/
-/*    font-size: 100%;*/
-/*    opacity: 50%;*/
-/*    content: '( Click to select categories )';*/
+
+/*.nav-package-id {*/
+/*    height: 50px;*/
+/*    padding: 15px 15px;*/
+/*    font-size: 18px;*/
+/*    line-height: 20px*/
 /*}*/

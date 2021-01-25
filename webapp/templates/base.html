@@ -41,11 +41,34 @@
 
 <body style='height: initial;'>
 
-{% block navbar %}
-  {% if entity_tup and rid%}
+{# jQuery, jQuery UI #}
+<script type="text/javascript" src='/static/lib/jquery/jquery-3.5.1.js'></script>
+<script type="text/javascript" src='/static/lib/jquery-ui/jquery-ui-1.12.1.custom/jquery-ui.js'></script>
+
+{#<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>#}
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+{#<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>#}
+
+{# Bokeh #}
+<script type="text/javascript" src='/static/lib/bokeh/bokeh-2.2.3.min.js'></script>
+<script type="text/javascript" src='/static/lib/bokeh/bokeh-api-2.2.3.min.js'></script>
+<script type="text/javascript" src='/static/lib/bokeh/bokeh-tables-2.2.3.min.js'></script>
+<script type="text/javascript" src='/static/lib/bokeh/bokeh-widgets-2.2.3.min.js'></script>
+
+{# DataTables #}
+<script type="text/javascript" src='/static/lib/DataTables/DataTables-1.10.22/js/jquery.dataTables.js'></script>
+<script type="text/javascript" src='/static/lib/DataTables/DataTables-1.10.22/js/dataTables.jqueryui.js'></script>
+
+{# select2 #}
+<script type="text/javascript" src='/static/lib/select2-4.1.0-beta.1/dist/js/select2.full.js'></script>
+<script type='text/javascript' src='/static/lib/jQuery-UI-Multiple-Select-Widget/src/jquery.multiselect.js'></script>
+
+{#{% block navbar %}#}
+{#  {% if entity_tup and rid%}#}
     {{ navbar.dexnavbar(entity_tup, rid) }}
-  {% endif %}
-{% endblock %}
+{#  {% endif %}#}
+{#{% endblock %}#}
 
 <div class="dex-container">
 
@@ -79,25 +102,6 @@
 {#<script src="//code.jquery.com/jquery-1.12.4.js"></script>#}
 {#<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>#}
 
-{# jQuery, jQuery UI #}
-<script type="text/javascript" src='/static/lib/jquery/jquery-3.5.1.js'></script>
-<script type="text/javascript" src='/static/lib/jquery-ui/jquery-ui-1.12.1.custom/jquery-ui.js'></script>
-
-{#<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>#}
-
-{# Bokeh #}
-<script type="text/javascript" src='/static/lib/bokeh/bokeh-2.2.3.min.js'></script>
-<script type="text/javascript" src='/static/lib/bokeh/bokeh-api-2.2.3.min.js'></script>
-<script type="text/javascript" src='/static/lib/bokeh/bokeh-tables-2.2.3.min.js'></script>
-<script type="text/javascript" src='/static/lib/bokeh/bokeh-widgets-2.2.3.min.js'></script>
-
-{# DataTables #}
-<script type="text/javascript" src='/static/lib/DataTables/DataTables-1.10.22/js/jquery.dataTables.js'></script>
-<script type="text/javascript" src='/static/lib/DataTables/DataTables-1.10.22/js/dataTables.jqueryui.js'></script>
-
-{# select2 #}
-<script type="text/javascript" src='/static/lib/select2-4.1.0-beta.1/dist/js/select2.full.js'></script>
-<script type='text/javascript' src='/static/lib/jQuery-UI-Multiple-Select-Widget/src/jquery.multiselect.js'></script>
 
 {# "Loading... message" #}
 <script type="text/javascript" src='/static/loading.js'></script>

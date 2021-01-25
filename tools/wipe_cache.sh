@@ -7,6 +7,7 @@ set -e
 test -e create_db.sql || { echo 'Run with current dir at the dex root'; exit; }
 
 rm -rf ../cache
+rm -rf ../dex-cache
 rm sqlite.db
 sqlite3 < create_db.sql sqlite.db
 

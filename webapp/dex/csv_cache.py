@@ -158,6 +158,33 @@ def get_categorical_columns(rid):
             )
     return cat_list
 
+# @dex.cache.disk("cat-cat", "list")
+def get_categories_for_column(rid, col_idx):
+    csv_df = dex.csv_cache.get_full_csv(rid)
+    col_series = csv_df.iloc[:, int(col_idx)]
+    res_list = pd.Series(col_series.unique())  # .tolist()
+    if res_list.dtype == "object":
+        res_list = res_list.apply(lambda x: str(x))
+    res_list = res_list.sort_values(na_position="last")
+    res_list = res_list.fillna("-")
+    res_list = res_list.to_list()
+    return res_list
+
+
+def is_csv(_rid, csv_path):
+    try:
+        dialect = detect_dialect(csv_path)
+        count_dict = {}
+        with open(csv_path, "r", newline="", encoding='utf-8') as f:
+            for i, row in enumerate(clevercsv.reader(f, dialect)):
+                if i == 100:
+                    break
+                count_dict.setdefault(len(row), 0)
+                count_dict[len(row)] += 1
+        return 1 <= len(count_dict) <= 3
+    except Exception:
+        return False
+
 
 #
 
