@@ -3,59 +3,55 @@
     <div class="container-fluid">
       <div class="navbar-header">
         <table>
-          <td width="5%"></td>
-          <td><a href="/eml/"><img style="width: 32px; width: 32px;" src="/static/assets/EDI-logo-300DPI_5.png"></a></td>
-          <td width="5%"></td>
-          <td>
-            <button aria-controls="navbar" aria-expanded="false"
-                    class="navbar-toggle collapsed" data-target="#top-navbar"
-                    data-toggle="collapse" type="button">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="/">Dex&nbsp;-&nbsp;Data&nbsp;Explorer</a>
-          </td>
+          <tr>
+            <td width="5%"></td>
+            <td><a href="/"><img style="width: 32px; width: 32px;" src="/static/assets/EDI-logo-300DPI_5.png"></a></td>
+            <td width="5%"></td>
+            <td>
+              <button aria-controls="navbar" aria-expanded="false"
+                      class="navbar-toggle collapsed" data-target="#top-navbar"
+                      data-toggle="collapse" type="button">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="/">Dex&nbsp;-&nbsp;Data&nbsp;Explorer</a>
+            </td>
+          </tr>
         </table>
       </div>
       <div class="navbar-collapse collapse" id="top-navbar">
         <ul class="nav navbar-nav">
-          <li class="dropdown">
-            <a aria-expanded="false" aria-haspopup="true"
-               class="dropdown-toggle" data-toggle="dropdown" href="#"
-               role="button">EDI Links
-              <span class="caret"></span>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="https://environmentaldatainitiative.org/" target="_blank">Environmental Data Initiative</a></li>
-              <li><a href="https://portal.edirepository.org/nis/home.jsp" target="_blank">EDI Data Portal</a></li>
-              <li><a href="https://pastaplus-core.readthedocs.io/en/latest/index.html" target="_blank">PASTAplus</a></li>
-              <li><a href="https://lternet.edu/" target="_blank">LTER Network</a></li>
-            </ul>
-          </li>
-          {#<li><a href="/eml/user_guide" title="User Guide">User Guide</a></li>#}
-          {#<li><a href="/eml/about" title="About">About</a></li>#}
-          <li><a id='nav_profile' class="nav-item nav-link" href="/dex/profile/{{ rid }}">Profile</a></li>
-          <li><a id='nav_subset' class="nav-item nav-link" href="/dex/subset/{{ rid }}">Subset</a></li>
-          <li><a id='nav_plot' class="nav-item nav-link" href="/dex/plot/{{ rid }}">Plot</a></li>
-          <li><a id='nav_eml' class="nav-item nav-link" href="/dex/eml/{{ rid }}">EML</a></li>
+
+          {% if entity_tup and rid %}
+
+            <li><a id='nav_profile' class="nav-item nav-link nav-" href="/dex/profile/{{ rid }}">Profile</a></li>
+            <li><a id='nav_subset' class="nav-item nav-link" href="/dex/subset/{{ rid }}">Subset</a></li>
+            <li><a id='nav_plot' class="nav-item nav-link" href="/dex/plot/{{ rid }}">Plot</a></li>
+            <li><a id='nav_eml' class="nav-item nav-link" href="/dex/eml/{{ rid }}">EML</a></li>
+          {% endif %}
         </ul>
 
-        <ul class="nav navbar-nav navbar-right">
-          <li>
-            <a href='{{ entity_tup.data_url }}' class="nav-item nav-link" style='font-size: 18px;'>
-              {% set pkd_id = [entity_tup.scope_str, entity_tup.identifier_int, entity_tup.version_int] | join('.') %}
-              Package ID: {{ pkd_id }}
-            </a>
-          </li>
-        </ul>
+        {% if entity_tup and rid %}
+
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              <a href="https://portal.edirepository.org/nis/home.jsp" class="nav-item nav-link" style="font-size: 18px;">
+                {% set pkd_id = [entity_tup.scope_str, entity_tup.identifier_int, entity_tup.version_int] | join('.') %}
+                Package ID: {{ pkd_id }}
+              </a>
+            </li>
+          </ul>
+
+        {% endif %}
+
       </div>
     </div>
   </nav>
 
-  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  {#<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>#}
+  {#<script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>#}
   <script>
   $(function () {
     let nav_check = $("#nav_check");
@@ -65,8 +61,8 @@
     let hidden_check = $("#hidden_check");
     let hidden_save = $("#hidden_save");
     let hidden_download = $("#hidden_download");
-    let hidden_new = $("#hidden_new");
-    let hidden_open = $("#hidden_open");
+    {#let hidden_new = $("#hidden_new");#}
+    {#let hidden_open = $("#hidden_open");#}
     let hidden_close = $("#hidden_close");
     let nav_link = $('.nav_link');
     if (hidden_save.length === 0) {
@@ -104,8 +100,8 @@
 
   </script>
 
-  <script src="//code.jquery.com/jquery-1.12.4.js"></script>
-  <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  {#<script src="//code.jquery.com/jquery-1.12.4.js"></script>#}
+  {#<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>#}
   <script>
   $(function () {
 
