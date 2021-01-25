@@ -6,7 +6,7 @@ import time
 import flask
 
 import db
-import webapp.perf
+import perf
 import dex.cache
 import dex.csv_tmp
 
@@ -70,7 +70,7 @@ def render_profile(rid):
     )
     start_ts = time.time()
     html_bytes = subprocess.check_output(cmd_list)
-    webapp.perf.set(f"{rid}/profile-sec", time.time() - start_ts)
+    perf.set(f"{rid}/profile-sec", time.time() - start_ts)
     log.debug('html_bytes=({}) "{}"'.format(len(html_bytes), html_bytes[:100]))
 
     # cache_path = dex.cache.get_cache_path(

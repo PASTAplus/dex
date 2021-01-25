@@ -1,31 +1,29 @@
 #!/usr/bin/env python
-import re
-import sys
-import urllib.parse
 
-sys.path.append("/home/pasta/dex/webapp")
-sys.path.append("/home/pasta/dex")
+"""Dex entry point"""
 
+import logging
 import os
-import dex.pasta
+import pathlib
+import random
+import re
 
 os.environ.setdefault("FLASK_ENV", "production")
 os.environ.setdefault("FLASK_DEBUG", "0")
 
 import flask
 import flask.logging
-import logging
-import pathlib
 
+import bokeh_server.views
 import db
 import dex.cache
 import dex.csv_cache
 import dex.exc
-import webapp.bokeh_server.views
-import webapp.dex.views.eml
-import webapp.dex.views.plot
-import webapp.dex.views.profile
-import webapp.dex.views.subset
+import dex.pasta
+import dex.views.eml
+import dex.views.plot
+import dex.views.profile
+import dex.views.subset
 
 # Flask prints the full list of URL query params when in development mode. The DataTable
 # widget sends huge queries, so to reduce the noise, we increase the logging level for
@@ -50,14 +48,14 @@ app = flask.Flask(
     .as_posix(),
 )
 
-app.config.from_object("webapp.config")
+app.config.from_object("config")
 app.debug = app.config["FLASK_DEBUG"]
 
-app.register_blueprint(webapp.bokeh_server.views.bokeh_server)
-app.register_blueprint(webapp.dex.views.profile.profile_blueprint)
-app.register_blueprint(webapp.dex.views.subset.subset_blueprint)
-app.register_blueprint(webapp.dex.views.plot.plot_blueprint)
-app.register_blueprint(webapp.dex.views.eml.eml_blueprint)
+app.register_blueprint(bokeh_server.views.bokeh_server)
+app.register_blueprint(dex.views.profile.profile_blueprint)
+app.register_blueprint(dex.views.subset.subset_blueprint)
+app.register_blueprint(dex.views.plot.plot_blueprint)
+app.register_blueprint(dex.views.eml.eml_blueprint)
 
 
 @app.before_first_request
@@ -92,38 +90,59 @@ def favicon():
 
 @app.route("/", methods=["GET"])
 def index_get():
-    log.info(
-        "template root: {}".format(
-            (pathlib.Path(__file__).parent / "templates").resolve().as_posix()
-        )
+    return flask.render_template(
+        'index.html',
+        rid=None,
+        entity_tup=None,
+        csv_list=get_sample_data_entity_list(None),
     )
 
-    csv_list = sorted(
-        [
+@app.route("/<path:data_url>", methods=["GET"])
+def index_get_url(data_url):
+    rid = db.add_entity(data_url)
+    return flask.redirect(f'/dex/profile/{rid}')
+
+
+@dex.cache.disk("sample_data_entity_list", "list")
+def get_sample_data_entity_list(_rid, k=200):
+    entity_list = get_data_entity_list(None)
+    if len(entity_list) >= k:
+        return sorted(random.sample(entity_list, k), key=lambda d: -d['size'])
+    return entity_list
+
+
+@dex.cache.disk("data_entity_list", "list")
+def get_data_entity_list(_rid):
+    data_entity_list = []
+    for abs_path in app.config['CSV_ROOT_DIR'].glob('**/*'):
+        if (not abs_path.is_file()
+            or len(abs_path.suffix) != 0
+            or not dex.csv_cache.is_csv(None, abs_path)
+        ):
+            continue
+        rel_path = abs_path.relative_to(app.config['CSV_ROOT_DIR'])
+        m = re.match(
+            '(?P<scope_str>[^.]*).'
+            '(?P<id_str>\d+).'
+            '(?P<ver_str>\d+).'
+            '(?P<entity_str>[0-9a-f]{32})$',
+            rel_path.as_posix(),
+        )
+        if not m:
+            continue
+        d = m.groupdict()
+        data_entity_list.append(
             {
-                'scope_str': scope_str,
-                'id_str': id_str,
-                'ver_str': ver_str,
-                'entity_str': entity_str,
-                # 'pkg_id': len(p.suffix),
-                # 'pkg_id': p.parent.name + '.' + p.name,
-                # 'size': int(123),
-                'size': p.stat().st_size,
-                # 'status': get_status(p.name),
+                'abs_path': abs_path.as_posix(),
+                'scope_str': d['scope_str'],
+                'id_str': d['id_str'],
+                'ver_str': d['ver_str'],
+                'entity_str': d['entity_str'],
+                'size': abs_path.stat().st_size,
                 'status': '',
             }
-            for (p, scope_str, id_str, ver_str, entity_str) in (
-                ([p2] + p2.parent.name.split('.') + [p2.name])
-                for p2 in app.config['CSV_ROOT_DIR'].glob('**/*')
-                if p2.is_file() and len(p2.suffix) == 0
-            )
-        ],
-        key=lambda d: -d['size'],
-    )
-
-    return flask.render_template(
-        'get_data_url.html', rid=None, entity_tup=None, csv_list=csv_list
-    )
+        )
+    return sorted(data_entity_list, key=lambda d: -d['size'])
 
 
 @app.route("/sample/<path:data_url>", methods=["GET"])
@@ -146,3 +165,4 @@ if __name__ == "__main__":
         # use_reloader=False,
         # passthrough_errors=True,
     )
+

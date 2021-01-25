@@ -4,7 +4,7 @@ import tempfile
 import flask
 import pytest
 
-from webapp.main import app
+from main import app
 
 
 @pytest.fixture(scope='function', autouse=True)

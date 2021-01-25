@@ -1,10 +1,10 @@
-"""Test the webapp.dex.pasta module.
+"""Test the dex.pasta module.
 """
 
 import pathlib
 
 import dex.pasta
-import webapp.dex.pasta
+import dex.pasta
 
 DATA_URL_1 = (
     'https://pasta-d.lternet.edu/package/data/eml/knb-lter-ble/9/1'
@@ -43,15 +43,15 @@ ENTITY_TUP_2 = dex.pasta.EntityTup(
 
 
 def test_1000():
-    assert webapp.dex.pasta.get_eml_url(ENTITY_TUP_1) == EML_URL_1
+    assert dex.pasta.get_eml_url(ENTITY_TUP_1) == EML_URL_1
 
 
 def test_1010():
-    assert webapp.dex.pasta.get_data_url(ENTITY_TUP_1) == DATA_URL_1
+    assert dex.pasta.get_data_url(ENTITY_TUP_1) == DATA_URL_1
 
 
 def test_1020():
-    assert webapp.dex.pasta.get_data_path(ENTITY_TUP_1) == DATA_PATH_1
+    assert dex.pasta.get_data_path(ENTITY_TUP_1) == DATA_PATH_1
 
 
 def test_1030():
