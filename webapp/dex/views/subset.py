@@ -69,15 +69,10 @@ def download(rid, form_dict):
         csv_df = csv_df[a : b + 1]
 
     # Filter by category
-    cat_dict = filter_dict["cat_map"]
-
-    # col_idx = int(filter_dict['category-col-dropdown'])
-    # if col_idx != -1:
-    #     cat_str = filter_dict['category-val-dropdown'].strip()
-    #     log.debug(f'Filtering by category: "{col_idx}"= "{cat_str}"')
-    #     csv_df = csv_df[
-    #         [(str(x).strip() == cat_str) for x in csv_df.iloc[:, col_idx]]
-    #     ]
+    for col_idx, cat_list in filter_dict["cat_map"]:
+        idx_map = dex.csv_cache.get_categories_for_column(rid, col_idx)
+        cat_set = {idx_map[i] for i in cat_list}
+        csv_df = csv_df.loc[csv_df[col_idx].isin(cat_set)]
 
     # Filter by date range
     date_filter = filter_dict["date_filter"]
@@ -281,7 +276,7 @@ def csv_fetch(rid):
 #     )
 #     start_ts = time.time()
 #     html_bytes = subprocess.check_output(cmd_list)
-#     webapp.perf.set(f'{rid}/profile-sec', time.time() - start_ts)
+#     perf.set(f'{rid}/profile-sec', time.time() - start_ts)
 #     log.debug('html_bytes=({}) "{}"'.format(len(html_bytes), html_bytes[:100]))
 #     cache_path = flask.current_app.config['CACHE_ROOT_DIR'] / rid
 #     cache_path.parent.mkdir(exist_ok=True)
@@ -295,15 +290,7 @@ def fetch_category(rid, col_idx):
     """Return a list of the unique values in a column. This will only be called for
     columns that have already been determined to be categorical.
     """
-    csv_df = dex.csv_cache.get_full_csv(rid)
-    col_series = csv_df.iloc[:, int(col_idx)]
-    res_list = pd.Series(col_series.unique())  # .tolist()
-    if res_list.dtype == "object":
-        res_list = res_list.apply(lambda x: str(x))
-    res_list = res_list.sort_values(na_position="last")
-    res_list = res_list.fillna("-")
-    res_list = res_list.to_list()
-
+    res_list = dex.csv_cache.get_categories_for_column(rid, col_idx)
     # Simulate large obj/slow server
     # import time
     # time.sleep(5)
