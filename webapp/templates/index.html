@@ -2,49 +2,91 @@
 
 {% block head %}
 
-  <style>
-    body {
-      font-family: 'Consolas', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
-    }
-  </style>
-
   <script>
   </script>
 
 {% endblock %}
 
-{% block header_all %}
-    <h1>Dex - Data Explorer</h1>
-    <h1>
-      {% block header %}{% endblock %}
-    </h1>
-    <h2>Explore and subset tabular data</h2>
-{% endblock %}
-
-{% block navbar %}{% endblock %}
+{#{% block header_all %}{% endblock %}#}
 
 {% block body %}
 
-  {#  https://dex.edirepository.org/#}
+  <h3>Open CSV</h3>
 
-  <a href='/dex/profile/https%3A%2F%2Fpasta-d.lternet.edu%2Fpackage%2Fdata%2Feml%2Fknb-lter-ble%2F9%2F1%2F0be92831cb9e173a828416a954778598'>
-    pkg
-  </a>
+  <div class='instructions'>
+    <ul>
+      <li>
+        In most cases, Dex (this service) is used by opening a CSV file in the
+        <a href='https://portal.edirepository.org/nis/home.jsp'>EDI Data Portal</a>
+      </li>
+      <li>
+        Use this form to open a CSV file if you already have its PASTA URL / identifier.
+      </li>
+    </ul>
+  </div>
 
-{#  <div class='index-csv-list'>#}
-{#    {% for csv_tup in csv_list %}#}
-{#      <div>#}
-{#        {{ '{:,}'.format(csv_tup.1) }}#}
-{#      </div>#}
-{#      <div>#}
-{#        {{ csv_tup.0 }}#}
-{#      </div>#}
-{#      <div>#}
-{#        <a href='dex/profile/{{ csv_tup.0 }}'>open</a>#}
-{#      </div>#}
-{#      <div>#}
-{#        {{ csv_tup.2 }}#}
-{#      </div>#}
-{#    {% endfor %}#}
-{#  </div>#}
+  <div class='widgets'>
+    <form action='/' method='post'>
+      <div class='form-group required'>
+        <label class="control-label" for='data_url'>Data Entity URL for a CSV file to open</label>
+        <input class="form-control" id='data_url' name='data_url' width='80'
+               value='https://pasta-d.lternet.edu/package/data/eml/knb-lter-ble/9/1/0be92831cb9e173a828416a954778598'/>
+      </div>
+      <div class='form-group required'>
+        <button class="btn btn-primary" type='submit'>Open</button>
+      </div>
+    </form>
+  </div>
+
+  <h3>Open a sample CSV</h3>
+
+  <div class='instructions'>
+    <ul>
+      <li>
+        This form may be used to open a randomly selected CSV document for testing or demonstration of Dex.
+      </li>
+    </ul>
+  </div>
+
+  {#<div class='dex-space'>#}
+  <div class='widgets'>
+    <table class='sample-csv-list'>
+      {% for csv_dict in csv_list %}
+        <tr>
+          <td>
+            {{ '{:,}'.format(csv_dict.size) }}
+          </td>
+          <td>
+            {{ csv_dict.scope_str }}
+          </td>
+          <td>
+            {{ csv_dict.id_str }}
+          </td>
+          <td>
+            {{ csv_dict.ver_str }}
+          </td>
+          <td>
+            {{ csv_dict.entity_str }}
+          </td>
+          <td>
+            {% set pkd_id = [
+                'https://pasta-d.lternet.edu/package/data/eml',
+                csv_dict.scope_str,
+                csv_dict.id_str,
+                csv_dict.ver_str,
+                csv_dict.entity_str
+                ] | join('/') %}
+            <a href='/sample/{{ pkd_id | urlencode | replace("/", "%2F") }}'>open</a>
+          </td>
+          <td>
+            {{ csv_dict.status }}
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
 {% endblock %}
