@@ -37,7 +37,9 @@ def lock(rid, key, obj_type):
     log.debug(f"Waiting to acquire lock: {rid}_{key}_{obj_type}")
     # with threading_lock:
 
-    with fasteners.InterProcessLock((LOCK_ROOT / f"{rid}_{key}_{obj_type}").as_posix()):
+    with fasteners.InterProcessLock(
+        (LOCK_ROOT / f"{rid}_{key}_{obj_type}").as_posix()
+    ):
         log.debug(f"Acquired lock: {rid}_{key}_{obj_type}")
         yield
     log.debug(f"Released lock: {rid}_{key}_{obj_type}")
@@ -79,13 +81,13 @@ def disk(key, obj_type):
         def wrapper(rid, *args, **kwargs):
             with lock(rid, key, obj_type):
                 if is_cached(rid, key, obj_type):
-                # try:
+                    # try:
                     # if not flask.current_app.config["DISK_CACHE_ENABLED"]:
                     #     raise KeyError
                     return read_from_cache(rid, key, obj_type)
                 else:
-                # except dex.exc.CacheError as e:
-                #     log.debug(f'Error: {repr(e)}')
+                    # except dex.exc.CacheError as e:
+                    #     log.debug(f'Error: {repr(e)}')
                     obj = fn(rid, *args, **kwargs)
                     save_to_cache(rid, key, obj_type, obj)
                     return obj
@@ -230,10 +232,11 @@ def get_cache_path(rid, key, obj_type):
 
 
 def _get_cache_path(rid, key, obj_type, is_compressed):
-    data_url = db.get_data_url(rid)
     return pathlib.Path(
         flask.current_app.config["CACHE_ROOT_DIR"],
-        filesystem.get_safe_lossy_path_element(data_url),
+        filesystem.get_safe_lossy_path_element(
+            db.get_data_url(rid) if rid is not None else 'global'
+        ),
         f"{key}.{obj_type}{'.xz' if is_compressed else ''}",
     ).resolve()
 
