@@ -90,15 +90,16 @@ $(document).ready(
             .then(async (response) => {
               // mode="no-cors" causes the body of the response to be unavailable, so we can only
               // check status.
+              const dl_el = $("#download-container");
               if (response.ok) {
                 // TODO: Use stream instead.
                 download(await response.blob(), filename, 'text/csv');
-                $("#download-container").Destroy();
+                dl_el.Destroy();
               }
               else {
                 throw `Error ${response.status}: ${await response.text()}`;
               }
-              $("#download-container").Destroy();
+              dl_el.Destroy();
             })
             .catch(async (error) => {
               // console.error(`Creating subset failed with error: ${error.toString()}`)
@@ -108,29 +109,67 @@ $(document).ready(
         return false;
       }
 
-      // CSV browser
 
-      $('#csv-table').DataTable({
-        // Enable horisontal scrolling
-        scrollX: '90vw',
-        // scrollY: 300,
-        processing: true,
-        serverSide: true,
-        ajax: {url: `fetch-browse/${g.rid}`, dataSrc: 'data'},
-        order: [[0, "asc"]],
-        columnDefs: [{
-          orderable: true,
-          targets: 0,
-        }],
-        select: {
-          items: 'column',
-          style: 'multi',
-          selector: 'td:first-child',
-          toggleable: true,
-        },
-        // Fix issue where table row width is different from header and footer
-        bAutoWidth: false,
+      // Pandas Query
+
+      let pq_auto_el = $('#pq-auto');
+      let pq_text_el = $('#pq-text');
+      let pq_apply_el = $('#pq-apply');
+
+      $('#csv-table')
+          .on('xhr.dt', function (e, settings, json, _xhr) {
+            pq_apply_el.prop('disabled', false);
+            $('#pq-result-msg').text(json['queryResult']);
+          })
+          .on('preXhr.dt', function (e, settings, data) {
+            $('#pq-result-msg').text("Running query...");
+            pq_apply_el.prop('disabled', true);
+          })
+          .dataTable({
+            // Enable horisontal scrolling
+            scrollX: '90vw',
+            processing: true,
+            serverSide: true,
+            ajax: {url: `fetch-browse/${g.rid}`, dataSrc: 'data',},
+            order: [[0, "asc"]],
+            columnDefs: [{
+              orderable: true,
+              targets: 0,
+            }],
+            select: {
+              items: 'column',
+              style: 'multi',
+              selector: 'td:first-child',
+              toggleable: true,
+            },
+            // Fix issue where table row width is different from header and footer
+            bAutoWidth: false,
+            // searching: true,
+            // Time in ms after the last key press and automatically triggering search (if enabled).
+            searchDelay: 400,
+          });
+
+      let pq_hidden_el = $('input[type=search]');
+
+      function pq_apply()
+      {
+        pq_hidden_el.val(pq_text_el.val());
+        pq_hidden_el.trigger('input');
+      }
+
+      pq_text_el.on('keyup', function (_ev) {
+        if (pq_auto_el[0].checked) {
+          pq_apply();
+        }
       });
+
+      pq_apply_el.on('click', (_ev) => {
+        pq_apply();
+      })
+          // After add the handler, we trigger it with a click because the browser may
+          // have filled in query text from a previous instance of the page.
+          .trigger('click');
+
 
       // Time period filter
 
@@ -145,7 +184,8 @@ $(document).ready(
 
       async function get_time_period_filter()
       {
-        let col_idx = parseInt($('#time-period-filter').val());
+        let col_idx = parseInt(time_period_filter_el.val());
+        // let col_idx = parseInt($('#time-period-filter').val());
         if (col_idx === -1) {
           return {col_idx: col_idx, start: null, end: null};
         }

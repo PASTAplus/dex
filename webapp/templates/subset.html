@@ -19,22 +19,6 @@
 
   <h2>CSV file subset</h2>
 
-  <h3>CSV file browser</h3>
-
-  <div class='instructions'>
-    <ul>
-      <li>
-        This view does not filter the CSV file, but can be helpful for finding values to use in the filter sections below.
-      </li>
-      <li>
-        Use the Search field to limit the display to only rows that include the given text (case insensitive).
-      </li>
-    </ul>
-  </div>
-  <div class='widgets'>
-    {{ csv_html | safe }}
-  </div>
-
   <h3>
     Filter by Time Period
   </h3>
@@ -53,12 +37,14 @@
         <div class='line-inner'>
           <label>
             Column:
-            <select class='dex-date-picker form-control' id='time-period-filter' name='date-dropdown'>
+            <select class='dex-date-picker form-control' id='time-period-filter'
+                    name='date-dropdown'>
               <option value='-1'>Filter not applied</option>
               {% for dt_col_dict in datetime_col_list %}
                 {# value = index of the column in the CSV file #}
                 {# text = name of the column from the CSV file #}
-                <option value='{{ dt_col_dict.col_idx }}'>{{ ref_col_list[dt_col_dict.col_idx] }}</option>
+                <option
+                    value='{{ dt_col_dict.col_idx }}'>{{ ref_col_list[dt_col_dict.col_idx] }}</option>
               {% endfor %}
             </select>
           </label>
@@ -68,7 +54,8 @@
         <div class='line-inner'>
           <label>
             Start:
-            <input class='dex-date-picker form-control' id='time-period-start' name='date-picker-start' placeholder='Start Date' type='text'>
+            <input class='dex-date-picker form-control' id='time-period-start'
+                   name='date-picker-start' placeholder='Start Date' type='text'>
           </label>
         </div>
       </div>
@@ -76,7 +63,8 @@
         <div class='line-inner'>
           <label>
             End:
-            <input class='dex-date-picker form-control' id='time-period-end' name='date-picker-end' placeholder='End Date' type='text'>
+            <input class='dex-date-picker form-control' id='time-period-end'
+                   name='date-picker-end' placeholder='End Date' type='text'>
           </label>
         </div>
       </div>
@@ -130,7 +118,8 @@
           <label>
             {#<label class='hidden'>#}
             First row:
-            <input id='row-start' name='row-start' type='text' class='dex-numeric form-control' placeholder="first row" value='1'>
+            <input id='row-start' name='row-start' type='text'
+                   class='dex-numeric form-control' placeholder="first row" value='1'>
           </label>
         </div>
       </div>
@@ -139,12 +128,59 @@
           <label>
             {#<label class='hidden'>#}
             Last row:
-            <input id='row-end' name='row-end' type='text' class='dex-numeric form-control' placeholder="last row" value='{{ row_count }}'>
+            <input id='row-end' name='row-end' type='text'
+                   class='dex-numeric form-control' placeholder="last row"
+                   value='{{ row_count }}'>
           </label>
         </div>
       </div>
     </div>
     <p id='row-filter-msg' class='result-msg'>
+  </div>
+
+  <h3>Filter by Pandas Query</h3>
+
+  <div class='instructions'>
+    <ul>
+      <li>
+        This view does not filter the CSV file, but can be helpful for finding values to
+        use in the filter sections below.
+      </li>
+      <li>
+        Use the Search field to limit the display to only rows that include the given
+        text (case insensitive).
+      </li>
+    </ul>
+  </div>
+
+  <div class='widgets pq'>
+    <div class='stack'>
+      <div class='stack-item'>
+        <label>
+          {{ csv_html | safe }}
+        </label>
+      </div>
+      <div class='stack-item'>
+        <label>
+        <textarea id='pq-text' name='pandas-query' cols="80" rows="3"
+                  class='form-control' placeholder="Pandas Query"></textarea>
+        </label>
+      </div>
+      <div class='stack-item'>
+        <div class='line'>
+          <div class="line-item ">
+            <button id='pq-apply' class='btn btn-primary'>Apply</button>
+          </div>
+          <div class="line-item">
+            <label for='pq-auto' class=''>Apply automatically</label>
+            <input type='checkbox' id='pq-auto' name='pq-auto' class=''/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class='stack-item'>
+      <p id="pq-result-msg" class='result-msg'>
+    </div>
   </div>
 
   <h3>
@@ -154,9 +190,15 @@
   <div class='instructions'>
     <ul>
       {% if cat_col_map != [] %}
-        <li>Select a column containing categories and select one or more of the categories to apply this filter.</li>
-        <li>To remove a column from the filter, set it back to 'Filter not applied', or remove the selected categories.</li>
-        <li>Leaving a column unselected is equivalent to selecting it and all its categories</li>
+        <li>Select a column containing categories and select one or more of the
+          categories to apply this filter.
+        </li>
+        <li>To remove a column from the filter, set it back to 'Filter not applied', or
+          remove the selected categories.
+        </li>
+        <li>Leaving a column unselected is equivalent to selecting it and all its
+          categories
+        </li>
       {% else %}
         <li>
           Filter unavailable: This CSV does not appear to contain any categorical data.

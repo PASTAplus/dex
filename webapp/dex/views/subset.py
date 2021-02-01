@@ -197,16 +197,18 @@ def csv_fetch(rid):
 
     # Filter the full CSV by the search string. A row is included if one or more of the
     # cells in the row have text matching the search string.
-    if search_str:
-        search_str = search_str.lower()
-        select_list = [
-            any([(search_str in str(r).lower()) for r in s])
-            for s in csv_df.values
-        ]
-        csv_df = csv_df[select_list]
 
-    # Get the filtered count before filtering to a single page.
     filtered_count = len(csv_df)
+    if search_str:
+        try:
+            csv_df = csv_df.query(search_str)
+        except Exception as e:
+            result_str = f'{e.__class__.__name__}: {str(e)}'
+        else:
+            filtered_count = len(csv_df)
+            result_str = f'Query OK -- Subset contains {filtered_count} rows'
+    else:
+        result_str = 'Filter not applied'
 
     # Sort the rows according to selection
     if not sort_col_idx:
@@ -219,8 +221,8 @@ def csv_fetch(rid):
 
     # Get the requested page of results (selected with the [1], [2]... buttons).
     csv_df = csv_df[
-        start_int : len(csv_df) if not row_count else start_int + row_count
-    ]
+             start_int: len(csv_df) if not row_count else start_int + row_count
+             ]
 
     # csv_df = csv_df.set_index('Name').sort_index(ascending=is_ascending)
     # csv_df = csv_df.sort_values(
@@ -228,15 +230,19 @@ def csv_fetch(rid):
     # )
 
     j = json.loads(csv_df.to_json(orient="split", index=True))
+    d = [(a, *b) for a, b in zip(j["index"], j["data"])]
+    for i in range(len(d), 10):
+        d.append(('',*['']*len(csv_df.columns)))
 
-    json_str = json.dumps(
-        {
-            "draw": draw_int,
-            "recordsTotal": total_count,
-            "recordsFiltered": filtered_count,
-            "data": [(a, *b) for a, b in zip(j["index"], j["data"])],
-            # "sort": [sort_col_idx,],
-        },
+    json_str = json.dumps({
+        # DataTable
+        "draw": draw_int,
+        "recordsTotal": total_count,
+        "recordsFiltered": filtered_count,
+        "data": d,
+        # Dex
+        "queryResult": result_str,
+    },
         indent=2,
         sort_keys=True,
     )

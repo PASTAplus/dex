@@ -134,8 +134,13 @@ p {
 .stack-item {
     display: flex;
     flex-direction: column;
-    padding: .5rem 0 .5rem 0;
-    margin: 0;
+
+
+    /*padding: .5rem 0 .5rem 0;*/
+    /*margin: .5rem 0 .5rem 0;*/
+    /*margin: 0;*/
+
+
     /* padding: 0; */
     /* border: 1px; */
     grid-row-gap: .2rem;
@@ -179,6 +184,10 @@ label select, label input {
     /* padding: 0; */
     /* margin: 0; */
 
+}
+
+.line-item {
+    align-self: baseline;
 }
 
 /* .line-item, dex-date-picker, .form-control, .select2-selection,.ui-multiselect-listbox, */
@@ -338,14 +347,18 @@ h2.data-entity {
 
 /* Buttons */
 
-#download, #plot {
+#download, #plot, #submit-query {
     font-size: 2.0rem;
     margin: 1.5rem 0 1.5rem 0;
-    padding: .5rem 1rem .3rem 1rem;
+    /*padding: .5rem 1rem .3rem 1rem;*/
     /* border-width: .2rem; */
     /* border-style: solid; */
     /* border-color: #a0a0a0; */
     /* border-radius: 1rem; */
+}
+
+.btn:disabled {
+    filter: brightness(50%);
 }
 
 /* DataTable */
@@ -458,3 +471,21 @@ iframe {
 /*    font-size: 18px;*/
 /*    line-height: 20px*/
 /*}*/
+
+
+/*!*.input[type="text"] {*!*/
+/*#pandas-query {*/
+/*	height:1.2em;*/
+/*	padding:2px;*/
+/*	border:1px solid #ddd;*/
+/*	font:1em/1.2 "Helvetica neue", Arial, sans-serif;*/
+/*}*/
+
+
+
+/* Hide the built-in table filter box */
+#csv-table_filter {
+    display:none;
+}
+
+
