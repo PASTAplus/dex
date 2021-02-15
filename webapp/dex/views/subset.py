@@ -19,10 +19,10 @@ subset_blueprint = flask.Blueprint(
 )
 
 
-@subset_blueprint.route("/<rid>", methods=["GET", "POST"])
+@subset_blueprint.route("/<rid>", methods=["GET"])
 def subset(rid):
-    if flask.request.method == "POST":
-        return download(rid, flask.request.form)
+    # if flask.request.method == "POST":
+    #     return download(rid, flask.request.form)
 
     csv_df = dex.csv_cache.get_full_csv(rid)
     # The first page of results for the CSV browser
@@ -47,17 +47,13 @@ def subset(rid):
     )
 
 
-def download(rid, form_dict):
-    # Example filter_dict:
-    # {
-    #     'cat_map': [4, [0, 1, 4]], [9, [1]]],
-    #     'col_filter': ['5', '10'],
-    #     'row_filter': [1, 356]},
-    # }
+@subset_blueprint.route("/<rid>", methods=["POST"])
+def download(rid):
     filter_dict = json.loads(flask.request.data)
 
     log.debug("=" * 100)
     log.debug(pprint.pformat({"rid": rid, "filter_dict": filter_dict}))
+    log.debug("=" * 100)
 
     csv_df = dex.csv_cache.get_full_csv(rid)
     unfiltered_row_count = len(csv_df)
@@ -66,7 +62,7 @@ def download(rid, form_dict):
     a, b = map(lambda x: x - 1, filter_dict["row_filter"])
     if a > 0 or b < unfiltered_row_count - 1:
         log.debug(f"Filtering by rows: {a} - {b}")
-        csv_df = csv_df[a : b + 1]
+        csv_df = csv_df[a: b + 1]
 
     # Filter by category
     for col_idx, cat_list in filter_dict["cat_map"]:
@@ -124,7 +120,7 @@ def download(rid, form_dict):
             ]
 
     # Filter columns
-    col_list = filter_dict["col_filter"]
+    col_list = filter_dict["col_filter"][1:]
     if col_list:
         log.debug(f'Filtering by columns: {", ".join(map(str, col_list))}')
         # col_name_list = [csv_df.columns[c] for c in col_list]
@@ -141,7 +137,7 @@ def download(rid, form_dict):
     # time.sleep(5)
 
     return flask.Response(
-        csv_df.to_csv(),
+        csv_df.to_csv(index=filter_dict["col_filter"][0]),
         mimetype="text/csv",
         headers={"Content-disposition": f"attachment; filename={rid}.csv"},
     )
@@ -199,11 +195,13 @@ def csv_fetch(rid):
     # cells in the row have text matching the search string.
 
     filtered_count = len(csv_df)
+    query_is_ok = True
     if search_str:
         try:
             csv_df = csv_df.query(search_str)
         except Exception as e:
             result_str = f'{e.__class__.__name__}: {str(e)}'
+            query_is_ok = False
         else:
             filtered_count = len(csv_df)
             result_str = f'Query OK -- Subset contains {filtered_count} rows'
@@ -232,7 +230,7 @@ def csv_fetch(rid):
     j = json.loads(csv_df.to_json(orient="split", index=True))
     d = [(a, *b) for a, b in zip(j["index"], j["data"])]
     for i in range(len(d), 10):
-        d.append(('',*['']*len(csv_df.columns)))
+        d.append(('', *[''] * len(csv_df.columns)))
 
     json_str = json.dumps({
         # DataTable
@@ -242,6 +240,7 @@ def csv_fetch(rid):
         "data": d,
         # Dex
         "queryResult": result_str,
+        "queryIsOk": query_is_ok,
     },
         indent=2,
         sort_keys=True,
