@@ -19,6 +19,63 @@
 
   <h2>CSV file subset</h2>
 
+  <h3>Filter by Query</h3>
+
+  <div class='instructions'>
+    <ul>
+      <li>
+        To apply this filter, type a query and/or unselect columns.
+      </li>
+      <li>
+        If a query is supplied, only rows that match the query may be included in the
+        subset.
+      </li>
+      <li>
+        Only selected columns (with checked boxes) will be included in the subset.
+      </li>
+      <li>This filter can also be used for viewing the dataset:
+        <ul>
+          <li>Set the sort order by clicking the column headers,</li>
+          <li>adjust the page size by setting the number of entires to show,</li>
+          <li>then page through the results.</li>
+        </ul>
+        {#TODO: Link to the query syntax.#}
+      </li>
+    </ul>
+  </div>
+
+  <div class='widgets pq'>
+    <div class='stack'>
+      <div class='stack-item'>
+        <label>
+          {{ csv_html | safe }}
+        </label>
+      </div>
+      <div class='stack-item'>
+        <label>
+        <textarea id='pq-text' name='pandas-query' cols="80" rows="3"
+                  class='form-control' placeholder="Query"></textarea>
+        </label>
+      </div>
+      <div class='stack-item'>
+        {# These are hidden with CSS #}
+        <div class='line hide'>
+          <div class="line-item ">
+            <button class='btn btn-primary' id='pq-apply'>Apply</button>
+          </div>
+          <div class="line-item">
+            <label class='' for='pq-auto'>Apply automatically</label>
+            <input class='' id='pq-auto' name='pq-auto' type='checkbox'
+                   checked='checked'/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class='stack-item'>
+      <p id="pq-result-msg" class='result-msg'>
+    </div>
+  </div>
+
   <h3>
     Filter by Time Period
   </h3>
@@ -73,30 +130,6 @@
   </div>
 
   <h3>
-    Filter by Columns
-  </h3>
-
-  <div class='instructions'>
-    <ul>
-      <li>
-        Select one or more columns to apply this filter.
-      </li>
-    </ul>
-  </div>
-
-  <div class='widgets'>
-    <label>
-      Columns:
-      <select id="col-filter" multiple='multiple' size='30' class='form-control'>
-        {% for col_str in ref_col_list %}
-          <option value='{{ loop.index0 }}'>{{ col_str }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <p id='col-filter-msg' class='result-msg'>
-  </div>
-
-  <h3>
     Filter by row index
   </h3>
 
@@ -138,51 +171,6 @@
     <p id='row-filter-msg' class='result-msg'>
   </div>
 
-  <h3>Filter by Pandas Query</h3>
-
-  <div class='instructions'>
-    <ul>
-      <li>
-        This view does not filter the CSV file, but can be helpful for finding values to
-        use in the filter sections below.
-      </li>
-      <li>
-        Use the Search field to limit the display to only rows that include the given
-        text (case insensitive).
-      </li>
-    </ul>
-  </div>
-
-  <div class='widgets pq'>
-    <div class='stack'>
-      <div class='stack-item'>
-        <label>
-          {{ csv_html | safe }}
-        </label>
-      </div>
-      <div class='stack-item'>
-        <label>
-        <textarea id='pq-text' name='pandas-query' cols="80" rows="3"
-                  class='form-control' placeholder="Pandas Query"></textarea>
-        </label>
-      </div>
-      <div class='stack-item'>
-        <div class='line'>
-          <div class="line-item ">
-            <button id='pq-apply' class='btn btn-primary'>Apply</button>
-          </div>
-          <div class="line-item">
-            <label for='pq-auto' class=''>Apply automatically</label>
-            <input type='checkbox' id='pq-auto' name='pq-auto' class=''/>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class='stack-item'>
-      <p id="pq-result-msg" class='result-msg'>
-    </div>
-  </div>
-
   <h3>
     Filter by category
   </h3>
@@ -215,6 +203,7 @@
   {#<div class='instructions'></div>#}
   <div class='space-top'>
     <p>
+    <div id='download-spinner'></div>
     <div id='download-container'>
       <button id='download' class='btn btn-primary'>Download</button>
     </div>

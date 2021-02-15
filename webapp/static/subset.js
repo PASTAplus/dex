@@ -1,59 +1,60 @@
-'use strict';
+'use strict'; // jshint ignore:line
 
 const NOT_APPLIED_STR = 'Filter not applied';
 
 let $ = jQuery.noConflict();
 
 // This also captures failed console.assert().
-function register_global_error_handler()
+async function register_global_error_handler()
 {
 }
 
-function captureError(ex)
-{
-  const errorData = {
-    name: ex.name,
-    message: ex.line,
-    url: document.location.href,
-    stack: ex.stack
-  };
-  alert(errorData);
-}
+// async function captureError(ex)
+// {
+//   const errorData = {
+//     name: ex.name,
+//     message: ex.line,
+//     url: document.location.href,
+//     stack: ex.stack
+//   };
+//   alert(errorData);
+// }
 
-function wrapErrors(fn)
-{
-  if (!fn.__wrapped__) {
-    fn.__wrapped__ = function () {
-      try {
-        return fn.apply(this, arguments).catch({});
-      }
-      catch (e) {
-        captureError(e);
-        throw e;
-      }
-    };
-  }
-  return fn.__wrapped__;
-}
+// async function wrapErrors(fn)
+// {
+//   if (!fn.__wrapped__) {
+//     fn.__wrapped__ = async function () {
+//       try {
+//         return fn.apply(this, arguments).catch({});
+//       }
+//       catch (e) {
+//         captureError(e);
+//         throw e;
+//       }
+//     };
+//   }
+//   return fn.__wrapped__;
+// }
 
 // Restricts input for the set of matched elements to the given inputFilter function.
 // https://stackoverflow.com/a/995193
-(function ($) {
-  $.fn.setNumeric = function (setNumeric) {
-    return this.on("input keydown keyup mousedown mouseup select contextmenu drop", function () {
-      if (setNumeric(this.value)) {
-        this.oldValue = this.value;
-        this.oldSelectionStart = this.selectionStart;
-        this.oldSelectionEnd = this.selectionEnd;
-      }
-      else if (this.hasOwnProperty("oldValue")) {
-        this.value = this.oldValue;
-        this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
-      }
-      else {
-        this.value = "";
-      }
-    });
+(async function ($) {
+  $.fn.setNumeric = async function (setNumeric) {
+    return this.on('input keydown keyup mousedown mouseup select contextmenu drop',
+        async function () {
+          if (setNumeric(this.value)) {
+            this.oldValue = this.value;
+            this.oldSelectionStart = this.selectionStart;
+            this.oldSelectionEnd = this.selectionEnd;
+          }
+          else if (this.hasOwnProperty('oldValue')) {
+            this.value = this.oldValue;
+            this.setSelectionRange(this.oldSelectionStart, this.oldSelectionEnd);
+          }
+          else {
+            this.value = '';
+          }
+        });
   };
 }(jQuery));
 
@@ -63,10 +64,10 @@ $(document).ready(
       register_global_error_handler();
 
       // Numeric input boxes
-      $(".dex-numeric").setNumeric(value => /^\d*$/.test(value));
+      $('.dex-numeric').setNumeric(value => /^\d*$/.test(value));
 
       // Row index filter
-      $("#row-start, #row-end").keyup(() => {
+      $('#row-start, #row-end').keyup(() => {
         update_row_filter_msg();
       });
       update_row_filter_msg();
@@ -74,7 +75,8 @@ $(document).ready(
       // Post a form without triggering a reload (not supported by regular form post).
       async function post_form(v)
       {
-        $("#download-container").Loading("Creating CSV subset");
+        $('#download-spinner').Loading('Creating CSV subset');
+        $('#download-container').addClass('dex-hidden');
 
         let filename = (
             `${g.entity_tup.scope_str}.` +
@@ -85,21 +87,22 @@ $(document).ready(
           mode: 'no-cors',
           method: 'POST',
           body: JSON.stringify(v),
-          cache: "no-cache",
+          cache: 'no-cache',
         })
             .then(async (response) => {
+
+              $('#download-spinner').Destroy();
+              $('#download-container').removeClass('dex-hidden');
+
               // mode="no-cors" causes the body of the response to be unavailable, so we can only
               // check status.
-              const dl_el = $("#download-container");
               if (response.ok) {
                 // TODO: Use stream instead.
                 download(await response.blob(), filename, 'text/csv');
-                dl_el.Destroy();
               }
               else {
                 throw `Error ${response.status}: ${await response.text()}`;
               }
-              dl_el.Destroy();
             })
             .catch(async (error) => {
               // console.error(`Creating subset failed with error: ${error.toString()}`)
@@ -110,37 +113,53 @@ $(document).ready(
       }
 
 
-      // Pandas Query
+      // Filter by Pandas Query
 
       let pq_auto_el = $('#pq-auto');
       let pq_text_el = $('#pq-text');
       let pq_apply_el = $('#pq-apply');
+      let pq_html_table = $('#csv-table');
+      let pq_query_is_valid = true;
 
-      $('#csv-table')
-          .on('xhr.dt', function (e, settings, json, _xhr) {
+      let pq_table = pq_html_table
+          .on('xhr.dt', async function (e, settings, json, _xhr) {
             pq_apply_el.prop('disabled', false);
-            $('#pq-result-msg').text(json['queryResult']);
+            $('#pq-result-msg').text(json.queryResult);
+            pq_query_is_valid = json.queryIsOk;
           })
-          .on('preXhr.dt', function (e, settings, data) {
-            $('#pq-result-msg').text("Running query...");
+          .on('preXhr.dt', async function (e, settings, data) {
+            $('#pq-result-msg').text('Running query...');
             pq_apply_el.prop('disabled', true);
           })
-          .dataTable({
+          .on('draw.dt', async function () {
+            await pq_sync();
+            // $('#csv-table').DataTable().columns.adjust();
+          })
+          .DataTable({
             // Enable horisontal scrolling
             scrollX: '90vw',
             processing: true,
             serverSide: true,
             ajax: {url: `fetch-browse/${g.rid}`, dataSrc: 'data',},
-            order: [[0, "asc"]],
+            order: [[0, 'asc']],
+            defaultContent: '',
+            // .prop('checked',true); instead of .attr('checked',true);
+            // "aoColumns": [
+            // ],
             columnDefs: [{
               orderable: true,
               targets: 0,
+              // Checkboxes in columns
+              // className: 'select-checkbox',
             }],
             select: {
               items: 'column',
-              style: 'multi',
-              selector: 'td:first-child',
+              // style: 'multi',
+              // selector: 'td:first-child',
               toggleable: true,
+              // Checkboxes in columns
+              // style: 'os',
+              // selector: 'td:first-child'
             },
             // Fix issue where table row width is different from header and footer
             bAutoWidth: false,
@@ -149,12 +168,73 @@ $(document).ready(
             searchDelay: 400,
           });
 
-      let pq_hidden_el = $('input[type=search]');
+      // Add column header checkboxes
+      pq_table.columns().iterator('column', function (context, index) {
+        // if (index !== 0) {
+          $(pq_table.column(index).header())
+              .find('.DataTables_sort_wrapper')
+              .prepend(`<input class='pq-column-select-checkbox' 
+              type='checkbox' checked='checked'/>`);
+        // }
+      });
 
-      function pq_apply()
+      // The table header, footer and rows expand as needed, up to the width of the screen. For some
+      // reason, the column header row only matches the width of the other elements on initial page
+      // rendering, and must handled programmatically after that.
+      $(window).resize(function () {
+        $('#csv-table').DataTable().columns.adjust();
+      });
+
+      let pq_col_sel_checkbox = $('.pq-column-select-checkbox');
+
+      pq_col_sel_checkbox.on('click', async function (e) {
+        // Prevent column sorting
+        e.stopPropagation();
+        // let checkbox_el = $(e.target);
+        // let parent_el = checkbox_el.parent();
+        // let col_idx = parent_el.parent().children().index(parent_el);
+        // $(`td:nth-child(${col_idx + 1})`).toggleClass('unselected', !checkbox_el.checked);
+      });
+
+      pq_col_sel_checkbox.on('change', async function (e) {
+        // Prevent column sorting
+        // e.stopPropagation();
+        await pq_sync();
+      });
+
+      async function pq_sync()
       {
-        pq_hidden_el.val(pq_text_el.val());
-        pq_hidden_el.trigger('input');
+        for (const [col_idx, v] of (await get_column_filter()).entries()) {
+          $(`td:nth-child(${col_idx + 1})`).toggleClass('unselected', !v);
+        }
+      }
+
+      async function get_column_filter()
+      {
+        let el_list = $('.pq-column-select-checkbox');
+        let sel_arr = el_list.map(function () { return this.checked; }).get();
+        // Somehow, the DataTable creates a duplicate row of the column select checkboxes. We slice
+        // those off here.
+        return sel_arr.slice(0, sel_arr.length / 2);
+      }
+
+      async function get_query_filter()
+      {
+        if (!pq_query_is_valid) {
+          throw (
+              'The query in "Filter by Query" is invalid. To create this subset, ' +
+              'please repair or clear the query.'
+          );
+        }
+        return pq_text_el.val()
+      }
+
+      let pq_hidden_search_el = $('input[type=search]');
+
+      async function pq_apply()
+      {
+        pq_hidden_search_el.val(pq_text_el.val());
+        pq_hidden_search_el.trigger('input');
       }
 
       pq_text_el.on('keyup', function (_ev) {
@@ -171,7 +251,7 @@ $(document).ready(
           .trigger('click');
 
 
-      // Time period filter
+      // Filter by time period
 
       let time_period_filter_el = $('#time-period-filter');
 
@@ -190,26 +270,26 @@ $(document).ready(
           return {col_idx: col_idx, start: null, end: null};
         }
         try {
-          $.datepicker.parseDate('yy-mm-dd', $("#time-period-start").val());
-          $.datepicker.parseDate('yy-mm-dd', $("#time-period-end").val());
+          $.datepicker.parseDate('yy-mm-dd', $('#time-period-start').val());
+          $.datepicker.parseDate('yy-mm-dd', $('#time-period-end').val());
         }
-        catch {
+        catch (e) {
           throw (
               'To create this subset, please ensure that the dates in the ' +
               'Time Period Filter are on the form "YYYY-MM-DD".'
-          )
+          );
         }
         return {
           col_idx: col_idx,
-          start: $("#time-period-start").val(),
-          end: $("#time-period-end").val()
+          start: $('#time-period-start').val(),
+          end: $('#time-period-end').val()
         };
       }
 
       async function update_time_period_filter(col_el)
       {
-        await update_datepicker_state(col_el, $("#time-period-start"), true);
-        await update_datepicker_state(col_el, $("#time-period-end"), false);
+        await update_datepicker_state(col_el, $('#time-period-start'), true);
+        await update_datepicker_state(col_el, $('#time-period-end'), false);
         await update_time_period_filter_msg(col_el);
       }
 
@@ -217,7 +297,7 @@ $(document).ready(
       {
         if (dt_el.hasClass('hasDatepicker')) {
           dt_el.datepicker('destroy');
-          dt_el.removeClass('hasDatepicker')
+          dt_el.removeClass('hasDatepicker');
         }
         let col_idx = parseInt(col_el.val());
         if (col_idx === -1) {
@@ -225,9 +305,9 @@ $(document).ready(
           dt_el.attr('disabled', true);
         }
         else {
-          dt_el.datepicker("option", {'disabled': false});
-          let dt_dict = g.datetime_col_list[col_el.prop('selectedIndex') - 1]
-          let date_str = is_start ? dt_dict['begin_dt'] : dt_dict['end_dt'];
+          dt_el.datepicker('option', {'disabled': false});
+          let dt_dict = g.datetime_col_list[col_el.prop('selectedIndex') - 1];
+          let date_str = is_start ? dt_dict.begin_dt : dt_dict.end_dt;
           dt_el.val(date_str);
           dt_el.attr('disabled', false);
           dt_el.datepicker({
@@ -258,61 +338,21 @@ $(document).ready(
         await update_time_period_filter($(this));
       }).trigger('change');
 
-
-      // Column filter
-
-      let col_filter_el = $('#col-filter');
-
-      col_filter_el.multiselect({
-        header: ['checkAll', 'uncheckAll'],
-        buttonWidth: 225,
-        noneSelectedText: 'Select columns',
-        showCheckAll: true,
-        showUncheckAll: true,
-        autoOpen: true,
-        menuWidth: '30em',
-        menuHeight: '30em',
-        listbox: true,
-        closeOnSelect: false,
-      });
-
-      async function update_col_filter_msg()
-      {
-        let msg_el = $('#col-filter-msg');
-        let col_arr = await get_selected_arr(col_filter_el);
-        if (!col_arr.length || col_arr.length === g.ref_col_list.length) {
-          msg_el.text('Subset is unmodified');
-        }
-        else {
-          msg_el.text(
-              `Subset will include only the selected (${col_arr.length} of ${g.ref_col_list.length}) columns`);
-        }
-      }
-
-      async function get_col_filter()
-      {
-        return await get_selected_arr(col_filter_el);
-      }
-
-      col_filter_el.on('change', async () => {
-        await update_col_filter_msg();
-      }).trigger('change');
-
       // Row index filter
 
-      function get_row_filter()
+      async function get_row_filter()
       {
-        let sa = $("#row-start").val();
-        let sb = $("#row-end").val();
+        let sa = $('#row-start').val();
+        let sb = $('#row-end').val();
         let a;
         let b;
-        if (sa === "") {
+        if (sa === '') {
           a = 1;
         }
         else {
           a = parseInt(sa);
         }
-        if (sb === "") {
+        if (sb === '') {
           b = g.row_count;
         }
         else {
@@ -338,7 +378,7 @@ $(document).ready(
         return [a, b];
       }
 
-      function update_row_filter_msg()
+      async function update_row_filter_msg()
       {
         let ab_arr = get_row_filter();
         let a = ab_arr[0];
@@ -358,9 +398,9 @@ $(document).ready(
 
       // Category filter
 
-      // Column block: Combination of column selector and category selector for that column.
-      // A category filter is only in use when both a column and one or more categories have been selected.
-      // Categories are downloaded on demand.
+      // Column block: Combination of column selector and category selector for that column. A
+      // category filter is only in use when both a column and one or more categories have been
+      // selected. Categories are downloaded on demand.
 
       let filterTemplate = $('#category-filter-template').contents();
       // Column df.iloc index to list of categories (unique values) in column.
@@ -409,12 +449,12 @@ $(document).ready(
         let filterFragment = filterTemplate.clone();
         let col_el = filterFragment.find('.cat-col');
 
-        col_el.append(`<option value='-1'>${NOT_APPLIED_STR}</option>`)
+        col_el.append(`<option value='-1'>${NOT_APPLIED_STR}</option>`);
 
         // Set maintains insert order, so no need to sort it
         for (let col_idx of Array.from(col_idx_set)) {
           let col_name = g.cat_col_map.get(col_idx);
-          col_el.append(`<option value='${col_idx}'>${col_name}</option>`)
+          col_el.append(`<option value='${col_idx}'>${col_name}</option>`);
         }
 
         await destroy_all_select2();
@@ -442,7 +482,7 @@ $(document).ready(
             // console.debug(`${i} skipped: Is in use`);
           }
           else {
-            delete_list.push(block_el)
+            delete_list.push(block_el);
             // console.debug(`${i} removed`);
           }
           ++i;
@@ -454,22 +494,22 @@ $(document).ready(
 
       }
 
-      function _assert(assert_bool)
+      async function _assert(assert_bool)
       {
         // console.assert(assert_bool);
         if (!assert_bool) {
-          throw Error('err')
+          throw Error('err');
         }
       }
 
-      async function get_free_col_list()
-      {
-        let full_set = new Set(g.cat_col_map.keys());
-        let sel_list = await get_sel_list();
-        let sel_set = new Set(sel_list.map(x => x.col_idx));
-        let free_col_list = [...full_set].filter(x => !sel_set.has(x));
-        return free_col_list;
-      }
+      // async function get_free_col_list()
+      // {
+      //   let full_set = new Set(g.cat_col_map.keys());
+      //   let sel_list = await get_sel_list();
+      //   let sel_set = new Set(sel_list.map(x => x.col_idx));
+      //   let free_col_list = [...full_set].filter(x => !sel_set.has(x));
+      //   return free_col_list;
+      // }
 
       async function get_sel_list()
       {
@@ -487,7 +527,7 @@ $(document).ready(
         let lineArr = [];
         let cat_map = await get_selected_category_filters();
         for (let x of (await cat_map).entries()) {
-          if (typeof x[0] !== "string") {
+          if (typeof x[0] !== 'string') {
             continue;
           }
           let col_name = x[0];
@@ -497,11 +537,11 @@ $(document).ready(
             cat_str = `"${cat_name_list[0]}"`;
           }
           else {
-            cat_str = `any of ${cat_name_list.join(", ")}`;
+            cat_str = `any of ${cat_name_list.join(', ')}`;
           }
           lineArr.push(`Column "${col_name}" contains ${cat_str}`);
         }
-        return lineArr.join('<br/>OR ')
+        return lineArr.join('<br/>OR ');
       }
 
       async function get_selected_category_filters()
@@ -556,12 +596,13 @@ $(document).ready(
         let response = await fetch(`/dex/subset/fetch-category/${g.rid}/${col_idx}`);
         sel_el.Destroy();
 
-        // If response is not ok, show the Flask exception page when debugging, else what the server sent.
+        // If response is not ok, show the Flask exception page when debugging, else what the server
+        // sent.
         if (response.status !== 200) {
-          let wnd = window.open("about:blank", "_blank");
+          let wnd = window.open('about:blank', '_blank');
           wnd.document.write(await response.text());
           wnd.document.close();
-          return
+          return;
         }
 
         val_el.empty();
@@ -588,7 +629,7 @@ $(document).ready(
       async function get_cat_block(ev)
       {
         let el = $(ev.target);
-        let block_el = await el.closest('.cat-filter-block')
+        let block_el = await el.closest('.cat-filter-block');
         // console.assert(block_el);
         return block_el;
       }
@@ -600,7 +641,7 @@ $(document).ready(
         let d = {
           col_el: await block_el.find('.cat-col'),
           val_el: await block_el.find('.cat-val'),
-        }
+        };
         return d;
       }
 
@@ -632,14 +673,14 @@ $(document).ready(
         let col_sel_set = await get_col_sel_set();
         for (let block_el of cat_list_el.find('.cat-filter-block')) {
           let sel_dict = await get_block_select_el($(block_el));
-          sel_dict.col_el.find('option').removeAttr("disabled");
+          sel_dict.col_el.find('option').removeAttr('disabled');
           let selected_col_idx = parseInt(sel_dict.col_el.val());
           sel_dict.col_el.find('option').each(function () {
             let opt_val = parseInt($(this).val());
             if (opt_val !== -1
                 && opt_val !== selected_col_idx
                 && col_sel_set.has(opt_val)) {
-              $(this).attr("disabled", "disabled");
+              $(this).attr('disabled', 'disabled');
             }
           });
         }
@@ -679,13 +720,13 @@ $(document).ready(
       async function destroy_all_select2()
       {
         $('.cat-col').each(function (_) {
-          if ($(this).hasClass("select2-hidden-accessible")) {
+          if ($(this).hasClass('select2-hidden-accessible')) {
             // noinspection JSUnresolvedFunction
             $(this).select2('destroy');
           }
         });
         $('.cat-val').each(function (_) {
-          if ($(this).hasClass("select2-hidden-accessible")) {
+          if ($(this).hasClass('select2-hidden-accessible')) {
             // noinspection JSUnresolvedFunction
             $(this).select2('destroy');
           }
@@ -712,10 +753,10 @@ $(document).ready(
       {
         let block_el = await get_cat_block(ev);
         let {col_el, val_el} = await get_block_select_el(block_el);
-        let {col_idx, cat_set} = await get_block_sel(block_el)
+        let {col_idx, cat_set} = await get_block_sel(block_el);
         let select2_args = {width: '30em'};
         if (col_idx >= 0 && !cat_set.size) {
-          select2_args['placeholder'] = 'Click to select';
+          select2_args.placeholder = 'Click to select';
         }
         val_el.select2(select2_args);
       }
@@ -732,7 +773,7 @@ $(document).ready(
       });
 
       $(cat_list_el).on('change', '.cat-val', async (ev) => {
-        await update_cat_filter_cat(ev)
+        await update_cat_filter_cat(ev);
         ev.stopImmediatePropagation();
         return false;
       });
@@ -740,9 +781,15 @@ $(document).ready(
       await add_remaining(new Set(g.cat_col_map.keys()));
       await update_cat_filter_msg();
 
-      $("#download").click(async () => {
+      $('#download').click(async () => {
         let subset_dict;
-        subset_dict = await get_subset_dict();
+        try {
+          subset_dict = await get_subset_dict();
+        }
+        catch (e) {
+          alert(e);
+          return;
+        }
         await post_form(subset_dict);
       });
 
@@ -750,7 +797,8 @@ $(document).ready(
       {
         return {
           date_filter: await get_time_period_filter(),
-          col_filter: await get_col_filter(),
+          col_filter: await get_column_filter(),
+          query_filter: await get_query_filter(),
           row_filter: await get_row_filter(),
           cat_map: [...(await get_cat_filter())],
         };
@@ -772,7 +820,7 @@ $(document).ready(
 
       // Color scheme
 
-      function set_color_scheme(scheme)
+      async function set_color_scheme(scheme)
       {
         switch (scheme) {
           case 'dark':
@@ -788,7 +836,7 @@ $(document).ready(
         return null;
       }
 
-      function get_preferred_color_scheme()
+      async function get_preferred_color_scheme()
       {
         if (window.matchMedia) {
           if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -806,7 +854,7 @@ $(document).ready(
         colorSchemeQuery.addEventListener('change', set_color_scheme(get_preferred_color_scheme()));
       }
 
-      // function get_cookies() {
+      // async function get_cookies() {
       //   document.cookie.split(';').reduce((cookies, cookie) => {
       //     const [name, value] = cookie.split('=').map(c => c.trim());
       //     cookies[name] = value;
@@ -814,4 +862,5 @@ $(document).ready(
       //   }, {});
       // }
     }
-);
+)
+;

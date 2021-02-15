@@ -50,7 +50,9 @@ body {
 Vertical spacing for top-level blocks.
 Remember: Vertical margins auto-collapse while padding does not.
 */
-ul, .result-msg {
+
+/*ul, */
+.result-msg {
     margin: 2.5rem 0;
 }
 
@@ -76,7 +78,7 @@ h1 a, h2 a, h3 a {
 /* list */
 
 ul {
-    padding-left: 0;
+    padding-left: 1rem;
     list-style: circle inside none;
 }
 
@@ -383,7 +385,7 @@ table.dataTable tbody th, table.dataTable tbody td {
     background-color: #e0e0e0;
 }
 
-.datatable td:empty:before {
+.datatable td:empty::before {
     top: 0;
     left: 0;
     font-size: 50%;
@@ -394,36 +396,6 @@ table.dataTable tbody th, table.dataTable tbody td {
 /* first column */
 table.datatable td:first-child {
     font-weight: bolder;
-}
-
-/* Filter by Columns */
-
-.ui-multiselect-header {
-}
-
-/* Checkbox spacing in column selection */
-input[type="checkbox"] {
-    margin: 0 .5rem 0 .5rem;
-}
-
-.ui-corner-all {
-    margin: 0;
-
-}
-
-#columns-table {
-    /* width: min-content; */
-}
-
-/* Remove empty toolbars */
-#columns-table > thead, #columns-table_wrapper .fg-toolbar {
-    /*     visibility: collapse; */
-
-}
-
-.select2-results__option {
-    padding-top: 0;
-    padding-bottom: 0;
 }
 
 /* Profiling page */
@@ -460,32 +432,48 @@ iframe {
     width: 50rem;
 }
 
+.dex-hidden {
+    display: none;
+}
+/*download*/
+
+
 .dex-space {
     padding-top: 2rem;
 }
 
+/*
 
-/*.nav-package-id {*/
-/*    height: 50px;*/
-/*    padding: 15px 15px;*/
-/*    font-size: 18px;*/
-/*    line-height: 20px*/
-/*}*/
+Filter by Pandas Query - DataTable
 
+*/
 
-/*!*.input[type="text"] {*!*/
-/*#pandas-query {*/
-/*	height:1.2em;*/
-/*	padding:2px;*/
-/*	border:1px solid #ddd;*/
-/*	font:1em/1.2 "Helvetica neue", Arial, sans-serif;*/
-/*}*/
-
-
-
-/* Hide the built-in table filter box */
 #csv-table_filter {
     display:none;
 }
 
+#csv-table .unselected {
+    filter: brightness(50%);
+}
 
+.DataTables_sort_wrapper {
+    display: inline-flex;
+    justify-content: start;
+    align-items: center;
+}
+
+input.pq-column-select-checkbox {
+    margin: 0 .8rem 0 0;
+}
+
+.ui-state-default {
+    align-self: baseline;
+    border: 0;
+}
+
+/* Add Index column title */
+.dataTables_scrollHead th:nth-child(1)::after {
+/*     content: "Index"; */
+    filter: brightness(50%);
+    text-overflow: clip;
+}
