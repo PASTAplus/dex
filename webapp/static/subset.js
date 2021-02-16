@@ -169,13 +169,25 @@ $(document).ready(
           });
 
       // Add column header checkboxes
+      // language=HTML
       pq_table.columns().iterator('column', function (context, index) {
-        // if (index !== 0) {
-          $(pq_table.column(index).header())
-              .find('.DataTables_sort_wrapper')
-              .prepend(`<input class='pq-column-select-checkbox' 
-              type='checkbox' checked='checked'/>`);
-        // }
+        $(pq_table.column(index).header())
+            .find('.DataTables_sort_wrapper')
+            .prepend(`<input class='pq-column-select-checkbox' type='checkbox' checked='checked'/>`);
+      });
+
+      // Add all/none toggle for column header checkboxes
+      // language=HTML
+      $('#csv-table_wrapper .fg-toolbar').first().children().first().after(`
+        <div id='pq-toggle-all'>
+          <input id='pq-toggle-all-input' name='pq-toggle-all-input' class='pq-column-all-checkbox' type='checkbox' checked='checked'/>
+          <label class='control-label' for='pq-toggle-all-input'>Columns: Select all / none</label>
+        </div>
+      `);
+
+      $('#pq-toggle-all-input').on('change', async () => {
+        $('.pq-column-select-checkbox').prop('checked', $('#pq-toggle-all-input').prop('checked'));
+        await pq_sync();
       });
 
       // The table header, footer and rows expand as needed, up to the width of the screen. For some
@@ -249,7 +261,6 @@ $(document).ready(
           // After add the handler, we trigger it with a click because the browser may
           // have filled in query text from a previous instance of the page.
           .trigger('click');
-
 
       // Filter by time period
 

@@ -477,3 +477,29 @@ input.pq-column-select-checkbox {
     filter: brightness(50%);
     text-overflow: clip;
 }
+
+.fg-toolbar {
+    display: inline-flex;
+    justify-content: start;
+    align-items: baseline;
+    width: 100%;
+}
+
+.fg-toolbar label {
+    display: inline-block;
+    margin: 0 .5rem 0 .5rem;
+    text-align: left;    
+}
+
+#pq-toggle-all {
+    padding: 0 5rem 0 5rem;
+}
+
+#csv-table_length select {
+    min-width: 6rem;
+}
+
+#csv-table_length > label > select {
+    margin: 0 .5rem 0 .5rem;
+}
+
