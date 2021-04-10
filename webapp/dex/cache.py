@@ -1,11 +1,11 @@
 import contextlib
 import functools
 import logging
+import lzma
 import pathlib
 import re
 import tempfile
 import threading
-import lzma
 
 import flask
 import pandas as pd

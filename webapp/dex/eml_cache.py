@@ -3,7 +3,6 @@
 import contextlib
 import datetime
 import io
-import json
 import logging
 import pathlib
 import types
@@ -14,12 +13,12 @@ import pygments
 import pygments.formatters
 import pygments.lexers
 
+import db
 import dex.cache
 import dex.csv_tmp
+import dex.eml_types
 import dex.exc
 import dex.pasta
-import db
-import dex.eml_types
 
 """
 * default:

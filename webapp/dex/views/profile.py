@@ -1,19 +1,17 @@
 import json
 import logging
-import pathlib
 import shlex
 import subprocess
-import time
 import tempfile
+import time
 
 import flask
 
 import db
-import dex.csv_cache
-import dex.eml_cache
-import perf
 import dex.cache
+import dex.csv_cache
 import dex.csv_tmp
+import dex.eml_cache
 
 log = logging.getLogger(__name__)
 

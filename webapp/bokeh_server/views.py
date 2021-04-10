@@ -1,18 +1,13 @@
 import json
-import pathlib
-import time
-import dex.eml_cache
 
 import bokeh.colors.rgb
 import bokeh.embed
-
+import flask
 from bokeh.plotting import figure
 
-import flask
-import pandas as pd
-
-import dex.csv_cache
 import dex.cache
+import dex.csv_cache
+import dex.eml_cache
 
 bokeh_server = flask.Blueprint("bokeh", "bokeh", url_prefix="/bokeh")
 

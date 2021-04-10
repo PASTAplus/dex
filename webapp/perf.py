@@ -1,5 +1,6 @@
-import flask
 import shelve
+
+import flask
 
 
 def set(k, v):

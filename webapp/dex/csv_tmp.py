@@ -8,7 +8,6 @@ import db
 import dex.exc
 import dex.pasta
 
-
 CACHE_ROOT = pathlib.Path(tempfile.gettempdir(), 'DEX-CACHE')
 CACHE_LIMIT = 10
 

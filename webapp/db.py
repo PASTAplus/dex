@@ -1,13 +1,12 @@
 import collections
-import json
 import logging
 import re
 import sqlite3
 
 import flask
 
-import dex.pasta
 import dex.exc
+import dex.pasta
 
 log = logging.getLogger(__name__)
 
