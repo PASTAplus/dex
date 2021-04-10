@@ -1,54 +1,21 @@
 import csv
 import logging
-import re
 import time
 
 import clevercsv
 import flask
 import pandas as pd
 
-import db
+import dex.cache
 import dex.csv_tmp
 import dex.eml_cache
-import dex.cache
-import dex.pasta
 import dex.exc
+import dex.pasta
 
 log = logging.getLogger(__name__)
 
 
-# @dex.cache.disk("full", "csv", is_source_obj=True)
-# def get_csv_path(rid):
-#     data_url = db.get_entity(rid).data_url
-#     log.debug(f"Downloading CSV: {data_url}")
-#     with dex.cache.open_file(rid, 'csv', 'path', for_write=True) as f:
-#         dex.pasta.download_data_entity(f, data_url)
-#     return dex.cache.get_cache_path(rid, 'csv', 'path')
-
-
-# def download_full_csv(data_url, rid):
-#     """Download or load CSV from disk cache.
-#
-#     This shares the same cache key as get_full_csv().
-#     """
-#     log.debug(f"Downloading CSV: {data_url}")
-#
-#     with dex.cache.lock(rid, "full", "df"):
-#         df_path = dex.cache.get_cache_path(rid, "full", "df")
-#         if df_path.exists():
-#             return
-#         with dex.cache.lock(rid, "full", "csv"):
-#             csv_path = dex.cache.get_cache_path(rid, "full", "csv", mkdir=True)
-#             if not csv_path.exists():
-#                 dex.pasta.download_data_entity(csv_path, data_url)
-#             df = _load_csv_to_df(csv_path)
-#             df.to_hdf(df_path, re.sub("[^a-z0-9]", "full", "_"), mode="w")
-#         # return df
-#     # return rid
-
-
-
-# @dex.cache.disk("full", "df")
+@dex.cache.disk("full", "df")
 def get_full_csv(rid, **csv_arg_dict):
     try:
         return _load_csv_to_df(rid, **csv_arg_dict)
@@ -92,7 +59,7 @@ def get_stats(rid):
     max_dict = df.max(skipna=True, numeric_only=True)
     mean_dict = df.mean(skipna=True, numeric_only=True)
     median_dict = df.median(skipna=True, numeric_only=True)
-    unique_dict = df.nunique()
+    unique_count = df.nunique()
 
     # Exclude NA/null values when computing the result.
     # numeric_only: Include only float, int, boolean columns. If None, will attempt to use everything, then use only numeric data. Not implemented for Series.
@@ -107,7 +74,7 @@ def get_stats(rid):
                 max_dict,
                 mean_dict,
                 median_dict,
-                unique_dict,
+                unique_count,
             )
         ],
         axis=1,
@@ -197,7 +164,7 @@ def _load_csv_to_df(rid, **csv_arg_dict):
     csv_path = dex.csv_tmp.get_data_path_by_row_id(rid)
 
     dialect = detect_dialect(csv_path)
-    skip_rows = _find_header_row(csv_path)
+    skip_rows = find_header_row(csv_path)
     log.info(f"skip_rows: {skip_rows}")
     log.info(f"pandas.read_csv start: {csv_path}")
     start_ts = time.time()
@@ -216,8 +183,7 @@ def _load_csv_to_df(rid, **csv_arg_dict):
     )
 
     log.info(f"pandas.read_csv: {time.time() - start_ts:.02f}s")
-    log.info(f"Memory used by DataFrame: {csv_df.memory_usage(deep=True)}")
-
+    # log.info(f"Memory used by DataFrame: {csv_df.memory_usage(deep=True)}")
     return csv_df
 
 
@@ -225,7 +191,7 @@ def _load_csv_to_df_slow(csv_path):
     """This method handles various broken CSV files but is too slow for use in
     production.
     """
-    skip_rows = _find_header_row(csv_path)
+    skip_rows = find_header_row(csv_path)
     log.info(f"skip_rows: {skip_rows}")
     log.info("CleverCSV - read_dataframe start")
     start_ts = time.time()
@@ -234,7 +200,7 @@ def _load_csv_to_df_slow(csv_path):
     return csv_df
 
 
-def _find_header_row(csv_path):
+def find_header_row(csv_path):
     """Return the index of the first row that looks like the headers in a CSV file.
 
     This returns the index of the first row that:
@@ -270,7 +236,7 @@ def _find_header_row(csv_path):
         for i, row in enumerate(clevercsv.reader(f, dialect)):
             if i == 100:
                 break
-            log.debug(f"checking row: {row}")
+            # log.debug(f"checking row: {row}")
             if len(row) != column_count:
                 continue
             if any(s.isnumeric() for s in row):
@@ -352,81 +318,6 @@ def get_dt_col(rid, col_idx):
     return dt_series
 
 
-# def get_dt_df(df):
-#     """Return a new DataFrame containing only the columns from `df` that contain
-#     date-times. Columns containing mixed values where more than `fuzz_percent`
-#     of the values are parsable as date-times, are included. In mixed value columns,
-#     The NaT (not a time) rows are filled in with interpolated date-times.
-#     """
-#     assert isinstance(df, pd.DataFrame)
-#
-#     dt_df = pd.DataFrame()
-#
-#     for col_name, col in df.iteritems():
-#         assert isinstance(col, pd.Series)
-#         dt_col = pd.to_datetime(col, errors='coerce')
-#         nat_count = dt_col.isna().sum()
-#         nat_percent = 100 * nat_count / len(df)
-#         if (
-#             nat_percent
-#             <= flask.current_app.config['DATETIME_THRESHOLD_PERCENT']
-#         ):
-#             dt_col.fillna(method='ffill')
-#             dt_df[col_name] = dt_col
-#
-#     return dt_df
-#
-# def get_dt_df(df):
-#     """Return a new DataFrame containing only the columns from `df` that contain
-#     date-times. Columns containing mixed values where more than `fuzz_percent`
-#     of the values are parsable as date-times, are included. In mixed value columns,
-#     The NaT (not a time) rows are filled in with interpolated date-times.
-#     """
-#     assert isinstance(df, pd.DataFrame)
-#
-#     new_dt = pd.DataFrame()
-#
-#     for col_name, col in df.iteritems():
-#         # fmt_str = dateinfer.infer(list(col)[:1000])
-#         # log.debug(f'Inferred datetime format: {fmt_str}')
-#
-#         assert isinstance(col, pd.Series)
-#
-#         def p(x):
-#             # return None
-#             log.debug(repr(x))
-#             x = str(x)
-#             d = dateparser.parse(x)
-#             log.debug(f'{x} -> {d}')
-#             return d or pd.NaT
-#
-#         col = col.apply(p)
-#         # for i in range(col.size):
-#         #     col[i] = dateparser.parse(col[i])
-#         # for c in col:
-#
-#
-#         # coerce: Not parsable as date-time is set to NaT (not a time)
-#         # dt_df = pd.to_datetime(df, infer_datetime_format=True, errors='coerce')
-#         # infer_datetime_format=True,
-#         # dt_col = pd.to_datetime(col, format=fmt_str, errors='coerce')
-#         # dt_col = col.to_timestamp(errors='coerce')
-#
-#         # if str(col.dtype).startswith('datetime'):
-#         #     new_dt.append(col)
-#         # else:
-#         nat_count = col.isna().sum()
-#         nat_percent = 100 * nat_count / len(df)
-#         if (
-#             nat_percent
-#             <= flask.current_app.config['DATETIME_THRESHOLD_PERCENT']
-#         ):
-#             col.fillna(method='ffill')
-#             new_dt.append(col)
-#
-#     return new_dt
-
-
 def get_mixed_columns(df):
     """Return indexes of columns that have mixed types or missing values"""
     return [
@@ -434,11 +325,3 @@ def get_mixed_columns(df):
         for col, col_type in df.dtypes.iteritems()
         if col_type == "object"
     ]
-
-
-# def get_dt_columns(df):
-#     return [
-#         col.index
-#         for col, col_type in df.dtypes.iteritems()
-#         if col_type in ('datetime64',)
-#     ]

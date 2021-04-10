@@ -26,29 +26,8 @@ def get_eml_path_by_row_id(rid):
     eml_path = dex.pasta.get_eml_path(entity_tup)
     return _get_path(eml_path, eml_url)
 
-    # data_url = db.get_data_url(rid)
-    # eml_url = dex.pasta.get_eml_url(data_url)
-    # # return get_path(data_url.rsplit('/', maxsplit=1)[0] + '/Level-0-EML.xml')
-    # return get_path(eml_url)
-
-
-# def get_path(data_url):
-#     """Get a local path to {data_url}.
-#     """
-#     try:
-#         file_path = dex.pasta.data_url_to_file_path(data_url)
-#         if file_path.exists():
-#             return file_path
-#         return _download_to_cache(data_url)
-#     except Exception as e:
-#         raise dex.exc.CacheError(
-#             f'Unable to get or create local path to CSV: {data_url}. Error: {repr(e)}'
-#         )
-#
 
 def _get_path(obj_path, obj_url):
-    """
-    """
     if obj_path.exists():
         return obj_path
     return _download_to_cache(obj_url)
@@ -103,4 +82,3 @@ def _uri_to_path(uri):
     if not p.exists():
         raise dex.exc.CacheError(f"Invalid file URI: {uri}")
     return p
-
