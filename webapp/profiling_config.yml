@@ -38,6 +38,7 @@ vars:
   cat:
     length: True
     unicode: False
+    characters: False
     cardinality_threshold: 50
     n_obs: 5
     # Set to zero to disable
