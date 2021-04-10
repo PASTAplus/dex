@@ -13,28 +13,10 @@ XPath: /html/body/div[1]/div[6]/label/div/ul
 /* } */
 
 body {
-    /* display: box-sizing; */
-
     --ind-level: 2.0rem;
     --ind-0: 0;
     --ind-1: var(--ind-level);
     --ind-2: calc(2 * var(--ind-level));
-
-    /*font-size: normal;*/
-    /*line-height: unset;*/
-
-    /*     font-size: unset; */
-    /*     line-height: unset; */
-
-    /*padding: 1rem 0;*/
-
-    /* background-color: #ffffff; */
-
-    /* These are in the reset now */
-    /* padding: 0; */
-    /* margin: 0; */
-
-    /* cursor: default; */
 }
 
 .dex-container {
@@ -88,32 +70,31 @@ li {
 /* table/ */
 
 
-
 table.sample-csv-list {
-     margin: 1em 1em 1em 1em;
-     border-collapse: collapse;
-     white-space: nowrap;
-     border: none;
+    margin: 1em 1em 1em 1em;
+    border-collapse: collapse;
+    white-space: nowrap;
+    border: none;
 }
 
 table.sample-csv-list tr {
-     border: none;
-     margin: 0em 0em 0em 0em;
+    border: none;
+    margin: 0;
 }
 
 
 table.sample-csv-list td {
-     margin: 0em 0em 0em 0em;
-     padding: 0 1em 0 0;
-     border: none;
+    margin: 0;
+    padding: 0 1em 0 0;
+    border: none;
 }
 
 table.sample-csv-list th {
-     font-weight: bold;
-     margin: 0em 0em 0em 0em;
-     padding: 0 1em 0 0;
-     text-align: left;
-     border: none;
+    font-weight: bold;
+    margin: 0;
+    padding: 0 1em 0 0;
+    text-align: left;
+    border: none;
 }
 
 /* */
@@ -124,6 +105,7 @@ p {
 
 /* Stack of boxes, width of the contents of the widest box is applied to all the boxes
  */
+/*noinspection CssBrowserCompatibilityForProperties*/
 .stack {
     display: flex;
     align-items: stretch;
@@ -133,33 +115,26 @@ p {
 }
 
 /* Labels above boxes instead of to the left. */
+/*noinspection CssBrowserCompatibilityForProperties*/
 .stack-item {
     display: flex;
     flex-direction: column;
-
-
-    /*padding: .5rem 0 .5rem 0;*/
-    /*margin: .5rem 0 .5rem 0;*/
-    /*margin: 0;*/
-
-
-    /* padding: 0; */
-    /* border: 1px; */
     grid-row-gap: .2rem;
 }
 
 label.stack-item {
-    /*     padding: .5rem 0 0 0; */
 }
 
 
 /* Grid */
 
+/*noinspection ALL*/
 .grid-2-col {
     display: grid;
     grid-template-columns: repeat(2, min-content);
     grid-gap: 1rem 1rem;
 }
+
 .grid-item {
 
 }
@@ -178,6 +153,7 @@ label.stack-item {
 label select, label input {
 }
 
+/*noinspection CssBrowserCompatibilityForProperties*/
 .line {
     display: flex;
     align-items: stretch;
@@ -192,12 +168,6 @@ label select, label input {
     align-self: baseline;
 }
 
-/* .line-item, dex-date-picker, .form-control, .select2-selection,.ui-multiselect-listbox, */
-/* .select2-selection, */
-/* .select2-search, */
-/* .select2-container, */
-/* .select2-hidden-accessible, */
-/* .select2-search--inline, */
 select {
     min-width: 25rem;
 }
@@ -208,32 +178,22 @@ select {
 
 /* Labels above boxes instead of to the left. */
 .line-inner > label {
-    /* display: flex; */
-    /* flex-direction: column; */
-    /* grid-column-gap: 2.5rem; */
 }
 
 /* Time period filter */
 
 .hasDatepicker, .dex-date-picker {
-    /* min-width: 16em; */
-    /* height: max-content; */
-    /* margin: .3rem 0 .3rem 0; */
 }
 
 
 label.hidden {
-    /* visibility: collapse; */
 }
 
 label.hidden * {
-    /* visibility: visible; */
 }
 
 
 label {
-    /* display: unset; */
-    /* margin: unset; */
 }
 
 /* Syntax highlighted EML */
@@ -252,6 +212,7 @@ label {
 }
 
 /* Remove the arrow down icon from select dropdown boxes */
+/*noinspection CssBrowserCompatibilityForProperties*/
 select {
     appearance: none;
 }
@@ -271,11 +232,9 @@ div.widgets {
 p.result-msg::before {
     content: "\27a4";
     margin-right: 1rem;
-    /*padding-right: 1rem;*/
 }
 
 p.result-msg {
-    /*padding: 1rem 0;*/
 }
 
 div.margin {
@@ -299,7 +258,7 @@ pre, table, input[type="text"],
 }
 
 .form-control {
-    margin: 0rem 10rem 0 0;
+    margin: 0 10rem 0 0;
 }
 
 /* List of CSV test files */
@@ -316,28 +275,7 @@ h2.data-entity {
     /* margin: 0; */
 }
 
-/* .data-entity-grid { */
-/* display: grid; */
-/* grid-template-columns: max-content auto; */
-/* margin: 0 0 2rem var(--ind-1); */
-/* grid-column-gap: 2rem; */
-/* } */
-
-/* .data-entity-grid .label, .data-entity-grid .value { */
-/* font-size: 1.1rem; */
-/* } */
-
-/* .data-entity-grid .label { */
-/* font-weight: 300; */
-/* text-align: right; */
-/* } */
-
-/* .data-entity-grid .value { */
-/* font-weight: 900; */
-/* } */
-
 .line .label {
-    /*padding-left: 0;*/
     font-size: 120%;
     font-weight: 300;
 }
@@ -352,11 +290,6 @@ h2.data-entity {
 #download, #plot, #submit-query {
     font-size: 2.0rem;
     margin: 1.5rem 0 1.5rem 0;
-    /*padding: .5rem 1rem .3rem 1rem;*/
-    /* border-width: .2rem; */
-    /* border-style: solid; */
-    /* border-color: #a0a0a0; */
-    /* border-radius: 1rem; */
 }
 
 .btn:disabled {
@@ -371,8 +304,6 @@ span.select-item {
 
 /* DataTables header */
 .dataTables_wrapper {
-    /* border blue 2px solid; */
-    /* margin-left: var(--ind-2); */
 }
 
 /* DataTables rows */
@@ -401,23 +332,12 @@ table.datatable td:first-child {
 /* Profiling page */
 
 #counter-msg, #generate-msg, #spinner-msg {
-    /* font-size: 1.3em; */
-    /* padding-top: 2rem; */
-    /* text-align: center; */
 }
 
 iframe {
-    /*width: 100%;*/
-    /*min-width: 100%;*/
-
-    /*width: 100%;*/
-    /*min-width: 100%;*/
-
     width: 100vw;
     min-width: 100vw;
-    /*height: 100vh;*/
     height: 1000em;
-
     border: 0;
 }
 
@@ -435,35 +355,49 @@ iframe {
 .dex-hidden {
     display: none;
 }
-/*download*/
 
+/* Download */
 
 .dex-space {
     padding-top: 2rem;
 }
 
+/* Filter by Pandas Query - DataTable */
+
 /*
-
-Filter by Pandas Query - DataTable
-
+Full CSS path to column checkboxes:
+/ html
+/ body
+/ div.dex-container
+/ div.widgets.pq
+/ div.stack
+/ div.stack-item
+/ label
+/ div#csv-table_wrapper.dataTables_wrapper.dt-jqueryui.no-footer
+/ div.dataTables_scroll
+/ div.dataTables_scrollHead.ui-state-default
+/ div.dataTables_scrollHeadInner
+/ table.dataframe.datatable.row-border.dataTable.no-footer
+/ thead
+/ tr
+/ th.sorting.ui-state-default
+/ div.DataTables_sort_wrapper
+/ div.pq-column-select-checkbox-container
+/ input#.pq-column-select-checkbox
 */
 
 #csv-table_filter {
-    display:none;
+    display: none;
 }
 
 #csv-table .unselected {
     filter: brightness(50%);
 }
 
-.DataTables_sort_wrapper {
-    display: inline-flex;
-    justify-content: start;
-    align-items: center;
-}
 
-input.pq-column-select-checkbox {
-    margin: 0 .8rem 0 0;
+div.stretchh {
+    color: yellow;
+    background-color: lightyellow;
 }
 
 .ui-state-default {
@@ -473,7 +407,6 @@ input.pq-column-select-checkbox {
 
 /* Add Index column title */
 .dataTables_scrollHead th:nth-child(1)::after {
-/*     content: "Index"; */
     filter: brightness(50%);
     text-overflow: clip;
 }
@@ -488,12 +421,18 @@ input.pq-column-select-checkbox {
 .fg-toolbar label {
     display: inline-block;
     margin: 0 .5rem 0 .5rem;
-    text-align: left;    
+    text-align: left;
 }
 
 #pq-toggle-all {
     padding: 0 5rem 0 5rem;
 }
+
+#pq-toggle-all-input {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
 
 #csv-table_length select {
     min-width: 6rem;
@@ -503,3 +442,67 @@ input.pq-column-select-checkbox {
     margin: 0 .5rem 0 .5rem;
 }
 
+/*
+Example table header, <th> and below. Note that the span holding the up/down sort arrows
+is a child of DataTables_sort_wrapper, but in the browser, it appears in the area of the
+<th>, due to collapsed margins (I think that's the reason).
+
+<th class="sorting ui-state-default" tabindex="0" aria-controls="csv-table" rowspan="1" colspan="1" style="width: 75.5px;" aria-label="Order: activate to sort column ascending">
+  <div class="DataTables_sort_wrapper">
+    <div class="pq-column-select-checkbox-container">
+      <input id="chk_4" class="pq-column-select-checkbox" type="checkbox" checked="checked">
+      <div class="stretchh"></div>
+    </div>
+    Column Name Goes Here
+    <span class="DataTables_sort_icon css_right ui-icon ui-icon-caret-2-n-s"></span>
+  </div>
+</th>
+*/
+
+/*noinspection CssBrowserCompatibilityForProperties*/
+div.DataTables_sort_wrapper {
+    all: revert;
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+/*noinspection CssBrowserCompatibilityForProperties*/
+div.pq-column-select-checkbox-container {
+    all: initial;
+    display: flex;
+    width: 2.5rem;
+    min-width: unset;
+    max-width: unset;
+    min-height: unset;
+    max-height: unset;
+}
+
+/*noinspection CssBrowserCompatibilityForProperties*/
+div.pq-column-select-checkbox-item {
+    all: initial;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    align-items: stretch;
+    align-self: stretch;
+}
+
+/*noinspection CssBrowserCompatibilityForProperties*/
+input.pq-column-select-checkbox {
+    width: 1.5rem;
+    flex-grow: 1;
+}
+
+div.col-type {
+    font-size: 75%;
+    /*filter: brightness(60%);*/
+}
+
+div.col-supp {
+    color: green !important;
+}
+
+div.col-unsupp {
+    color: red !important;
+}
