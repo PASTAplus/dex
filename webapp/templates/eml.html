@@ -19,6 +19,14 @@
 
 {% block body %}
 
+  {% if dbg %}
+  <hr/>
+    <pre>
+    {{ dbg }}
+    </pre>
+  <hr/>
+  {% endif %}
+
   {#t1: {{ t1 }}#}
 
   <div class='eml-xml'>
