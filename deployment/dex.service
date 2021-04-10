@@ -1,0 +1,15 @@
+[Unit]
+Description=uWSGI instance to serve PASTA data exporlorer services
+After=network.target
+
+[Service]
+User=pasta
+Group=www-data
+WorkingDirectory=/home/pasta/dex2
+Environment="PATH=/home/pasta/anaconda3/envs/dex2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+ExecStart=/home/pasta/anaconda3/envs/dex2/bin/uwsgi --ini deployment/uwsgi.ini
+#Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
+
