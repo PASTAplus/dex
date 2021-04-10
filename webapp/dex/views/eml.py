@@ -32,6 +32,7 @@ none 	none 	curl -i -X GET https://pasta.lternet.edu/package/metadata/eml/knb-lt
 # /data/eml/{scope}/{identifier}/{revision}/{entityId
 """
 
+
 @eml_blueprint.route("/<rid>")
 def view(rid):
     eml_html, eml_css = dex.eml_cache.get_eml_highlighted_html(rid)

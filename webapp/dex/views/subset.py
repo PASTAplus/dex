@@ -15,9 +15,7 @@ import dex.pasta
 
 log = logging.getLogger(__name__)
 
-subset_blueprint = flask.Blueprint(
-    "subset", __name__, url_prefix="/dex/subset"
-)
+subset_blueprint = flask.Blueprint("subset", __name__, url_prefix="/dex/subset")
 
 
 @subset_blueprint.route("/<rid>", methods=["GET"])
@@ -59,7 +57,7 @@ def download(rid):
     a, b = map(lambda x: x - 1, filter_dict["row_filter"])
     if a > 0 or b < unfiltered_row_count - 1:
         log.debug(f"Filtering by rows: {a} - {b}")
-        csv_df = csv_df[a: b + 1]
+        csv_df = csv_df[a : b + 1]
 
     # Filter by category
     for col_idx, cat_list in filter_dict["cat_map"]:
@@ -103,17 +101,11 @@ def download(rid):
             ]
         elif start_date:
             csv_df = csv_df[
-                [
-                    (start_date <= x.tz_localize(None))
-                    for x in csv_df.iloc[:, col_idx]
-                ]
+                [(start_date <= x.tz_localize(None)) for x in csv_df.iloc[:, col_idx]]
             ]
         elif end_date:
             csv_df = csv_df[
-                [
-                    (x.tz_localize(None) <= end_date)
-                    for x in csv_df.iloc[:, col_idx]
-                ]
+                [(x.tz_localize(None) <= end_date) for x in csv_df.iloc[:, col_idx]]
             ]
 
     # Filter columns
@@ -215,9 +207,7 @@ def csv_fetch(rid):
         )
 
     # Get the requested page of results (selected with the [1], [2]... buttons).
-    csv_df = csv_df[
-             start_int: len(csv_df) if not row_count else start_int + row_count
-             ]
+    csv_df = csv_df[start_int : len(csv_df) if not row_count else start_int + row_count]
 
     # csv_df = csv_df.set_index('Name').sort_index(ascending=is_ascending)
     # csv_df = csv_df.sort_values(
@@ -229,16 +219,17 @@ def csv_fetch(rid):
     for i in range(len(d), 10):
         d.append(('', *[''] * len(csv_df.columns)))
 
-    json_str = json.dumps({
-        # DataTable
-        "draw": draw_int,
-        "recordsTotal": total_count,
-        "recordsFiltered": filtered_count,
-        "data": d,
-        # Dex
-        "queryResult": result_str,
-        "queryIsOk": query_is_ok,
-    },
+    json_str = json.dumps(
+        {
+            # DataTable
+            "draw": draw_int,
+            "recordsTotal": total_count,
+            "recordsFiltered": filtered_count,
+            "data": d,
+            # Dex
+            "queryResult": result_str,
+            "queryIsOk": query_is_ok,
+        },
         indent=2,
         sort_keys=True,
     )

@@ -17,9 +17,9 @@ import dex.cache
 bokeh_server = flask.Blueprint("bokeh", "bokeh", url_prefix="/bokeh")
 
 THEME_DICT = {
-    "light": {"fg_color": "black",},
-    "dark": {"fg_color": "#a59a89",},
-    "default": {"fg_color": "white",},
+    "light": {"fg_color": "black"},
+    "dark": {"fg_color": "#a59a89"},
+    "default": {"fg_color": "white"},
 }
 
 

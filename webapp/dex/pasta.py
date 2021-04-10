@@ -164,13 +164,14 @@ def get_data_path(entity_tup):
 
 def get_pkg_id(entity_tup, sep_str='.', entity=False):
     t = entity_tup
-    return '/'.join((
-        sep_str.join((
-            str(x)
-            for x in (t.scope_str, t.identifier_int, t.version_int)
-        )),
-        *((t.entity_str,) if entity else ()),
-    ))
+    return '/'.join(
+        (
+            sep_str.join(
+                (str(x) for x in (t.scope_str, t.identifier_int, t.version_int))
+            ),
+            *((t.entity_str,) if entity else ()),
+        )
+    )
 
 
 def get_entity_tup(data_url):

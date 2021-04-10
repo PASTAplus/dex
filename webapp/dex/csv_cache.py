@@ -39,15 +39,16 @@ def get_csv_sample(rid):
     the CSV file.
     """
     df = get_full_csv(rid)
-    return df.sample(
-        min(len(df), flask.current_app.config["CSV_SAMPLE_THRESHOLD"])
-    )
+    return df.sample(min(len(df), flask.current_app.config["CSV_SAMPLE_THRESHOLD"]))
 
 
 @dex.cache.disk("describe", "df")
 def get_description(rid):
     df = get_full_csv(rid)
-    return df.describe(include="all", datetime_is_numeric=True,)
+    return df.describe(
+        include="all",
+        datetime_is_numeric=True,
+    )
 
 
 @dex.cache.disk("stats", "df")
@@ -106,9 +107,7 @@ def get_categorical_columns(rid):
     of unique values. Each item is a tuple with the column index and a descriptive text
     that includes the column name.
     """
-    threshold_float = (
-        flask.current_app.config["CATEGORY_THRESHOLD_PERCENT"] / 100
-    )
+    threshold_float = flask.current_app.config["CATEGORY_THRESHOLD_PERCENT"] / 100
     df = get_description(rid)
     cat_list = []
     for i, col_name in enumerate(df.columns):
@@ -120,10 +119,9 @@ def get_categorical_columns(rid):
         #     continue
         unique_float = cat_col["unique"] / cat_col["count"]
         if unique_float < threshold_float:
-            cat_list.append(
-                (i, f'{col_name} ({cat_col["unique"]:,} categories)')
-            )
+            cat_list.append((i, f'{col_name} ({cat_col["unique"]:,} categories)'))
     return cat_list
+
 
 # @dex.cache.disk("cat-cat", "list")
 def get_categories_for_column(rid, col_idx):
@@ -154,6 +152,7 @@ def is_csv(_rid, csv_path):
 
 
 #
+
 
 def _load_csv_to_df(rid, **csv_arg_dict):
     """Read CSV file to DataFrame.
@@ -271,9 +270,7 @@ def get_native_dialect(clever_dialect):
     """Translate from clevercsv.SimpleDialect() to csv.Dialect()"""
     dialect = csv.excel
     dialect.delimiter = clever_dialect.delimiter
-    dialect.quotechar = (
-        clever_dialect.quotechar if clever_dialect.quotechar else '"'
-    )
+    dialect.quotechar = clever_dialect.quotechar if clever_dialect.quotechar else '"'
     dialect.escapechar = (
         clever_dialect.escapechar if clever_dialect.escapechar else None
     )
@@ -321,7 +318,5 @@ def get_dt_col(rid, col_idx):
 def get_mixed_columns(df):
     """Return indexes of columns that have mixed types or missing values"""
     return [
-        col.index
-        for col, col_type in df.dtypes.iteritems()
-        if col_type == "object"
+        col.index for col, col_type in df.dtypes.iteritems() if col_type == "object"
     ]

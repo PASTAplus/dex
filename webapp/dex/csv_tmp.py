@@ -48,8 +48,7 @@ def _download_to_cache(obj_url):
 
 
 def _limit_cache_size():
-    """Delete the oldest cached file if number of cached files have reached CACHE_LIMIT.
-    """
+    """Delete the oldest cached file if number of cached files have reached CACHE_LIMIT."""
     path_list = [pathlib.Path(CACHE_ROOT, p) for p in os.listdir(CACHE_ROOT)]
     if len(path_list) <= CACHE_LIMIT:
         return

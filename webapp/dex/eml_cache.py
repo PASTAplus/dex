@@ -107,9 +107,7 @@ def get_attribute_fragments(rid):
     object_name = first_str(dt_el, './/physical/objectName/text()')
     ss.write(f'\n{object_name}\n\n')
 
-    for i, attr_el in enumerate(
-        dt_el.xpath('.//attributeList/attribute')
-    ):
+    for i, attr_el in enumerate(dt_el.xpath('.//attributeList/attribute')):
         ss.write(pretty_format_fragment(attr_el))
 
     return ss.getvalue()
@@ -118,7 +116,6 @@ def get_attribute_fragments(rid):
 def get_profiling_types(rid):
     dt_el = find_data_table(rid)
     return dex.eml_types.get_profiling_types(dt_el)
-
 
 
 def has(el, xpath):
@@ -201,24 +198,24 @@ def get_default_start_end_datetime_range(rid):
                 './/dataset/coverage/temporalCoverage/rangeOfDates/beginDate/calendarDate/text()',
             )
         )
-                 or FALLBACK_START_DATETIME,
+        or FALLBACK_START_DATETIME,
         end_dt=get_iso_date_time(
             first_str(
                 el,
                 './/dataset/coverage/temporalCoverage/rangeOfDates/endDate/calendarDate/text()',
             )
         )
-               or FALLBACK_END_DATETIME,
+        or FALLBACK_END_DATETIME,
     )
 
 
 def find_data_table(rid):
     el = get_eml_tree(rid)
     data_url = db.get_data_url(rid).upper()
-    data_url = data_url[data_url.find('/PACKAGE/'):]
+    data_url = data_url[data_url.find('/PACKAGE/') :]
     for dt_el in el.xpath('.//dataset/dataTable'):
         url = first_str(dt_el, './/physical/distribution/online/url/text()')
-        url = url[url.find('/PACKAGE/'):]
+        url = url[url.find('/PACKAGE/') :]
         if url == data_url:
             return dt_el
     raise dex.exc.EMLError(f'Missing DataTable in EML. rid="{rid}"')
@@ -241,7 +238,9 @@ def get_eml_xml(rid):
     return pretty_format_fragment(root_el)
 
 
-M@dex.cache.disk('eml', 'etree')
+M @ dex.cache.disk('eml', 'etree')
+
+
 def get_eml_tree(rid):
     if isinstance(rid, pathlib.Path):
         eml_path = rid
