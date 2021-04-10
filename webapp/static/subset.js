@@ -9,33 +9,6 @@ async function register_global_error_handler()
 {
 }
 
-// async function captureError(ex)
-// {
-//   const errorData = {
-//     name: ex.name,
-//     message: ex.line,
-//     url: document.location.href,
-//     stack: ex.stack
-//   };
-//   alert(errorData);
-// }
-
-// async function wrapErrors(fn)
-// {
-//   if (!fn.__wrapped__) {
-//     fn.__wrapped__ = async function () {
-//       try {
-//         return fn.apply(this, arguments).catch({});
-//       }
-//       catch (e) {
-//         captureError(e);
-//         throw e;
-//       }
-//     };
-//   }
-//   return fn.__wrapped__;
-// }
-
 // Restricts input for the set of matched elements to the given inputFilter function.
 // https://stackoverflow.com/a/995193
 (async function ($) {
@@ -112,7 +85,6 @@ $(document).ready(
         return false;
       }
 
-
       // Filter by Pandas Query
 
       let pq_auto_el = $('#pq-auto');
@@ -173,14 +145,29 @@ $(document).ready(
       pq_table.columns().iterator('column', function (context, index) {
         $(pq_table.column(index).header())
             .find('.DataTables_sort_wrapper')
-            .prepend(`<input class='pq-column-select-checkbox' type='checkbox' checked='checked'/>`);
+            // language=HTML
+            .prepend(`
+              <div class='pq-column-select-checkbox-container'>
+                <div class='pq-column-select-checkbox-item'>
+                  <input class='pq-column-select-checkbox' type='checkbox' checked='checked'/>
+                </div>
+              </div>`
+            );
+      });
+
+      // Listen for all clicks on the document
+      document.addEventListener('click', function (event) {
+        // If the click happened inside the the container, bail
+        if (!event.target.closest('pq-column-select-checkbox')) {
+        }
       });
 
       // Add all/none toggle for column header checkboxes
       // language=HTML
       $('#csv-table_wrapper .fg-toolbar').first().children().first().after(`
         <div id='pq-toggle-all'>
-          <input id='pq-toggle-all-input' name='pq-toggle-all-input' class='pq-column-all-checkbox' type='checkbox' checked='checked'/>
+          <input id='pq-toggle-all-input' name='pq-toggle-all-input' class='pq-column-all-checkbox'
+                 type='checkbox' checked='checked'/>
           <label class='control-label' for='pq-toggle-all-input'>Columns: Select all / none</label>
         </div>
       `);
