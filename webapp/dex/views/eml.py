@@ -1,5 +1,4 @@
-"""
-
+"""View for syntax highlighted and pretty printed EML
 """
 
 import logging
@@ -16,7 +15,7 @@ log = logging.getLogger(__name__)
 eml_blueprint = flask.Blueprint("eml", __name__, url_prefix="/dex/eml")
 
 """
-{#  https://dex.edirepository.org/#}
+{# https://dex.edirepository.org/ #}
 
 
 GET : /metadata/eml/{scope}/{identifier}/{revision}
@@ -30,17 +29,15 @@ none 	none 	curl -i -X GET https://pasta.lternet.edu/package/metadata/eml/knb-lt
 none 	none 	curl -i -X GET https://pasta.lternet.edu/package/metadata/eml/knb-lter-lno/1/newest
 none 	none 	curl -i -X GET https://pasta.lternet.edu/package/metadata/eml/knb-lter-lno/1/oldest
 
-
-# /data/eml/{scope}/{identifier}/{revision}/{entityId}
-
+# /data/eml/{scope}/{identifier}/{revision}/{entityId
 """
-
 
 @eml_blueprint.route("/<rid>")
 def view(rid):
     eml_html, eml_css = dex.eml_cache.get_eml_highlighted_html(rid)
 
-    col_name_list = dex.csv_cache.get_ref_col_list(rid)
+    # dbg = dex.eml_cache.get_breakdown(rid)
+    dbg = ''
 
     return flask.render_template(
         "eml.html",
@@ -54,14 +51,5 @@ def view(rid):
         entity_tup=db.get_entity_as_dict(rid),
         eml_html=eml_html,
         eml_css=eml_css,
+        dbg=dbg,
     )
-
-    # cache_path = flask.current_app.config['CACHE_ROOT_DIR'] / rid
-    # if cache_path.exists():
-    #     iframe_src = f'/dex/profile/doc/{rid}'
-    # else:
-    #     iframe_src = f'/dex/profile/generate/{rid}'
-    # return flask.render_template(
-    #     'profile.html', rid=rid, iframe_src=iframe_src
-    # )
-    #

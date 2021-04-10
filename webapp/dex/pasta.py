@@ -11,7 +11,6 @@ import shutil
 import flask
 import requests
 
-# (
 DATA_RX_TUP = re.compile(
     r"""
     (?P<base_url>https://pasta(?:-d)?.lternet.edu/package)
@@ -24,20 +23,6 @@ DATA_RX_TUP = re.compile(
     """,
     re.VERBOSE,
 )
-# ,
-# re.compile(
-#     r"""
-# (?P<base_url>file://.*/)
-# (?P<scope_str>[^.]+)\.
-# (?P<id_str>\d+)\.
-# (?P<ver_str>\d+)/
-# (?P<entity_str>[a-f0-9A-F]{32,})
-# (?:\.xz)?
-# $
-# """,
-#     re.VERBOSE,
-# ),
-# )
 
 
 log = logging.getLogger(__name__)
@@ -197,6 +182,3 @@ def get_entity_tup(data_url):
         d["version_int"] = int(d.pop("ver_str"))
         return EntityTup(data_url=data_url, **d)
     raise Exception(f'Not a valid Data or File URL/URI: "{data_url}"')
-
-# def get_entity_tup_by_row_id(rid):
-#     data_url = db.get_data_url(rid)

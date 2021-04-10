@@ -11,6 +11,7 @@ import pandas as pd
 import db
 import dex.csv_cache
 import dex.eml_cache
+import dex.pasta
 
 log = logging.getLogger(__name__)
 
@@ -21,22 +22,18 @@ subset_blueprint = flask.Blueprint(
 
 @subset_blueprint.route("/<rid>", methods=["GET"])
 def subset(rid):
-    # if flask.request.method == "POST":
-    #     return download(rid, flask.request.form)
-
     csv_df = dex.csv_cache.get_full_csv(rid)
-    # The first page of results for the CSV browser
-    browser_df = csv_df.iloc[:10]
-
     return flask.render_template(
         "subset.html",
         rid=rid,
-        entity_tup=db.get_entity_as_dict(rid),
+        entity_tup=(db.get_entity_as_dict(rid)),
         row_count=len(csv_df),
         ref_col_list=dex.csv_cache.get_ref_col_list(rid),
         datetime_col_list=dex.eml_cache.get_datetime_columns(rid),
         cat_col_map=dex.csv_cache.get_categorical_columns(rid),
-        csv_html=browser_df.to_html(
+        prof_type_list=json.dumps(dex.eml_cache.get_profiling_types(rid)),
+        data_url=db.get_entity(rid).data_url,
+        csv_html=csv_df.iloc[:10].to_html(
             table_id="csv-table",
             classes="datatable row-border",
             formatters=[cell_formatter for _ in csv_df.columns + ["u"]],
@@ -252,43 +249,6 @@ def csv_fetch(rid):
     return json_str
 
 
-# @subset_blueprint.route('/profile/<rid>')
-# def profile(rid):
-#     cache_path = flask.current_app.config['CACHE_ROOT_DIR'] / rid
-#     if cache_path.exists():
-#         return flask.send_file(cache_path, mimetype='text/html')
-#     return flask.render_template('profile.html', rid=rid)
-#
-#
-# @subset_blueprint.route('/profile-fetch/<rid>')
-# def profile_render(rid):
-#     csv_path = dex.csv_cache.get_csv_path(rid)
-#     cmd_list = [
-#         # For debugging in PyCharm, run pandas-profiling in a separate process. The
-#         # python process is wrapped in a shell script to prevent the debugger from
-#         # attaching to it. The process crashes if the debugger is able to attach to it.
-#         # Turning off automatic attach in the PyCharm debugger settings causes the
-#         # debugger to trigger a crash in Flask.
-#         flask.current_app.config['PROFILING_SH'].as_posix(),
-#         sys.executable,
-#         csv_path.resolve().as_posix(),
-#         # sys.executable,
-#         # flask.current_app.config['PROFILING_BIN'].as_posix(),
-#         # csv_path.resolve().as_posix(),
-#     ]
-#     log.debug(
-#         'Running: {}'.format(' '.join([shlex.quote(s) for s in cmd_list]))
-#     )
-#     start_ts = time.time()
-#     html_bytes = subprocess.check_output(cmd_list)
-#     perf.set(f'{rid}/profile-sec', time.time() - start_ts)
-#     log.debug('html_bytes=({}) "{}"'.format(len(html_bytes), html_bytes[:100]))
-#     cache_path = flask.current_app.config['CACHE_ROOT_DIR'] / rid
-#     cache_path.parent.mkdir(exist_ok=True)
-#     cache_path.write_bytes(html_bytes)
-#     return html_bytes
-
-
 # noinspection PyTypeChecker
 @subset_blueprint.route("/fetch-category/<rid>/<col_idx>")
 def fetch_category(rid, col_idx):
@@ -296,6 +256,7 @@ def fetch_category(rid, col_idx):
     columns that have already been determined to be categorical.
     """
     res_list = dex.csv_cache.get_categories_for_column(rid, col_idx)
+
     # Simulate large obj/slow server
     # import time
     # time.sleep(5)
