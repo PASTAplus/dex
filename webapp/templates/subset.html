@@ -10,6 +10,7 @@
     ref_col_list: JSON.parse('{{ ref_col_list | tojson }}'),
     datetime_col_list: JSON.parse('{{ datetime_col_list | tojson }}'),
     cat_col_map: new Map(JSON.parse('{{ cat_col_map | tojson }}')),
+    prof_type_list: JSON.parse('{{ prof_type_list | safe }}'),
   };
   </script>
 
