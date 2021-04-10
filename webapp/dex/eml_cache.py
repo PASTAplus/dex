@@ -1,7 +1,11 @@
 """PASTA and EML utils"""
+
 import contextlib
 import datetime
 import io
+import json
+import logging
+import pathlib
 import types
 
 import dateutil.parser
@@ -9,14 +13,13 @@ import lxml.etree
 import pygments
 import pygments.formatters
 import pygments.lexers
-import requests
-import logging
 
-import db
-import dex.csv_tmp
-import dex.pasta
 import dex.cache
+import dex.csv_tmp
 import dex.exc
+import dex.pasta
+import db
+import dex.eml_types
 
 """
 * default:
@@ -67,32 +70,86 @@ PYGMENTS_STYLE_LIST = [
 ]
 # fmt:on
 
-EML_STYLE_NAME = "perldoc"
+EML_STYLE_NAME = 'perldoc'
 
 log = logging.getLogger(__name__)
 
 # Default start and end datetimes used in the UI if the EML lists one or more datetime
 # columns, but no datetime ranges.
-FALLBACK_START_DATETIME = datetime.datetime(2000, 1, 1,)
-FALLBACK_END_DATETIME = datetime.datetime(2040, 1, 1,)
+FALLBACK_START_DATETIME = datetime.datetime(
+    2000,
+    1,
+    1,
+)
+FALLBACK_END_DATETIME = datetime.datetime(
+    2040,
+    1,
+    1,
+)
 
 
-def TODO():
-    """get name of CSV from entityName or objectName (find out which)"""
+DATE_FORMAT_DICT = {
+    'YYYY': '%Y',
+    'YYYY-MM-DD': '%Y-%m-%d',
+    'YYYY-MM-DD HH:MM:SS': '%Y-%m-%d %H:%M:%S',
+    'MM': '%M',
+    'MM/DD/YYYY': '%M/%D/%Y',
+    'HHMM': '%H%M',
+}
+
+
+def get_attribute_fragments(rid):
+    """Get column descriptions for a given CSV file. The columns are described in EML
+    attribute elements.
+    """
+    ss = io.StringIO()
+    dt_el = find_data_table(rid)
+    object_name = first_str(dt_el, './/physical/objectName/text()')
+    ss.write(f'\n{object_name}\n\n')
+
+    for i, attr_el in enumerate(
+        dt_el.xpath('.//attributeList/attribute')
+    ):
+        ss.write(pretty_format_fragment(attr_el))
+
+    return ss.getvalue()
+
+
+def get_profiling_types(rid):
+    dt_el = find_data_table(rid)
+    return dex.eml_types.get_profiling_types(dt_el)
+
+
+
+def has(el, xpath):
+    return first(el, xpath) is not None
 
 
 def first(el, xpath):
     """Return the first match to the xpath if there was a match, else None. Can this be
     done directly in xpath 1.0?
     """
-    log.debug(f"first() xpath={xpath} ...")
-    res_el = el.xpath(f"({xpath})[1]")
+    log.debug(f'first() xpath={xpath} ...')
+    res_el = el.xpath(f'({xpath})[1]')
     try:
-        res_str = res_el[0]
+        el = res_el[0]
     except IndexError:
-        res_str = None
-    log.debug(f"first() -> {res_str}")
-    return res_str
+        el = None
+    log.debug(f'first() -> {el}')
+    return el
+
+
+def first_str(el, text_xpath):
+    """Apply xpath and, if there is a match, assume that the match is a text node, and
+    convert it to an uppper case string. {text_xpath} is an xpath that returns a text
+    node. E.g., `.//text()`.
+    """
+    el = first(el, text_xpath)
+    s = None
+    if el:
+        s = str(el).upper().strip()
+    log.debug(f'first_str() -> {s}')
+    return s
 
 
 def get_iso_date_time(iso_str):
@@ -100,29 +157,25 @@ def get_iso_date_time(iso_str):
     successful, else None.
     """
     with contextlib.suppress(ValueError, TypeError):
-        return dateutil.parser.isoparse(iso_str).strftime("%Y-%m-%d")
+        return dateutil.parser.isoparse(iso_str).strftime('%Y-%m-%d')
 
 
 # @dex.cache.disk('eml-dt-cols', 'list')
 def get_datetime_columns(rid):
-    data_table_el = _find_data_table(rid)
+    dt_el = find_data_table(rid)
     default_dt = get_default_start_end_datetime_range(rid)
     # attributeList/attribute contains descriptions of the columns in the CSV
     dt_col_list = []
-    for i, attr_el in enumerate(
-        data_table_el.xpath(".//attributeList/attribute")
-    ):
-        if first(attr_el, ".//storageType/text()") not in ("dateTime", "date"):
+    for i, attr_el in enumerate(dt_el.xpath('.//attributeList/attribute')):
+        if first_str(attr_el, './/storageType/text()') not in ('dateTime', 'date'):
             continue
-        dt_format_str = first(
-            attr_el, "//measurementScale/dateTime/formatString/text()"
+        dt_format_str = first_str(
+            attr_el, '//measurementScale/dateTime/formatString/text()'
         )
         begin_dt = get_iso_date_time(
-            first(attr_el, ".//beginDate/calendarDate/text()")
+            first_str(attr_el, './/beginDate/calendarDate/text()')
         )
-        end_dt = get_iso_date_time(
-            first(attr_el, ".//endDate/calendarDate/text()")
-        )
+        end_dt = get_iso_date_time(first_str(attr_el, './/endDate/calendarDate/text()'))
         dt_col_list.append(
             dict(
                 col_idx=i,
@@ -131,80 +184,70 @@ def get_datetime_columns(rid):
                 end_dt=end_dt or default_dt.end_dt,
             )
         )
-    log.debug(f"Found datetime columns: {dt_col_list}")
+    log.debug(f'Found datetime columns: {dt_col_list}')
     return dt_col_list
 
 
 def get_datetime_columns_as_dict(rid):
-    return {d["col_idx"]: d for d in get_datetime_columns(rid)}
+    return {d['col_idx']: d for d in get_datetime_columns(rid)}
 
 
 def get_default_start_end_datetime_range(rid):
     el = get_eml_tree(rid)
     return types.SimpleNamespace(
         start_dt=get_iso_date_time(
-            first(
+            first_str(
                 el,
-                ".//dataset/coverage/temporalCoverage/rangeOfDates/beginDate/calendarDate/text()",
+                './/dataset/coverage/temporalCoverage/rangeOfDates/beginDate/calendarDate/text()',
             )
         )
-        or FALLBACK_START_DATETIME,
+                 or FALLBACK_START_DATETIME,
         end_dt=get_iso_date_time(
-            first(
+            first_str(
                 el,
-                ".//dataset/coverage/temporalCoverage/rangeOfDates/endDate/calendarDate/text()",
+                './/dataset/coverage/temporalCoverage/rangeOfDates/endDate/calendarDate/text()',
             )
         )
-        or FALLBACK_END_DATETIME,
+               or FALLBACK_END_DATETIME,
     )
 
 
-def _find_data_table(rid):
+def find_data_table(rid):
     el = get_eml_tree(rid)
-    for data_table_el in el.xpath(".//dataTable"):
-        data_url = data_table_el.xpath(
-            ".//physical//distribution/online/url/text()"
-        )
-        if not data_url:
-            continue
-        rid = dex.pasta.get_entity_tup(data_url[0])
-        if rid == rid:
-            return data_table_el
+    data_url = db.get_data_url(rid).upper()
+    data_url = data_url[data_url.find('/PACKAGE/'):]
+    for dt_el in el.xpath('.//dataset/dataTable'):
+        url = first_str(dt_el, './/physical/distribution/online/url/text()')
+        url = url[url.find('/PACKAGE/'):]
+        if url == data_url:
+            return dt_el
     raise dex.exc.EMLError(f'Missing DataTable in EML. rid="{rid}"')
 
 
 # noinspection PyUnresolvedReferences
-@dex.cache.disk("eml-highlighted", "xml")
+@dex.cache.disk('eml-highlighted', 'xml')
 def get_eml_highlighted_html(rid):
     html_formatter = pygments.formatters.HtmlFormatter(style=EML_STYLE_NAME)
     xml_str = get_eml_xml(rid)
     return (
-        pygments.highlight(
-            xml_str, pygments.lexers.XmlLexer(), html_formatter
-        ),
-        html_formatter.get_style_defs(".highlight"),
+        pygments.highlight(xml_str, pygments.lexers.XmlLexer(), html_formatter),
+        html_formatter.get_style_defs('.highlight'),
     )
 
 
-@dex.cache.disk("eml", "xml")
+@dex.cache.disk('eml', 'xml')
 def get_eml_xml(rid):
     root_el = get_eml_tree(rid)
     return pretty_format_fragment(root_el)
 
 
-@dex.cache.disk("eml", "etree")
+M@dex.cache.disk('eml', 'etree')
 def get_eml_tree(rid):
-    eml_path = dex.csv_tmp.get_eml_path_by_row_id(rid)
-    # data_url = db.get_data_url(rid)
-    # eml_url = dex.pasta.pasta_data_to_eml_url(data_url)
-    # response = requests.get(eml_url)
-    # response.raise_for_status()
-    # return lxml.etree.parse(io.BytesIO(response.text.encode("utf-8")))
+    if isinstance(rid, pathlib.Path):
+        eml_path = rid
+    else:
+        eml_path = dex.csv_tmp.get_eml_path_by_row_id(rid)
     return lxml.etree.parse(eml_path.as_posix())
-
-
-def pretty_print_fragment(el):
-    print(f"\n{pretty_format_fragment(el).strip()}\n")
 
 
 def pretty_format_fragment(el):
@@ -213,101 +256,4 @@ def pretty_format_fragment(el):
     buf = io.BytesIO()
     for e in el:
         buf.write(lxml.etree.tostring(e, pretty_print=True))
-    return buf.getvalue().decode("utf-8")
-
-
-# def build_eml_dict(self):
-#     total_count = sum(1 for _ in EML_DIR_PATH.iterdir())
-#     all_eml_dict = {}
-#
-#     for i, eml_path in enumerate(EML_DIR_PATH.iterdir()):
-#         print(i)
-#         try:
-#             with eml_path.open('rb') as f:
-#                 tree = etree.parse(f)
-#         except lxml.etree.Error as e:
-#             # print(str(e))
-#             continue
-#         except IOError as e:
-#             # print(str(e))
-#             continue
-#
-#         self.extract_eml(tree)
-#
-# def extract_eml(self, xml):
-#     """Extract dict of rid to filename from a single EML doc."""
-#     self.count('__files')
-#     for dt_el in xml.xpath('.//dataTable'):
-#         self.count('__datatables')
-#
-#         attr_list = dt_el.xpath('.//attribute')
-#         for attr in attr_list:
-#             self.count('__columns')
-#
-#             unit_list = attr.xpath('.//unit')
-#             for unit in unit_list:
-#                 std_list = unit.xpath('.//standardUnit')
-#                 for std in std_list:
-#                     self.count(f'unit {std.text}')
-#
-#             dt_list = attr.xpath('.//dateTime')
-#             for dt in dt_list:
-#                 fmt_list = dt.xpath('.//formatString')
-#                 for fmt in fmt_list:
-#                     self.count(f'dateTime {fmt.text}')
-#
-# def count(self, k):
-#     print(k)
-#     self.count_dict[k] += 1
-#
-#
-#     for physical_el in xml.xpath('//physical', is_required=False):
-#         log.info("Found <physical>")
-#         # log.debug(d1_common.xml.etree_to_pretty_xml(physical_el))
-#
-#         rid = self.extract_text(physical_el, 'distribution/online/url')
-#         if rid is None:
-#             # Event was recorded in extract_text()
-#             continue
-#
-#         object_name = self.extract_text(physical_el, 'objectName')
-#         if object_name is None:
-#             # Event was recorded in extract_text()
-#             continue
-#
-#         if not rid.startswith('https://pasta.lternet.edu/'):
-#             log.info(
-#                 'Ignored rid not starting with "https://pasta.lternet.edu/"'
-#             )
-#             continue
-#
-#         physical_dict.setdefault(rid, []).append(object_name)
-#
-#     return ret_dict
-#
-# # def get_package_id(self, xml):
-# #     package_id = xml.get_element('.')[0].attrib['packageId']
-# #     package_tup = package_id.split('.')
-# #     if len(package_tup) != 3:
-# #         log.info(f'Invalid packageId. package_id="{package_id}"')
-# #         return PackageId(package_id, '', '')
-# #
-# #     return PackageId(*package_tup)
-#
-# # def extract_text(self, physical_el, xpath):
-# #     el = physical_el.find(xpath)
-# #     # ElementTree has non-standard behavior when evaluating elements in a boolean
-# #     # context. True if it has children, False otherwise.
-# #     if el is None:
-# #         log.info(f"No element at {xpath}", xpath=xpath)
-# #         return
-# #     log.info(f"Found element at {xpath}", xpath=xpath)
-# #     v = el.text
-# #     if v is None:
-# #         log.info(f"No text in element at {xpath}", xpath=xpath)
-# #     return v
-#
-#
-# if __name__ == "__main__":
-# main()
-#
+    return buf.getvalue().decode('utf-8')
