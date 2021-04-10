@@ -40,12 +40,8 @@ log = logging.getLogger(__name__)
 app = flask.Flask(
     __name__,
     static_url_path="/static/",
-    static_folder=(pathlib.Path(__file__).parent / "static")
-    .resolve()
-    .as_posix(),
-    template_folder=(pathlib.Path(__file__).parent / "templates")
-    .resolve()
-    .as_posix(),
+    static_folder=(pathlib.Path(__file__).parent / "static").resolve().as_posix(),
+    template_folder=(pathlib.Path(__file__).parent / "templates").resolve().as_posix(),
 )
 
 app.config.from_object("config")
@@ -63,14 +59,13 @@ def register_redirect_handler():
     def handle_redirect_to_index(_):
         return flask.redirect("/", 302)
 
-    app.register_error_handler(
-        dex.exc.RedirectToIndex, handle_redirect_to_index
-    )
+    app.register_error_handler(dex.exc.RedirectToIndex, handle_redirect_to_index)
 
 
 @app.before_request
 def before_request():
-    log.info(f"{flask.request.method} {flask.request.path}")
+    # log.debug(f"{flask.request.method} {flask.request.path}")
+    pass
 
 
 @app.after_request
@@ -97,6 +92,7 @@ def index_get():
         csv_list=get_sample_data_entity_list(None),
     )
 
+
 @app.route("/<path:data_url>", methods=["GET"])
 def index_get_url(data_url):
     rid = db.add_entity(data_url)
@@ -115,7 +111,8 @@ def get_sample_data_entity_list(_rid, k=200):
 def get_data_entity_list(_rid):
     data_entity_list = []
     for abs_path in app.config['CSV_ROOT_DIR'].glob('**/*'):
-        if (not abs_path.is_file()
+        if (
+            not abs_path.is_file()
             or len(abs_path.suffix) != 0
             or not dex.csv_cache.is_csv(None, abs_path)
         ):
@@ -165,4 +162,3 @@ if __name__ == "__main__":
         # use_reloader=False,
         # passthrough_errors=True,
     )
-
