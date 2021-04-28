@@ -1,22 +1,28 @@
 #!/usr/bin/env python
 
 """"""
-import csv
-import json
+
 import logging
 import pathlib
 import pprint
 import sys
-import types
 
-import pandas as pd
-
+import flask
+import flask.json
 import pandas_profiling
+
+import dex.csv_parser
 
 log = logging.getLogger(__name__)
 
 
 def main():
+    app = flask.Flask(__name__)
+    app.config.from_object("config")
+    with app.app_context():
+        return flask_main(app)
+
+def flask_main(app):
     is_debug = '--debug' in sys.argv
     if is_debug:
         sys.argv.remove('--debug')
@@ -35,77 +41,20 @@ def main():
 
     json_config_path = pathlib.Path(sys.argv[1])
     json_str = json_config_path.read_text()
-    j = json.loads(json_str, object_hook=lambda d: types.SimpleNamespace(**d))
 
-    log.info('JSON config:')
-    (list(map(log.info, pprint.pformat(vars(j)).splitlines())))
+    arg = flask.json.loads(json_str)
+    pprint.pp(arg, stream=sys.stderr, indent=2, width=1000)
 
-    log.debug(f'Reading csv to df. csv={j.csv_path}')
+    log.debug(f'Reading csv to df. csv={arg["csv_path"]}')
 
-    dialect = csv.excel
-    dialect.delimiter = j.csv_dialect.delimiter
-    dialect.quotechar = j.csv_dialect.quotechar
-    dialect.escapechar = j.csv_dialect.escapechar
-    df = pd.read_csv(
-        j.csv_path,
-        skiprows=j.skip_rows,
-        dialect=dialect,
-    )
-
-    # log.debug('dtypes before:')
-    # log.debug(df.dtypes)
-
-    # \"i\": 0, \"name\": \"Watershed\", \"type\": \"S_TYPE_UNSUPPORTED\"}
-
-    # type_dict = {
-    #     'i': i,
-    #     'attribute_name': attribute_name,
-    #     'type_str': 'S_TYPE_UNSUPPORTED',
-    #     'storage_type': storage_type,
-    #     'iso_date_format_str': iso_date_format_str,
-    #     'c_date_format_str': None,
-    #     'number_type': number_type,
-    #     'numeric_domain': numeric_domain,
-    #     'ratio': ratio,
-    # }
-
-    for i, type_dict in enumerate(j.profiling_types):
-        print('type_dict', file=sys.stderr)
-        pprint.pprint(type_dict, stream=sys.stderr)
-        d = type_dict.i
-        s = df.iloc[:, d]
-
-        if type_dict.type_str == 'TYPE_DATE':
-            log.info(f'Column "{type_dict.attribute_name}" -> {type_dict.type_str}')
-            s = pd.to_datetime(s, errors='ignore', format=type_dict.c_date_format_str)
-
-        elif type_dict.type_str == 'TYPE_NUM':
-            log.info(f'Column "{type_dict.attribute_name}" -> {type_dict.type_str}')
-            s = pd.to_numeric(
-                s,
-                errors='ignore',
-            )
-
-        elif type_dict.type_str == 'TYPE_CAT':
-            log.info(f'Column "{type_dict.attribute_name}" -> {type_dict.type_str}')
-            s = s.astype('category', errors='ignore')
-
-        else:
-            pass
-
-        df.iloc[:, d] = s
-
-        # if dt is not None:
-        #     df.iloc[:, type_dict['i']] = df.iloc[:, type_dict['i']].to_numpy(dtype=dt)
-        # dtype=pd.to_datetime()
-        # df.iloc[:, 0] = df.iloc[:, 0].astype(dtype=pd.StringDtype())
+    ctx = dex.csv_parser.get_parsed_csv_with_context(arg['rid'])
+    csv_df = ctx['csv_df']
 
     # Create a tree representation of the report.
     report_tree = pandas_profiling.ProfileReport(
-        df,
-        config_file=j.yml_config_path,
-        dark_mode=j.dark_mode,
-        # dtype_list=type_list
+        csv_df,
+        config_file=arg['yml_config_path'],
+        dark_mode=arg['dark_mode'],
     )
 
     # Move the Sample section from the end to the front of the report.
@@ -119,10 +68,7 @@ def main():
             'name'
         ] = 'Reproducibility'
     except Exception as e:
-        log.warning(
-            f'Unable to reorder the sections of the Pandas Profiling report. '
-            f'Error: {repr(e)}'
-        )
+        log.exception('Unable to reorder the sections of the Pandas Profiling report')
 
     html_str = report_tree.to_html()
 
