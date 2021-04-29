@@ -1,0 +1,78 @@
+{% macro debugbar(dbg) %}
+  <div id='debug-container'>
+
+    {# ctx1.csv_df                     #}
+    {# ctx1.csv_path                   #}
+    {# ctx1.header_row_idx             #}
+    {# ctx1.header_list                #}
+    {# ctx1.raw_line_count             #}
+    {#                                 #}
+    {# ctx2.csv_dialect                #}
+    {# ctx2.csv_path                   #}
+    {# ctx2.derived_dtypes_list        #}
+    {# ctx2.header_list                #}
+    {# ctx2.header_row_idx             #}
+    {# ctx2.parser_dict                #}
+    {#                                 #}
+    {# csv_df                          #}
+    {# head_df                         #}
+    {# tail_df                         #}
+    {#                                 #}
+    {# derived_dtype_html              #}
+    {# head_html                       #}
+    {# head_row_count                  #}
+    {# tail_html                       #}
+    {# tail_row_count                  #}
+    {# total_row_count                 #}
+    {# debug_panel                     #}
+
+    <div class='debug'>
+      <h1>DEBUG enabled (config.FLASK_DEBUG == True)</h1>
+      <a href='?toggle-debug'>Toggle panel</a>
+      {% if dbg.debug_panel %}
+
+        <h2>Source CSV</h2>
+        <div>{{ dbg.source_html | safe }}</div>
+
+        <div>{{ dbg.csv_dialect | safe }}</div>
+
+        <div>{{ dbg.col_info_html | safe }}</div>
+
+        <h2>EML derived dtypes and context</h2>
+        <div>{{ dbg.derived_dtype_html | safe }}</div>
+
+        <h2>info()</h2>
+        <pre>{{ dbg.col_info_txt }}</pre>
+
+        <h2>Parsers</h2>
+        The parsers that have been selected for each column. Applied to the full CSV
+        before storing cached version.
+        <div>{{ dbg.parsers_html | safe }}</div>
+
+        <h2>Formatters</h2>
+        The formatters that have been selected for each column. Applied to rows that
+        have been selected for display.
+        <div>{{ dbg.formatters_html | safe }}</div>
+
+        <h2>CSV head, {{ dbg.head_row_count }} rows</h2>
+        <div>
+          {{ dbg.head_html | safe }}
+        </div>
+
+        <h2>CSV tail, {{ dbg.tail_row_count }} rows</h2>
+        <div>
+          {{ dbg.tail_html | safe }}
+        </div>
+
+        <h1>EML attribute fragments</h1>
+        <div>
+          {% for attr_tup in dbg.attr_list %}
+            <h2>{{ attr_tup.0 }}</h2>
+            <style> {{ attr_tup.1 | safe }}</style>
+            <pre>{{ attr_tup.2 | safe }}</pre>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endmacro %}
