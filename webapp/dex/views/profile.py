@@ -53,13 +53,10 @@ def doc(rid):
 def render_profile(rid):
     profiling_sh_path = flask.current_app.config["PROFILING_SH"]
 
-    csv_path = dex.csv_tmp.get_data_path_by_row_id(rid).resolve().as_posix()
+    # csv_path = dex.csv_tmp.get_data_path_by_row_id(rid).resolve().as_posix()
     yml_config_path = (profiling_sh_path.parent / 'profiling_config.yml').as_posix()
     py_proc_path = (profiling_sh_path.parent / 'profiling_proc.py').as_posix()
     py_interpreter_path = flask.current_app.config["PYTHON_BIN"]
-
-    csv_dialect = dex.csv_cache.detect_dialect(csv_path)
-    dialect_obj = dex.csv_cache.get_native_dialect(csv_dialect)
 
     with tempfile.NamedTemporaryFile(
         mode='wt',
@@ -70,18 +67,11 @@ def render_profile(rid):
     ) as f:
         json.dump(
             {
+                'rid': rid,
                 'py_proc_path': py_proc_path,
                 'py_interpreter_path': py_interpreter_path,
-                'csv_path': csv_path,
                 'json_config_path': f.name,
                 'yml_config_path': yml_config_path,
-                'profiling_types': dex.eml_cache.get_profiling_types(rid),
-                'skip_rows': dex.csv_cache.find_header_row(csv_path),
-                'csv_dialect': {
-                    'delimiter': dialect_obj.delimiter,
-                    'quotechar': dialect_obj.quotechar,
-                    'escapechar': dialect_obj.escapechar,
-                },
                 'dark_mode': True,
             },
             f,
@@ -103,7 +93,7 @@ def render_profile(rid):
     # log.debug(cmd_list)
 
     log.debug("Running: {}".format(" ".join([shlex.quote(s) for s in cmd_list])))
-    start_ts = time.time()
+    # start_ts = time.time()
     html_bytes = subprocess.check_output(cmd_list)
 
     # perf.set(f"{rid}/profile-sec", time.time() - start_ts)
