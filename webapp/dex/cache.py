@@ -6,8 +6,11 @@ import pathlib
 import re
 import tempfile
 import threading
+import time
 
+import fasteners
 import flask
+import lxml.etree
 import pandas as pd
 
 import db
@@ -19,11 +22,34 @@ try:
 except ImportError:
     import pickle
 
-import lxml.etree
 
-import fasteners
+class NamedThreadLocks:
+    def __init__(self):
+        self.locks = {}
+        self.my_lock = threading.RLock()
+        self.es = contextlib.ExitStack()
+        self.out = pathlib.Path('/tmp/out').open('a')
 
-threading_lock = threading.Lock()
+    @contextlib.contextmanager
+    def __call__(self, name):
+        with self.my_lock:
+            self.locks.setdefault(name, threading.RLock())
+        ts = time.time()
+        self.p(f'{name}: waiting')
+        with self.locks[name]:
+            acq_ts = time.time() - ts
+            self.p(f'{name}: acquired after {acq_ts :.2f}s')
+            yield
+        release_ts = time.time() - ts
+        self.p(f'{name}: released after {release_ts - acq_ts :.2f}s')
+
+    def p(self, *a, **kw):
+        print(*a, **kw, file=self.out)
+
+
+named_thread_locks = NamedThreadLocks()
+
+threading_lock = threading.RLock()
 
 log = logging.getLogger(__name__)
 
@@ -35,11 +61,16 @@ LOCK_ROOT.mkdir(0o755, parents=True, exist_ok=True)
 @contextlib.contextmanager
 def lock(rid, key, obj_type):
     log.debug(f"Waiting to acquire lock: {rid}_{key}_{obj_type}")
-    # with threading_lock:
-    with fasteners.InterProcessLock((LOCK_ROOT / f"{rid}_{key}_{obj_type}").as_posix()):
-        log.debug(f"Acquired lock: {rid}_{key}_{obj_type}")
-        yield
-    log.debug(f"Released lock: {rid}_{key}_{obj_type}")
+    with named_thread_locks(f"{rid}_{key}_{obj_type}"):
+        start_ts = time.time()
+        with fasteners.InterProcessLock(
+            (LOCK_ROOT / f"{rid}_{key}_{obj_type}").as_posix()
+        ):
+            log.debug(
+                f"Acquired lock after {time.time() - start_ts}s: {rid}_{key}_{obj_type}"
+            )
+            yield
+        log.debug(f"Released lock: {rid}_{key}_{obj_type}")
 
 
 def disk(key, obj_type):
@@ -63,10 +94,10 @@ def disk(key, obj_type):
     Also important to note is that reading multiple files at the same time from the same
     HDD causes disk thrashing and extremely bad performance. The situation is much
     better on SSDs, but the bandwidth to the disk can be saturated, so, while there may
-    not be a large disavantage to concurrent access as with HDDs, it's also not
-    necessarly very beneficial.
+    not be a large disadvantage to concurrent access as with HDDs, it's also not
+    necessarily very beneficial.
 
-    The locks also prevent attemts to read cached items while they're being written.
+    The locks also prevent attempts to read cached items while they're being written.
 
     Args:
         key:
@@ -162,17 +193,31 @@ def save_df(rid, key, obj_type, obj):
         mode="w",
         complevel=6,
         complib="bzip2",
+        # > Cannot store a category dtype in a HDF5 dataset that uses format="fixed".
+        # Use format="table".
+        format='table',
     )
     # os.rename(cache_path.with_suffix('.tmp'), cache_path)
 
 
 def save_gen(rid, key, obj_type, obj):
     with open_file(rid, key, obj_type, for_write=True) as f:
-        if obj_type in ("text", "csv", "html", "eml"):
+        if obj_type in ("text", "csv", "html", "eml", 'xml'):
             return f.write(obj.encode("utf-8"))
         elif obj_type in ("lxml", "etree"):
-            return obj.write(f)
+            with contextlib.suppress(LookupError, TypeError):
+                if len(obj) == 1:
+                    obj = obj[0]
+            try:
+                xml_str = lxml.etree.tostring(obj)
+                return f.write(xml_str)
+            except TypeError:
+                raise webapp.dex.exc.CacheError(
+                    f'Unable to serialize object as an LXML or etree type. '
+                    f'tag={get_tag_str(rid, key, obj_type)}'
+                )
         else:
+            log.info(f'pickling object type {obj.__class__.__name__}')
             return pickle.dump(obj, f)
 
 
