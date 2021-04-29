@@ -1,14 +1,16 @@
-import os
+"""Handle initial retrieval and temporary caching of the source CSV and EML docs that
+can be processed by Dex.
+"""
 import pathlib
-import tempfile
 import urllib.parse
 import urllib.request
+
+from flask import current_app as app
 
 import db
 import dex.exc
 import dex.pasta
 
-CACHE_ROOT = pathlib.Path(tempfile.gettempdir(), 'DEX-CACHE')
 CACHE_LIMIT = 10
 
 
@@ -27,14 +29,14 @@ def get_eml_path_by_row_id(rid):
 
 
 def _get_path(obj_path, obj_url):
-    if obj_path.exists():
+    if obj_path.exists() and obj_path.stat().st_size:
         return obj_path
     return _download_to_cache(obj_url)
 
 
 def _download_to_cache(obj_url):
     file_name = urllib.parse.quote(obj_url, safe='')
-    p = pathlib.Path(CACHE_ROOT, file_name)
+    p = app.config['TMP_CACHE_ROOT'] / file_name
     if p.exists():
         return p
     p.parent.mkdir(0o755, parents=True, exist_ok=True)
@@ -47,12 +49,13 @@ def _download_to_cache(obj_url):
 
 
 def _limit_cache_size():
-    """Delete the oldest cached file if number of cached files have reached CACHE_LIMIT."""
-    path_list = [pathlib.Path(CACHE_ROOT, p) for p in os.listdir(CACHE_ROOT)]
-    if len(path_list) <= CACHE_LIMIT:
-        return
-    oldest_path = min(path_list, key=lambda p: p.stat().st_size)
-    oldest_path.unlink()
+    """Delete the oldest cached file(s) if number of cached files have exceeded the
+    limit."""
+    path_list = list(app.config['TMP_CACHE_ROOT'].iterdir())
+    while len(path_list) > app.config['TMP_CACHE_LIMIT']:
+        oldest_path = min(path_list, key=lambda p: p.stat().st_mtime)
+        oldest_path.unlink()
+        path_list.remove(oldest_path)
 
 
 def _is_file_uri(uri):
