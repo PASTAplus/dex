@@ -5,12 +5,12 @@
 import argparse
 import io
 import logging
+import pprint
 import random
 import string
 import sys
 import time
 import timeit
-import pprint
 
 import pandas as pd
 
@@ -31,7 +31,9 @@ REPEAT_COUNT = 3
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--debug', action='store_true', help='Debug level logging',
+        '--debug',
+        action='store_true',
+        help='Debug level logging',
     )
     args = parser.parse_args()
 
@@ -50,21 +52,15 @@ def main():
     test_filters(df, sel_list)
 
     bench_loop_s = (
-        timeit.timeit(
-            lambda: filter_with_loop(df, sel_list), number=REPEAT_COUNT
-        )
+        timeit.timeit(lambda: filter_with_loop(df, sel_list), number=REPEAT_COUNT)
         / REPEAT_COUNT
     )
     bench_isin_s = (
-        timeit.timeit(
-            lambda: filter_with_isin(df, sel_list), number=REPEAT_COUNT
-        )
+        timeit.timeit(lambda: filter_with_isin(df, sel_list), number=REPEAT_COUNT)
         / REPEAT_COUNT
     )
     bench_query_s = (
-        timeit.timeit(
-            lambda: filter_with_query(df, sel_list), number=REPEAT_COUNT
-        )
+        timeit.timeit(lambda: filter_with_query(df, sel_list), number=REPEAT_COUNT)
         / REPEAT_COUNT
     )
     print('#' * 100)
@@ -134,9 +130,7 @@ def filter_with_isin(df, sel_list):
 def filter_with_query(df, sel_list):
     dump('sel_list', sel_list)
     query_str = ' | '.join(
-        f'{col_idx} in ('
-        + ','.join(f'"{cat_str}"' for cat_str in cat_set)
-        + ')'
+        f'{col_idx} in (' + ','.join(f'"{cat_str}"' for cat_str in cat_set) + ')'
         for col_idx, cat_set in sel_list
     )
     dump('query_str', query_str)
@@ -191,9 +185,7 @@ def create_df_with_categories(cat_list):
             start_ts = time.time()
             print(f'{i:,} / {ROW_COUNT:,} ({i / ROW_COUNT * 100:.02f}%)')
     # Appending rows directly to a DataFrame is very slow. This is much faster.
-    df = pd.DataFrame(
-        row_list, columns=list(string.ascii_uppercase)[: len(cat_list)]
-    )
+    df = pd.DataFrame(row_list, columns=list(string.ascii_uppercase)[: len(cat_list)])
     dump('Generated DF with categories', df)
     return df
 

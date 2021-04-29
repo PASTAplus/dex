@@ -86,7 +86,6 @@ FALLBACK_END_DATETIME = datetime.datetime(
     1,
 )
 
-
 DATE_FORMAT_DICT = {
     'YYYY': '%Y',
     'YYYY-MM-DD': '%Y-%m-%d',

@@ -20,8 +20,6 @@ p = lambda *a, **kw: util.logpp(*a, **kw, logger=log.info)
 DATA_URL_1 = 'https://pasta-d.lternet.edu/package/data/eml/knb-lter-cce/72/2/f12ac76be131821d245316854f7ddf44'
 
 
-
-
 class Dialect1(csv.excel):
     delimiter = ','
     doublequote = True
@@ -81,7 +79,9 @@ def test_1000(rid, tmp_cache):
     p(derived_dict, 'derived_dict')
     parser_dict = dex.csv_parser.get_parser_dict(derived_dict)
     p(parser_dict, 'parser_dict')
-    parser_func_dict = {derived_dict[k]['col_name']: d['fn'] for k, d in parser_dict.items()}
+    parser_func_dict = {
+        derived_dict[k]['col_name']: d['fn'] for k, d in parser_dict.items()
+    }
     p(parser_func_dict, 'parser_func_dict')
     df = dex.csv_parser.get_parsed_csv(rid, header_row_idx, parser_func_dict, Dialect1)
     df.info()

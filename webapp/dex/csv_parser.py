@@ -45,7 +45,7 @@ def get_parsed_csv_with_context(rid):
     csv_df = get_parsed_csv(
         rid,
         header_row_idx=ctx['header_row_idx'],
-        parser_dict=parser_func_dict,#ctx['parser_dict'],
+        parser_dict=parser_func_dict,  # ctx['parser_dict'],
         csv_dialect=ctx['csv_dialect'],
     )
     return dict(
