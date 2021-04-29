@@ -3,7 +3,7 @@
 This parses the .csv files according to the type declarations for each column in the
 corresponding EML documents.
 """
-
+import contextlib
 import csv
 import datetime
 import functools
@@ -24,6 +24,14 @@ import dex.exc
 import dex.pasta
 
 log = logging.getLogger(__name__)
+
+DTYPE_TO_FRIENDLY_DICT = {
+    'S_TYPE_UNSUPPORTED': 'Generic',
+    'TYPE_CAT': 'Categorical',
+    'TYPE_DATE': "Time series",
+    'TYPE_INT': "Numeric",
+    'TYPE_NUM': "Numeric",
+}
 
 
 # @dex.cache.disk("parsed-csv-context", "df")
@@ -47,6 +55,7 @@ def get_parsed_csv_with_context(rid):
         header_list=ctx['header_list'],
         header_row_idx=ctx['header_row_idx'],
         parser_dict=ctx['parser_dict'],
+        col_agg_dict=get_col_agg_dict(csv_df, ctx['derived_dtypes_list']),
     )
 
 
@@ -208,6 +217,20 @@ def apply_parsers(df, derived_dtypes_list):
     parser_list = get_parser_list(derived_dtypes_list)
     for i, (parser_dict, column_name) in enumerate(zip(parser_list, df.columns)):
         df.iloc[:, i].map(parser_dict['fn'])
+
+
+def get_col_agg_dict(df, derived_dtypes_list):
+    """Calculate per column aggregates."""
+    formatter_list = get_formatter_list(derived_dtypes_list)
+    d = {}
+    for i, col_name in enumerate(df.columns):
+        fmt_fn = formatter_list[i]['fn']
+        with contextlib.suppress(Exception):
+            d[col_name] = dict(
+                v_max=fmt_fn(df.iloc[:, i].max()),
+                v_min=fmt_fn(df.iloc[:, i].min()),
+            )
+    return d
 
 
 def apply_formatters(df, derived_dtypes_list):
@@ -385,7 +408,7 @@ def get_parser(dtype_dict):
             name=f'parse datetime',
             fmt=d["c_date_fmt_str"],
             dtype=d['type_str'],
-            fn=date_parser,
+            fn=functools.partial(date_parser, fmt_str=d['c_date_fmt_str']),
         )
 
     elif d['type_str'] == 'TYPE_INT' or d['type_str'] == 'TYPE_NUM':
