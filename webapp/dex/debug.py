@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import io
 import pandas as pd
@@ -80,9 +81,7 @@ def debug(rid):
 
     def to_html(**kv):
         """With an index, pandas uses dict keys for column names and dict values for
-        each of the index values.
-
-        {column -> {index -> value}}
+        each of the index values: {column -> {index -> value}}
         """
         util.logpp(kv)
         return (
@@ -117,11 +116,13 @@ def debug(rid):
             'total_row_count': len(csv_df),
             'debug_panel': flask.g.get('debug_panel'),
             'source_html': to_html(
-                csv_path={'': ctx1['csv_path'].as_posix()},
-                raw_line_count={'': ctx1['raw_line_count']},
+                source_csv={
+                    'csv_path': ctx1['csv_path'],
+                    'raw_line_count': ctx1['raw_line_count'],
+                }
             ),
             'csv_dialect': to_html(
-                csv_dialect=dex.csv_parser.get_dialect_as_dict(ctx2['csv_dialect'])
+                csv_dialect=dex.csv_parser.get_dialect_as_dict(ctx2['csv_dialect']),
             ),
             'derived_dtype_html': pd.DataFrame.from_dict(
                 {
@@ -131,29 +132,29 @@ def debug(rid):
             )
             .style.applymap(highlight_types)
             .render(),
-            'col_info_txt': col_info_txt,
-            'parsers_html': to_html(
-                **expose_keys(
-                    {ctx1['header_list'][k]: v for k, v in ctx2['parser_dict'].items()}
-                ),
-            ),
-            'formatters_html': to_html(
-                **expose_keys(
-                    dex.csv_parser.get_formatter_dict(ctx2['derived_dtypes_list'])
-                )
-            ),
-            'attr_list': attr_list,
         },
+        'col_info_txt': col_info_txt,
+        'parsers_html': to_html(
+            **expose_keys(
+                {ctx1['header_list'][k]: v for k, v in ctx2['parser_dict'].items()}
+            ),
+        ),
+        'formatters_html': to_html(
+            **expose_keys(
+                dex.csv_parser.get_formatter_dict(ctx2['derived_dtypes_list'])
+            )
+        ),
+        'attr_list': attr_list,
     }
+
     return dbg
 
 
 def highlight_types(val):
-    if val in WATCH_SET:
-        bg = 'darkgreen'
-    else:
-        bg = '#202020'
-
+    bg = '#202020'
+    with contextlib.suppress(Exception):
+        if isinstance(val, str) and val in WATCH_SET:
+            bg = 'darkgreen'
     return f'background-color: {bg}'
 
 

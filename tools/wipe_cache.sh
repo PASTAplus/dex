@@ -2,14 +2,27 @@
 
 # Wipe the cache and database.
 
-set -e
+#set -e
 
-test -e create_db.sql || { echo 'Run with current dir at the dex root'; exit; }
+test -e schema.sql || {
+  echo 'Run with current dir at the dex root'
+  exit
+}
 
-rm -rf ../cache
-rm -rf ../dex-cache
+dirs=('../cache' '../dex-cache')
+
+# Skip global cache files
+#for p in "${dirs[@]}"; do
+#  find "$p" -print -delete
+#done
+
+# All
+for p in "${dirs[@]}"; do
+  find "$p" -print -delete
+  mkdir -p "$p"
+done
+
 rm sqlite.db
-sqlite3 < create_db.sql sqlite.db
+sqlite3 <schema.sql sqlite.db
 
 echo Success!
-

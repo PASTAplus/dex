@@ -1,9 +1,9 @@
 import collections
 import logging
-import re
 import sqlite3
 
 import flask
+from flask import current_app as app
 
 import dex.exc
 import dex.pasta
@@ -32,9 +32,7 @@ def namedtuple_factory(cursor, row):
 def get_db():
     db = getattr(flask.g, "_database", None)
     if db is None:
-        db = flask.g._database = sqlite3.connect(
-            flask.current_app.config["SQLITE_PATH"].as_posix()
-        )
+        db = flask.g._database = sqlite3.connect(app.config["SQLITE_PATH"].as_posix())
 
     # Return namedtuples.
     db.row_factory = namedtuple_factory
@@ -56,11 +54,11 @@ def query_db(query, args=(), one=False, db=None):
         rv = cur.fetchall()
     finally:
         cur.close()
-    log.debug(
-        'query_db() query="{}", args="{}", rv={} bool(rv)={}'.format(
-            re.sub(r"(\n|\r|\s| )+", " ", query), args, rv, bool(rv)
-        )
-    )
+    # log.debug(
+    #     'query_db() query="{}", args="{}", rv={} bool(rv)={}'.format(
+    #         re.sub(r"(\n|\r|\s| )+", " ", query), args, rv, bool(rv)
+    #     )
+    # )
     if one:
         if len(rv) != 1:
             raise OneError(
@@ -128,8 +126,11 @@ def get_entity(row_id):
         )
     except OneError:
         raise dex.exc.RedirectToIndex(f"Unknown Package")
+
+    # TODO: Determine how we should handle moving between pasta and pasta-d.
+    # row_list = list(row_tup)
+    # row_list[1] = row_list[1].replace('pasta-d', 'pasta')
     entity_tup = dex.pasta.EntityTup(*row_tup)
-    log.debug(f'get_entity() row_id={row_id} entity_tup="{entity_tup}"')
     return entity_tup
 
 
