@@ -2,11 +2,13 @@
 """
 
 import logging
+import pprint
 
 import flask
 
 import db
 import dex.csv_cache
+import dex.debug
 import dex.eml_cache
 import dex.pasta
 
@@ -35,22 +37,19 @@ none 	none 	curl -i -X GET https://pasta.lternet.edu/package/metadata/eml/knb-lt
 
 @eml_blueprint.route("/<rid>")
 def view(rid):
-    eml_html, eml_css = dex.eml_cache.get_eml_highlighted_html(rid)
+
+    eml_html, eml_css = dex.eml_cache.get_eml_as_highlighted_html(rid)
 
     # dbg = dex.eml_cache.get_breakdown(rid)
-    dbg = ''
+    # dbg = ''
 
     return flask.render_template(
         "eml.html",
         t1=dex.eml_cache.get_datetime_columns(rid),
-        # base_url=base_url,
-        # id_str=id_str,
-        # scope_str=scope_str,
-        # ver_str=ver_str,
-        # rid=rid,
+        g_dict={eml_html: eml_html, eml_css: eml_css},
         rid=rid,
         entity_tup=db.get_entity_as_dict(rid),
         eml_html=eml_html,
         eml_css=eml_css,
-        dbg=dbg,
+        dbg=dex.debug.debug(rid),
     )
