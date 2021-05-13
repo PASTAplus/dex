@@ -91,6 +91,7 @@ def get_derived_dtypes_from_eml(dt_el):
         # )
         is_enumarated = has(attr_el, './/nonNumericDomain/enumeratedDomain')
         ratio = first_str(attr_el, './/measurementScale/ratio/text()')
+        missing_code_list = multiple_str(attr_el, './/missingValueCode/code/text()')
 
         # log.debug(f'Raw extracted:')
         # log.debug(f'  col_name={col_name}')
@@ -99,6 +100,8 @@ def get_derived_dtypes_from_eml(dt_el):
         # log.debug(f'  number_type={number_type}')
         # log.debug(f'  is_enumerated ={is_enumerated }')
         # log.debug(f'  ratio={ratio}')
+        # log.debug(f'  missing_value_list={missing_value_list}')
+        # log.debug(f'  col_agg_dict={col_agg_dict}')
 
         dtype_dict = {
             'col_idx': col_idx,
@@ -110,6 +113,7 @@ def get_derived_dtypes_from_eml(dt_el):
             'number_type': number_type,
             'is_enumerated': is_enumarated,
             'ratio': ratio,
+            'missing_code_list': missing_code_list,
         }
 
         # Supported date formats
