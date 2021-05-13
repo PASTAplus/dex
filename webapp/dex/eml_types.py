@@ -194,11 +194,20 @@ def plog(obj, msg=None, logger=log.debug):
     )
     logger("")
 
+def get_data_table_by_data_url(el, data_url):
+    for dt_el in el.xpath('.//dataset/dataTable'):
+        url = first_str(dt_el, './/physical/distribution/online/url/text()')
+        url = url[url.find('/PACKAGE/') :]
+        if url == data_url.as_posix().upper():
+            return dt_el
+    raise dex.exc.EMLError(f'Missing DataTable in EML. data_url="{data_url}"')
 
-def pretty_format_fragment(el):
-    if not isinstance(el, list):
-        el = [el]
-    buf = io.BytesIO()
-    for e in el:
-        buf.write(lxml.etree.tostring(e, pretty_print=True))
-    return buf.getvalue().decode('utf-8')
+
+def get_data_table_by_package_id(el, pkg_path):
+    for dt_el in el.xpath('.//dataset/dataTable'):
+        url = first_str(dt_el, './/physical/distribution/online/url/text()')
+        # log.debug(f'{url}')
+        # log.debug(f'{pkg_path}')
+        if url and url.lower().endswith(pkg_path):
+            return dt_el
+    raise dex.exc.EMLError(f'Missing DataTable in EML. pkg_path="{pkg_path}"')
