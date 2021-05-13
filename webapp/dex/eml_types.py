@@ -80,7 +80,7 @@ def get_derived_dtypes_from_eml(dt_el):
         col_name = first_str_orig(attr_el, './/attributeName/text()')
 
         storage_type = first_str(attr_el, './/storageType/text()')
-        iso_date_format_str = first_str(
+        date_fmt_str = first_str(
             attr_el, './/measurementScale/dateTime/formatString/text()'
         )
         number_type = first_str(
