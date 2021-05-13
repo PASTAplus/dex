@@ -13,27 +13,54 @@ log = logging.getLogger(__name__)
 
 # Default start and end datetimes used in the UI if the EML lists one or more datetime
 # columns, but no datetime ranges.
-FALLBACK_START_DATETIME = datetime.datetime(2000, 1, 1)
+FALLBACK_BEGIN_DATETIME = datetime.datetime(2000, 1, 1)
 FALLBACK_END_DATETIME = datetime.datetime(2040, 1, 1)
 
-
+# Supported date-format strings. Ordered by how much information they extract.
+# List of formatting directives:
+# https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
 DATE_FORMAT_DICT = {
-    'YYYY': '%Y',
-    'YYYY-MM-DD': '%Y-%m-%d',
     'YYYY-MM-DD HH:MM:SS': '%Y-%m-%d %H:%M:%S',
     'YYYY-MM-DDTHH:MM:SS': '%Y-%m-%dT%H:%M:%S',
-    'MM': '%M',
-    'MM/DD/YYYY': '%M/%D/%Y',
+    'YYYY-MM-DD': '%Y-%m-%d',
+    'MM/DD/YYYY': '%m/%d/%Y',
+    'DD-MON-YYYY': '%d-%b-%Y',
+}
+
+DATE_INT_FORMAT_DICT = {
+    'YYYY': '%Y',
     'HHMM': '%H%M',
+    'MM': '%m',
+    'HH:MM:SS': '%H:%M:%S',
 }
 
 
-def get_profiling_types(dt_el):
-    """
-    TYPE_DATE           # A date variable
-    TYPE_NUM            # A numeric variable
-    TYPE_CAT            # A categorical variable
-    S_TYPE_UNSUPPORTED  # An unsupported variable
+def get_derived_dtypes_from_eml(dt_el):
+    """Heuristics to find a Pandas / NumPy type, called dtype, to use when processing
+    a CSV file that has EML based type declarations.
+
+    Pandas supports a basic set of types, while EML supports much more complex type
+    declarations and descriptions. The columns for which we are able to derive a dtype
+    are supported with additional functionality in other areas of of the app.
+
+    TYPE_DATE           - A date variable
+    TYPE_NUM            - A numeric variable
+    TYPE_CAT            - A categorical variable
+    S_TYPE_UNSUPPORTED  - An unsupported variable
+
+    # dtype_dict = {
+    #     'col_idx': col_idx,
+    #     'col_name': col_name,
+    #     'type_str': 'S_TYPE_UNSUPPORTED',
+    #     'storage_type': storage_type,
+    #     'date_fmt_str': date_fmt_str,
+    #     'c_date_fmt_str': None,
+    #     'number_type': number_type,
+    #     'numeric_domain': numeric_domain,
+    #     'ratio': ratio,
+    #     'missing_value_list': missing_value_list,
+    #     'col_agg_dict': col_agg_dict,
+    # }
     """
     type_list = []
 
