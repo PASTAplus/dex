@@ -62,6 +62,8 @@ def get_derived_dtypes_from_eml(dt_el):
     #     'col_agg_dict': col_agg_dict,
     # }
     """
+    default_dt = get_default_begin_end_datetime_range(dt_el)
+
     type_list = []
 
     # Iterate over 'attribute', which describes each individual column.
@@ -98,8 +100,8 @@ def get_derived_dtypes_from_eml(dt_el):
             'attribute_name': attribute_name,
             'type_str': 'S_TYPE_UNSUPPORTED',
             'storage_type': storage_type,
-            'iso_date_format_str': iso_date_format_str,
-            'c_date_format_str': None,
+            'date_fmt_str': date_fmt_str,
+            'c_date_fmt_str': None,
             'number_type': number_type,
             'is_enumerated': is_enumarated,
             'ratio': ratio,
@@ -110,10 +112,37 @@ def get_derived_dtypes_from_eml(dt_el):
         if attribute_name == 'YEAR' and iso_date_format_str is None:
             iso_date_format_str = 'YYYY'
 
-        if iso_date_format_str in DATE_FORMAT_DICT.keys():
-            type_dict['type_str'] = 'TYPE_DATE'
-            type_dict['iso_date_format_str'] = iso_date_format_str
-            type_dict['c_date_format_str'] = DATE_FORMAT_DICT[iso_date_format_str]
+        if date_fmt_str in DATE_INT_FORMAT_DICT.keys():
+            dtype_dict['type_str'] = 'TYPE_INT'
+            dtype_dict['date_fmt_str'] = date_fmt_str
+            date_fmt_str = DATE_INT_FORMAT_DICT[date_fmt_str]
+            dtype_dict['c_date_fmt_str'] = date_fmt_str
+            begin_date_str = first_str(attr_el, './/beginDate/calendarDate/text()')
+            end_date_str = first_str(attr_el, './/endDate/calendarDate/text()')
+            dtype_dict['begin_dt'] = (
+                try_date_time_parse(begin_date_str)
+                if begin_date_str
+                else default_dt.begin_dt
+            )
+            dtype_dict['end_dt'] = (
+                try_date_time_parse(end_date_str) if end_date_str else default_dt.end_dt
+            )
+
+        elif date_fmt_str in DATE_FORMAT_DICT.keys():
+            dtype_dict['type_str'] = 'TYPE_DATE'
+            dtype_dict['date_fmt_str'] = date_fmt_str
+            date_fmt_str = DATE_FORMAT_DICT[date_fmt_str]
+            dtype_dict['c_date_fmt_str'] = date_fmt_str
+            begin_date_str = first_str(attr_el, './/beginDate/calendarDate/text()')
+            end_date_str = first_str(attr_el, './/endDate/calendarDate/text()')
+            dtype_dict['begin_dt'] = (
+                try_date_time_parse(begin_date_str)
+                if begin_date_str
+                else default_dt.begin_dt
+            )
+            dtype_dict['end_dt'] = (
+                try_date_time_parse(end_date_str) if end_date_str else default_dt.end_dt
+            )
 
         # Supported number formats
 
@@ -181,18 +210,49 @@ def get_data_table_list(root_el):
     return root_el.xpath('.//dataset/dataTable')
 
 
-def plog(obj, msg=None, logger=log.debug):
-    if lxml.etree.iselement(obj):
-        obj_str = pretty_format_fragment(obj)
-    else:
-        obj_str = pprint.pformat(obj)
-    logger("-" * 100)
-    if msg:
-        logger(f"{msg}:")
-    tuple(
-        map(logger, tuple(f"  {line}" for line in obj_str.splitlines())),
+def get_default_begin_end_datetime_range(el):
+    begin_str = first_str(
+        el,
+        './/dataset/coverage/temporalCoverage/rangeOfDates/beginDate/calendarDate/text()',
     )
-    logger("")
+    end_str = first_str(
+        el,
+        './/dataset/coverage/temporalCoverage/rangeOfDates/endDate/calendarDate/text()',
+    )
+    return N(
+        begin_dt=try_date_time_parse(begin_str)
+        if begin_str
+        else FALLBACK_BEGIN_DATETIME,
+        end_dt=try_date_time_parse(end_str) if end_str else FALLBACK_END_DATETIME,
+    )
+
+
+# def get_iso_date_time(iso_str):
+#     """Try to parse as ISO8601. Return a string on form 'YYYY-MM-DD' if parsing is
+#     successful, else None.
+#     """
+#     with contextlib.suppress(ValueError, TypeError):
+#         return dateutil.parser.isoparse(iso_str).strftime('%Y-%m-%d')
+
+
+def try_date_time_parse(dt_str, dt_fmt=None):
+    """Apply xpath and, if there is a match, try to parse the result as a date-time.
+
+    Args:
+        dt_str (str): A date-time, date, or time.
+        dt_fmt: If is provided, tried as the first date-time parse format.
+
+    If dt_fmt is not provided, or if parsing with dt_fmt fails, parsing is tried
+    with ISO formats, then with other common date-time formats.
+    """
+    if dt_fmt:
+        with contextlib.suppress(ValueError, TypeError):
+            return datetime.datetime.strptime(dt_str, dt_fmt)
+    with contextlib.suppress(ValueError, TypeError):
+        return dateutil.parser.isoparse(dt_str)
+    for dt_fmt in DATE_FORMAT_DICT.values():
+        return datetime.datetime.strptime(dt_str, dt_fmt)
+
 
 def get_data_table_by_data_url(el, data_url):
     for dt_el in el.xpath('.//dataset/dataTable'):
