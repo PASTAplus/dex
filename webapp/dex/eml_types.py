@@ -74,10 +74,10 @@ def get_derived_dtypes_from_eml(dt_el):
     # Iterate over 'attribute', which describes each individual column.
     attr_list = list(dt_el.xpath('.//attributeList/attribute'))
 
-    for i, attr_el in enumerate(attr_list):
-        # log.info()
+    for col_idx, attr_el in enumerate(attr_list):
+        # log.debug()
 
-        attribute_name = first_str(attr_el, './/attributeName/text()')
+        col_name = first_str_orig(attr_el, './/attributeName/text()')
 
         storage_type = first_str(attr_el, './/storageType/text()')
         iso_date_format_str = first_str(
@@ -100,9 +100,9 @@ def get_derived_dtypes_from_eml(dt_el):
         # log.debug(f'  is_enumerated ={is_enumerated }')
         # log.debug(f'  ratio={ratio}')
 
-        type_dict = {
-            'i': i,
-            'attribute_name': attribute_name,
+        dtype_dict = {
+            'col_idx': col_idx,
+            'col_name': col_name,
             'type_str': 'S_TYPE_UNSUPPORTED',
             'storage_type': storage_type,
             'date_fmt_str': date_fmt_str,
@@ -168,10 +168,10 @@ def get_derived_dtypes_from_eml(dt_el):
 
         # Categorical data
 
-        elif is_enumarated:
-            type_dict['type_str'] = 'TYPE_CAT'
+        elif is_enumerated :
+            dtype_dict['type_str'] = 'TYPE_CAT'
 
-        type_list.append(type_dict)
+        type_list.append(dtype_dict)
 
         # This shows the attibute EML fragment and the resulting derived type info.
         # plog({'idx': i, 'name': attribute_name}, '%' * 100, log.info)
@@ -201,6 +201,36 @@ def first_str(el, text_xpath):
     node. E.g., `.//text()`.
     """
     el = first(el, text_xpath)
+    return str(el).upper().strip() if el else None
+
+
+def first_str_orig(el, text_xpath):
+    el = first(el, text_xpath)
+    return str(el) if el else None
+
+
+def multiple_str(el, text_xpath):
+    el = el.xpath(text_xpath)
+    return [str(x) for x in el] if el else None
+
+
+def has(el, xpath):
+    return first(el, xpath) is not None
+
+
+# TODO: dt_fmt
+def first_date(el, date_xpath, dt_fmt=None):
+    """Apply xpath and, if there is a match, try to parse the result as a date-time.
+
+    Args:
+        el:
+        date_xpath: xpath that returns a date-time string in a text node. E.g., `.//text()`.
+        dt_fmt: If is provided, tried as the first date-time parse format.
+
+    If dt_fmt is not providing, or if parsing with dt_fmt fails, parsing is tried
+    with ISO formats, then with other common date-time formats.
+    """
+    el = first(el, date_xpath)
     return str(el).upper().strip() if el else None
 
 
