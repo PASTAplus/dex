@@ -1,13 +1,18 @@
-"""EML type utils"""
+"""EML type utils
 
+This module works directly with EML XML objects in the lxml.etree domain, and so can
+be used without having an `rid`.
+"""
+import contextlib
 import datetime
-import io
 import logging
-import pprint
 
-import lxml.etree
+import dateutil.parser
 
-# import dex.exc
+import dex.exc
+
+# This module should not require cache access and so, should not import `dex.eml_cache`
+# or `dex.cache`.
 
 log = logging.getLogger(__name__)
 
@@ -88,11 +93,11 @@ def get_derived_dtypes_from_eml(dt_el):
         ratio = first_str(attr_el, './/measurementScale/ratio/text()')
 
         # log.debug(f'Raw extracted:')
-        # log.debug(f'  attribute_name={attribute_name}')
+        # log.debug(f'  col_name={col_name}')
         # log.debug(f'  storage_type={storage_type}')
-        # log.debug(f'  iso_date_format_str={iso_date_format_str}')
+        # log.debug(f'  date_fmt_str={date_fmt_str}')
         # log.debug(f'  number_type={number_type}')
-        # log.debug(f'  is_enumarated={is_enumarated}')
+        # log.debug(f'  is_enumerated ={is_enumerated }')
         # log.debug(f'  ratio={ratio}')
 
         type_dict = {
@@ -174,10 +179,6 @@ def get_derived_dtypes_from_eml(dt_el):
         # plog(type_dict, 'type_dict', log.info)
 
     return type_list
-
-
-def has(el, xpath):
-    return first(el, xpath) is not None
 
 
 def first(el, xpath):
