@@ -118,8 +118,8 @@ def get_derived_dtypes_from_eml(dt_el):
 
         # Supported date formats
 
-        if attribute_name == 'YEAR' and iso_date_format_str is None:
-            iso_date_format_str = 'YYYY'
+        if col_name.upper() == 'YEAR' and date_fmt_str is None:
+            date_fmt_str = 'YYYY'
 
         if date_fmt_str in DATE_INT_FORMAT_DICT.keys():
             dtype_dict['type_str'] = 'TYPE_INT'
