@@ -14,5 +14,9 @@ class EMLError(DexError):
     pass
 
 
+class CSVError(DexError):
+    pass
+
+
 class CacheError(DexError):
     pass
