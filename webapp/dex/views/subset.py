@@ -27,115 +27,36 @@ DEFAULT_DISPLAY_ROW_COUNT = 10
 
 @subset_blueprint.route("/<rid>", methods=["GET"])
 def subset(rid):
-    csv_df = dex.csv_cache.get_full_csv(rid)
+    ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
+    csv_df = ctx['csv_df']
+    formatter_dict = dex.csv_parser.get_formatter_dict(ctx['derived_dtypes_list'])
+    g_dict = dict(
+        rid=rid,
+        entity_tup=db.get_entity_as_dict(rid),
+        row_count=len(csv_df),
+        derived_dtypes_list=ctx['derived_dtypes_list'],
+        cat_col_map={
+            d['col_name']: d for d in dex.eml_cache.get_categorical_columns(rid)
+        },
+        filter_not_applied_str='Filter not applied',
+    )
     return flask.render_template(
         "subset.html",
-        rid=rid,
-        entity_tup=(db.get_entity_as_dict(rid)),
-        row_count=len(csv_df),
-        ref_col_list=dex.csv_cache.get_ref_col_list(rid),
-        datetime_col_list=dex.eml_cache.get_datetime_columns(rid),
-        cat_col_map=dex.csv_cache.get_categorical_columns(rid),
-        prof_type_list=json.dumps(dex.eml_cache.get_profiling_types(rid)),
         data_url=db.get_entity(rid).data_url,
-        csv_html=csv_df.iloc[:10].to_html(
+        g_dict=g_dict,
+        csv_html=csv_df.iloc[:DEFAULT_DISPLAY_ROW_COUNT].to_html(
             table_id="csv-table",
             classes="datatable row-border",
-            formatters=[cell_formatter for _ in csv_df.columns + ["u"]],
+            formatters=formatter_dict,
             index=True,
             index_names=False,
             border=0,
         ),
-    )
-
-
-@subset_blueprint.route("/<rid>", methods=["POST"])
-def download(rid):
-    filter_dict = json.loads(flask.request.data)
-
-    log.debug("=" * 100)
-    log.debug(pprint.pformat({"rid": rid, "filter_dict": filter_dict}))
-    log.debug("=" * 100)
-
-    csv_df = dex.csv_cache.get_full_csv(rid)
-    unfiltered_row_count = len(csv_df)
-
-    # Filter rows
-    a, b = map(lambda x: x - 1, filter_dict["row_filter"])
-    if a > 0 or b < unfiltered_row_count - 1:
-        log.debug(f"Filtering by rows: {a} - {b}")
-        csv_df = csv_df[a : b + 1]
-
-    # Filter by category
-    for col_idx, cat_list in filter_dict["cat_map"]:
-        idx_map = dex.csv_cache.get_categories_for_column(rid, col_idx)
-        cat_set = {idx_map[i] for i in cat_list}
-        csv_df = csv_df.loc[csv_df[col_idx].isin(cat_set)]
-
-    # Filter by date range
-    date_filter = filter_dict["date_filter"]
-    col_idx, start_str, end_str = (
-        date_filter['col_idx'],
-        date_filter['start'],
-        date_filter['end'],
-    )
-    if col_idx == -1:
-        log.debug(f'Date range filter not specified')
-    else:
-        start_date, end_date = [
-            datetime.datetime.strptime(v, "%Y-%m-%d") if v else None
-            for v in (start_str, end_str)
-        ]
-        log.debug(
-            f'Filtering by date range: '
-            f'{start_date.isoformat() if start_date else "<unset>"} - '
-            f'{end_date.isoformat() if end_date else "<unset>"}'
-        )
-        if start_date or end_date:
-            csv_df.iloc[:, col_idx] = pd.to_datetime(
-                csv_df.iloc[:, col_idx].apply(str),
-                infer_datetime_format=True,
-                errors='ignore',
-            )
-            # csv_df.iloc[:, col_idx] = pd.tz_localize(None)
-
-        if start_date and end_date:
-            csv_df = csv_df[
-                [
-                    (start_date <= x.tz_localize(None) <= end_date)
-                    for x in csv_df.iloc[:, col_idx]
-                ]
-            ]
-        elif start_date:
-            csv_df = csv_df[
-                [(start_date <= x.tz_localize(None)) for x in csv_df.iloc[:, col_idx]]
-            ]
-        elif end_date:
-            csv_df = csv_df[
-                [(x.tz_localize(None) <= end_date) for x in csv_df.iloc[:, col_idx]]
-            ]
-
-    # Filter columns
-    col_list = filter_dict["col_filter"][1:]
-    if col_list:
-        log.debug(f'Filtering by columns: {", ".join(map(str, col_list))}')
-        # col_name_list = [csv_df.columns[c] for c in col_list]
-        csv_df = csv_df.iloc[:, col_list]
-
-    log.debug(
-        f'Subset created successfully. '
-        f'unfiltered_row_count={unfiltered_row_count} '
-        f'subset_row_count={len(csv_df)}'
-    )
-
-    # Simulate large obj/slow server
-    # import time
-    # time.sleep(5)
-
-    return flask.Response(
-        csv_df.to_csv(index=filter_dict["col_filter"][0]),
-        mimetype="text/csv",
-        headers={"Content-disposition": f"attachment; filename={rid}.csv"},
+        rid=rid,
+        entity_tup=db.get_entity_as_dict(rid),
+        derived_dtypes_list=ctx['derived_dtypes_list'],
+        filter_not_applied_str='Filter not applied',
+        dbg=dex.debug.debug(rid),
     )
 
 
