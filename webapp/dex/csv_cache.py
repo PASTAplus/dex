@@ -101,26 +101,10 @@ def get_col_series_by_index(rid, col_idx):
     return get_full_csv(rid).iloc[:, col_idx]
 
 
-@dex.cache.disk("cat-col", "list")
-def get_categorical_columns(rid):
-    """Return list of columns that have fewer than a configurable shreshold percentage
-    of unique values. Each item is a tuple with the column index and a descriptive text
-    that includes the column name.
-    """
-    threshold_float = flask.current_app.config["CATEGORY_THRESHOLD_PERCENT"] / 100
-    df = get_description(rid)
-    cat_list = []
-    for i, col_name in enumerate(df.columns):
-        cat_col = df.iloc[:, i]
-        if "unique" not in cat_col:
-            continue
-        # Filter out columns with one unique value
-        # if cat_col['unique'] == 1:
-        #     continue
-        unique_float = cat_col["unique"] / cat_col["count"]
-        if unique_float < threshold_float:
-            cat_list.append((i, f'{col_name} ({cat_col["unique"]:,} categories)'))
-    return cat_list
+def is_nan(x):
+    if isinstance(x, (int, float)):
+        return math.isnan(x)
+    return False
 
 
 # @dex.cache.disk("cat-cat", "list")
