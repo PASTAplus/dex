@@ -1,16 +1,20 @@
 import json
 import logging
+import pathlib
 import shlex
 import subprocess
 import tempfile
-import time
 
 import flask
+import flask.json
+from flask import current_app as app
 
 import db
 import dex.cache
 import dex.csv_cache
+import dex.csv_parser
 import dex.csv_tmp
+import dex.debug
 import dex.eml_cache
 
 log = logging.getLogger(__name__)
@@ -22,9 +26,13 @@ profile_blueprint = flask.Blueprint("profile", __name__, url_prefix="/dex/profil
 def profile(rid):
     return flask.render_template(
         "profile.html",
+        g_dict=dict(
+            is_cached=dex.cache.is_cached(rid, "profile", "html"),
+        ),
+        # For the base template, should be included in all render_template() calls.
         rid=rid,
         entity_tup=db.get_entity_as_dict(rid),
-        is_cached=('true' if dex.cache.is_cached(rid, "profile", "html") else 'false'),
+        dbg=dex.debug.debug(rid),
     )
 
 
@@ -51,12 +59,13 @@ def doc(rid):
 
 @dex.cache.disk("profile", "html")
 def render_profile(rid):
-    profiling_sh_path = flask.current_app.config["PROFILING_SH"]
-
     # csv_path = dex.csv_tmp.get_data_path_by_row_id(rid).resolve().as_posix()
-    yml_config_path = (profiling_sh_path.parent / 'profiling_config.yml').as_posix()
-    py_proc_path = (profiling_sh_path.parent / 'profiling_proc.py').as_posix()
-    py_interpreter_path = flask.current_app.config["PYTHON_BIN"]
+    webapp_path = pathlib.Path(__file__).resolve().parents[2]
+
+    py_interpreter_path = app.config["PYTHON_BIN"]
+    py_proc_path = (webapp_path / 'profiling_proc.py').as_posix()
+    sh_proc_path = (webapp_path / 'profiling_proc.sh').as_posix()
+    yml_config_path = (webapp_path / 'profiling_config.yml').as_posix()
 
     with tempfile.NamedTemporaryFile(
         mode='wt',
@@ -65,43 +74,25 @@ def render_profile(rid):
         suffix='.json',
         delete=False,
     ) as f:
-        json.dump(
-            {
-                'rid': rid,
-                'py_proc_path': py_proc_path,
-                'py_interpreter_path': py_interpreter_path,
-                'json_config_path': f.name,
-                'yml_config_path': yml_config_path,
-                'dark_mode': True,
-            },
+        flask.json.dump(
+            dict(
+                # For profiling_proc.sh:
+                py_interpreter_path=py_interpreter_path,
+                py_proc_path=py_proc_path,
+                sh_proc_path=sh_proc_path,
+                # For profiling_proc.py:
+                rid=rid,
+                yml_config_path=yml_config_path,
+                dark_mode=True,
+            ),
             f,
-            indent=2,
         )
-
-    cmd_list = [
-        # For debugging in PyCharm, run pandas-profiling in a separate process. The
-        # python process is wrapped in a shell script to prevent the debugger from
-        # attaching to it. The process crashes if the debugger is able to attach to it.
-        # Turning off automatic attach in the PyCharm debugger settings causes the
-        # debugger to trigger a crash in Flask.
-        profiling_sh_path.as_posix(),
-        py_interpreter_path,
-        py_proc_path,
-        f.name,
-    ]
-
-    # log.debug(cmd_list)
-
-    log.debug("Running: {}".format(" ".join([shlex.quote(s) for s in cmd_list])))
-    # start_ts = time.time()
-    html_bytes = subprocess.check_output(cmd_list)
-
-    # perf.set(f"{rid}/profile-sec", time.time() - start_ts)
-    # log.debug('html_bytes=({}) "{}"'.format(len(html_bytes), html_bytes[:100]))
-
-    # cache_path = dex.cache.get_cache_path(
-    #     rid, 'profile', 'html', mkdir=True
-    # )
-    # cache_path.write_bytes(html_bytes)
+        cmd_list = [sh_proc_path, py_interpreter_path, py_proc_path, f.name]
+        log.debug("Running: {}".format(" ".join([shlex.quote(s) for s in cmd_list])))
+        # start_ts = time.time()
+    try:
+        html_bytes = subprocess.check_output(cmd_list)
+    except subprocess.CalledProcessError as e:
+        raise Exception(f'stdout="{e.stdout}" stderr="{e.stderr}"')
 
     return html_bytes.decode("utf-8")

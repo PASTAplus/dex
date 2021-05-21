@@ -67,7 +67,8 @@ def lock(rid, key, obj_type):
             (LOCK_ROOT / f"{rid}_{key}_{obj_type}").as_posix()
         ):
             log.debug(
-                f"Acquired lock after {time.time() - start_ts}s: {rid}_{key}_{obj_type}"
+                f"Acquired lock after {time.time() - start_ts : .02f}s: "
+                f"{rid}_{key}_{obj_type}"
             )
             yield
         log.debug(f"Released lock: {rid}_{key}_{obj_type}")
@@ -217,7 +218,7 @@ def save_gen(rid, key, obj_type, obj):
                     f'tag={get_tag_str(rid, key, obj_type)}'
                 )
         else:
-            log.info(f'pickling object type {obj.__class__.__name__}')
+            log.debug(f'pickling object type {obj.__class__.__name__}')
             return pickle.dump(obj, f)
 
 

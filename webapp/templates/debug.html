@@ -1,35 +1,18 @@
 {% macro debugbar(dbg) %}
-  <div id='debug-container'>
-
-    {# ctx1.csv_df                     #}
-    {# ctx1.csv_path                   #}
-    {# ctx1.header_row_idx             #}
-    {# ctx1.header_list                #}
-    {# ctx1.raw_line_count             #}
-    {#                                 #}
-    {# ctx2.csv_dialect                #}
-    {# ctx2.csv_path                   #}
-    {# ctx2.derived_dtypes_list        #}
-    {# ctx2.header_list                #}
-    {# ctx2.header_row_idx             #}
-    {# ctx2.parser_dict                #}
-    {#                                 #}
-    {# csv_df                          #}
-    {# head_df                         #}
-    {# tail_df                         #}
-    {#                                 #}
-    {# derived_dtype_html              #}
-    {# head_html                       #}
-    {# head_row_count                  #}
-    {# tail_html                       #}
-    {# tail_row_count                  #}
-    {# total_row_count                 #}
-    {# debug_panel                     #}
+  <div id='dbg'>
 
     <div class='debug'>
       <h1>DEBUG enabled (config.FLASK_DEBUG == True)</h1>
       <a href='?toggle-debug'>Toggle panel</a>
       {% if dbg.debug_panel %}
+
+        <h2>EML derived dtypes and context</h2>
+        <div>{{ dbg.derived_dtype_html | safe }}</div>
+        <h3>Derived, summary</h3>
+        <div>{{ dbg.derived_dtype_summary_html | safe }}</div>
+
+        <h2>Flask ctx</h2>
+        <div>{{ dbg.flask_g_html | safe }}</div>
 
         <h2>Source CSV</h2>
         <div>{{ dbg.source_html | safe }}</div>

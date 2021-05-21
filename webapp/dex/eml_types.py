@@ -111,7 +111,7 @@ def get_derived_dtypes_from_eml(dt_el):
             'date_fmt_str': date_fmt_str,
             'c_date_fmt_str': None,
             'number_type': number_type,
-            'is_enumerated': is_enumarated,
+            'is_enumerated': is_enumerated ,
             'ratio': ratio,
             'missing_code_list': missing_code_list,
         }
@@ -161,14 +161,15 @@ def get_derived_dtypes_from_eml(dt_el):
             'whole',
             'natural',
         ):
-            type_dict['type_str'] = 'TYPE_NUM'
+            dtype_dict['type_str'] = 'TYPE_NUM'
 
         elif storage_type and storage_type.lower() in (
             'float',
             'floating-point',
             'integer',
         ):
-            type_dict['type_str'] = 'TYPE_NUM'
+            dtype_dict['type_str'] = 'TYPE_NUM'
+            dtype_dict['number_type'] = storage_type.lower()
 
         # Categorical data
 
@@ -177,10 +178,10 @@ def get_derived_dtypes_from_eml(dt_el):
 
         type_list.append(dtype_dict)
 
-        # This shows the attibute EML fragment and the resulting derived type info.
-        # plog({'idx': i, 'name': attribute_name}, '%' * 100, log.info)
-        # plog(attr_el, 'attr_el', log.info)
-        # plog(type_dict, 'type_dict', log.info)
+        # This shows the attibute EML fragment and the resulting derived_dtype type info.
+        # logpp({'idx': col_idx, 'name': col_name}, '%' * 100, log.debug)
+        # logpp(attr_el, 'attr_el', log.debug)
+        # logpp(dtype_dict, 'dtype_dict', log.debug)
 
     return type_list
 
@@ -195,13 +196,13 @@ def first(el, xpath):
         el = res_el[0]
     except IndexError:
         el = None
-    log.debug(f'first() -> {el}')
+    # log.debug(f'first() -> {el}')
     return el
 
 
 def first_str(el, text_xpath):
     """Apply xpath and, if there is a match, assume that the match is a text node, and
-    convert it to an uppper case string. {text_xpath} is an xpath that returns a text
+    convert it to an upper case string. {text_xpath} is an xpath that returns a text
     node. E.g., `.//text()`.
     """
     el = first(el, text_xpath)
