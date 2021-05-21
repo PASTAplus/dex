@@ -2,12 +2,13 @@ import json
 
 import bokeh.colors.rgb
 import bokeh.embed
+import bokeh.plotting
 import flask
-from bokeh.plotting import figure
 
 import dex.cache
 import dex.csv_cache
 import dex.eml_cache
+import util
 
 bokeh_server = flask.Blueprint("bokeh", "bokeh", url_prefix="/bokeh")
 
@@ -17,9 +18,12 @@ THEME_DICT = {
     "default": {"fg_color": "white"},
 }
 
+# TODO: Check if these functions can use the regular disk caching now.
+
 
 @bokeh_server.route("/col-plot/<rid>/<col>")
 def col_plot(rid, col):
+    """Create a plot of all the values in a single column."""
     theme_key = flask.request.args.get("theme", "default")
     fg_color = THEME_DICT[theme_key]["fg_color"]
 
@@ -28,13 +32,11 @@ def col_plot(rid, col):
     if plot_json:
         return plot_json
 
-    d = dex.csv_cache.get_col_name_by_index(rid, int(col))
-
     # output to static HTML file
     # output_file('lines.html')
 
     # create a new plot with a title and axis labels
-    fig = figure(plot_width=400, plot_height=35)
+    fig = bokeh.plotting.figure(plot_width=400, plot_height=35)
 
     fig.axis.visible = False
     fig.toolbar.logo = None
@@ -67,8 +69,12 @@ def col_plot(rid, col):
     #     range(len(d)), d, line_width=2, color=bokeh.colors.RGB(167, 158, 139)
     # )
     # fig.dot(range(len(d)), d, size=5, color=bokeh.colors.RGB(167, 158, 139))
+    d = dex.csv_cache.get_col_name_by_index(rid, int(col))
     fig.dot(range(len(d)), d, size=5, color=fg_color)
-    plot_json = json.dumps(bokeh.embed.json_item(fig))
+    plot_json = json.dumps(
+        bokeh.embed.json_item(fig),
+        cls=util.DatetimeEncoder,
+    )
 
     add_plot_to_cache(rid, col, plot_json, theme_key)
     return plot_json
@@ -101,31 +107,28 @@ def xy_plot(rid, x_col_idx, y_col_idx):
     y_col_idx = int(y_col_idx)
     x = df.iloc[:, int(x_col_idx)]
     y = df.iloc[:, int(y_col_idx)]
-    # x = dex.csv_cache.get_column_iloc(rid, int(x))
-    # y = dex.csv_cache.get_column_iloc(rid, int(y))
 
     datetime_col_list = dex.eml_cache.get_datetime_columns(rid)
     is_dt = x_col_idx in [d["col_idx"] for d in datetime_col_list]
 
-    fig = figure(
+    fig = bokeh.plotting.figure(
         plot_width=500,
         plot_height=500,
         x_axis_label=df.columns[x_col_idx],
         y_axis_label=df.columns[y_col_idx],
         x_axis_type="datetime" if is_dt else "auto",
     )
-    if is_dt:
-        x_list = dex.csv_cache.get_dt_col(rid, x_col_idx)
-    else:
-        x_list = x.fillna("interpolate").to_list()
-
+    # if is_dt:
+    #     x_list = dex.csv_cache.get_dt_col(rid, x_col_idx)
+    # else:
+    x_list = x.fillna("interpolate").to_list()
     y_list = y.fillna("interpolate").to_list()
 
     # print(x_list)
     # print(y_list)
     fig.dot(x_list, y_list, size=20, color="#000000")
     # fig.line(x.to_list(), y.to_list(),  color='#000000')
-    plot_json = json.dumps(bokeh.embed.json_item(fig))
+    plot_json = json.dumps(bokeh.embed.json_item(fig), cls=util.DatetimeEncoder)
 
     # Simulate large obj/slow server
     # import time

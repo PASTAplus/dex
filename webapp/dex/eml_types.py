@@ -89,7 +89,7 @@ def get_derived_dtypes_from_eml(dt_el):
         # numeric_domain = first_str(
         #     attr_el, './/measurementScale/ratio/unit/numericDomain/text()'
         # )
-        is_enumarated = has(attr_el, './/nonNumericDomain/enumeratedDomain')
+        is_enumerated = has(attr_el, './/nonNumericDomain/enumeratedDomain')
         ratio = first_str(attr_el, './/measurementScale/ratio/text()')
         missing_code_list = multiple_str(attr_el, './/missingValueCode/code/text()')
 
