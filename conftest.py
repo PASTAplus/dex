@@ -116,8 +116,8 @@ def csv_path(entity_tup):
 
 
 @pytest.fixture
-def csv_dialect(csv_path):
-    return dex.csv_parser.get_csv_dialect(csv_path)
+def dialect(csv_path):
+    return dex.csv_parser.get_dialect(csv_path)
 
 
 @pytest.fixture

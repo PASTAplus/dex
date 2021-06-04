@@ -31,10 +31,10 @@ class Dialect1(csv.excel):
 
 
 def test_0100(rid, csv_path):
-    """get_csv_dialect()"""
-    csv_dialect = dex.csv_parser.get_csv_dialect(csv_path)
+    """get_dialect()"""
+    dialect = dex.csv_parser.get_dialect(csv_path)
     assert dex.csv_parser.get_dialect_as_dict(
-        csv_dialect
+        dialect
     ) == dex.csv_parser.get_dialect_as_dict(Dialect1)
 
 

@@ -46,7 +46,8 @@ def get_parsed_csv_with_context(rid):
         rid,
         header_row_idx=ctx['header_row_idx'],
         parser_dict=parser_func_dict,  # ctx['parser_dict'],
-        csv_dialect=ctx['csv_dialect'],
+        dialect=ctx['dialect'],
+        na_list=list(missing_code_set),
     )
     return dict(
         csv_df=csv_df,
@@ -65,10 +66,10 @@ def get_csv_context(rid):
     derived_dtypes_list = get_derived_dtypes_from_eml(rid)
     parser_dict = get_parser_dict(derived_dtypes_list)
     csv_path = dex.csv_tmp.get_data_path_by_row_id(rid)
-    csv_dialect = get_csv_dialect(csv_path)
+    dialect = get_dialect(csv_path)
     header_row_idx, header_list = find_header_row(csv_path)
     return dict(
-        csv_dialect=csv_dialect,
+        dialect=dialect,
         csv_path=csv_path,
         derived_dtypes_list=derived_dtypes_list,
         header_list=header_list,
@@ -122,15 +123,15 @@ def cast_to_eml_types(df, rid):
         df.iloc[:, d['col_idx']] = s
 
 
-def get_csv_dialect(csv_path, verbose=False):
-    """Get the csv_dialect (type of delimiter, quotes and escape characters) for the CSV.
-    The csv_dialect is passed to pandas.read_csv() to improve parsing.
+def get_dialect(csv_path, verbose=False):
+    """Get the dialect (type of delimiter, quotes and escape characters) for the CSV.
+    The dialect is passed to pandas.read_csv() to improve parsing.
     """
     return _get_native_dialect(get_clevercsv_dialect(csv_path, verbose))
 
 
 def get_clevercsv_dialect(csv_path, verbose=False):
-    # log.debug("CleverCSV - start csv_dialect discovery")
+    # log.debug("clevercsv - start dialect discovery")
     with open(csv_path, "r", newline="") as fp:
         clever_dialect = clevercsv.Sniffer().sniff(
             fp.read(app.config["CSV_SNIFF_THRESHOLD"]),
@@ -141,12 +142,12 @@ def get_clevercsv_dialect(csv_path, verbose=False):
 
 def _get_native_dialect(clever_dialect):
     """Translate from clevercsv.SimpleDialect() to csv.Dialect()"""
-    csv_dialect = csv.excel
+    dialect = csv.excel
     c = clever_dialect
-    csv_dialect.delimiter = c.delimiter
-    csv_dialect.quotechar = c.quotechar if c.quotechar else '"'
-    csv_dialect.escapechar = c.escapechar if c.escapechar else None
-    return csv_dialect
+    dialect.delimiter = c.delimiter
+    dialect.quotechar = c.quotechar if c.quotechar else '"'
+    dialect.escapechar = c.escapechar if c.escapechar else None
+    return dialect
 
 
 def get_dialect_as_dict(native_dialect):
@@ -469,7 +470,7 @@ def get_raw_csv_with_context(rid, max_rows=1000):
     # ctx['top_list']
     csv_df = get_raw_csv(
         csv_path=ctx['csv_path'],
-        csv_dialect=ctx['csv_dialect'],
+        dialect=ctx['dialect'],
         header_row_idx=ctx['header_row_idx'],
         max_rows=max_rows,
     )
@@ -484,10 +485,10 @@ def get_raw_csv_with_context(rid, max_rows=1000):
 
 def get_raw_context(rid):
     csv_path = dex.csv_tmp.get_data_path_by_row_id(rid)
-    csv_dialect = get_csv_dialect(csv_path)
+    dialect = get_dialect(csv_path)
     header_row_idx, header_list = find_header_row(csv_path)
     return dict(
-        csv_dialect=csv_dialect,
+        dialect=dialect,
         csv_path=csv_path,
         header_row_idx=header_row_idx,
         header_list=header_list,
@@ -495,7 +496,7 @@ def get_raw_context(rid):
 
 
 @dex.cache.disk("parsed", "df")
-def get_parsed_csv(rid, header_row_idx, parser_dict, csv_dialect):
+def get_parsed_csv(rid, header_row_idx, parser_dict, dialect, na_list=None):
     """Read a CSV and parse each value (cell) to the type declared for its column in the
     EML.
 
@@ -516,7 +517,7 @@ def get_parsed_csv(rid, header_row_idx, parser_dict, csv_dialect):
         # nrows=col_idx,
         converters=parser_dict,
         #
-        dialect=csv_dialect,
+        dialect=dialect,
         header=0,
         # names=[0]*100,
         # index_col=False,
@@ -528,7 +529,7 @@ def get_parsed_csv(rid, header_row_idx, parser_dict, csv_dialect):
     )
 
 
-def get_raw_csv(csv_path, csv_dialect, header_row_idx, max_rows):
+def get_raw_csv(csv_path, dialect, header_row_idx, max_rows):
     csv_df = pd.read_csv(
         # index_col=False,
         header=0,
@@ -538,7 +539,7 @@ def get_raw_csv(csv_path, csv_dialect, header_row_idx, max_rows):
         na_filter=False,
         skip_blank_lines=False,
         nrows=max_rows,
-        dialect=csv_dialect,
+        dialect=dialect,
         # Setting dtype to str and providing no valid matches for NaNs, disables the
         # automatic parsing in Pandas. and gives us the unprocessed text values of the
         # fields.

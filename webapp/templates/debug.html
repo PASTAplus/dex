@@ -16,15 +16,11 @@
 
         <h2>Source CSV</h2>
         <div>{{ dbg.source_html | safe }}</div>
-
-        <div>{{ dbg.csv_dialect | safe }}</div>
-
-        <div>{{ dbg.col_info_html | safe }}</div>
-
-        <h2>EML derived dtypes and context</h2>
-        <div>{{ dbg.derived_dtype_html | safe }}</div>
-
-        <h2>info()</h2>
+        <h3>Dialect</h3>
+        <div>{{ dbg.dialect | safe }}</div>
+        {#<h3>Columns</h3>#}
+        {#<div>{{ dbg.col_info_html | safe }}</div>#}
+        <h3>pandas.info()</h3>
         <pre>{{ dbg.col_info_txt }}</pre>
 
         <h2>Parsers</h2>

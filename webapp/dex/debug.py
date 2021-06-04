@@ -48,7 +48,7 @@ def debug(rid):
     # raw_line_count = ctx1.raw_line_count,
 
     ctx2 = dex.csv_parser.get_csv_context(rid)
-    # csv_dialect = ctx2.csv_dialect,
+    # dialect = ctx2.dialect,
     # csv_path = ctx2.csv_path,
     # derived_dtypes_list = ctx2.derived_dtypes_list,
     # header_list = ctx2.header_list,
@@ -121,8 +121,8 @@ def debug(rid):
                     'raw_line_count': ctx1['raw_line_count'],
                 }
             ),
-            'csv_dialect': to_html(
-                csv_dialect=dex.csv_parser.get_dialect_as_dict(ctx2['csv_dialect']),
+            'dialect': to_html(
+                dialect=dex.csv_parser.get_dialect_as_dict(ctx2['dialect']),
             ),
             'derived_dtype_html': pd.DataFrame.from_dict(
                 {

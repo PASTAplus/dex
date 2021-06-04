@@ -122,10 +122,10 @@ def get_categories_for_column(rid, col_idx):
 
 def is_csv(_rid, csv_path):
     try:
-        dialect = detect_dialect(csv_path)
+        clevercsv_dialect = dex.csv_parser.get_clevercsv_dialect(csv_path)
         count_dict = {}
         with open(csv_path, "r", newline="", encoding='utf-8') as f:
-            for i, row in enumerate(clevercsv.reader(f, dialect)):
+            for i, row in enumerate(clevercsv.reader(f, clevercsv_dialect)):
                 if i == 100:
                     break
                 count_dict.setdefault(len(row), 0)
@@ -141,22 +141,21 @@ def is_csv(_rid, csv_path):
 def _load_csv_to_df(rid, **csv_arg_dict):
     """Read CSV file to DataFrame.
 
-    This uses CleverCSV to determine the dialect of the CSV, then reads it with the
+    This uses clevercsv to determine the dialect of the CSV, then reads it with the
     standard csv module to save time.
     """
     csv_path = dex.csv_tmp.get_data_path_by_row_id(rid)
-
-    dialect = detect_dialect(csv_path)
-    skip_rows = find_header_row(csv_path)
-    log.info(f"skip_rows: {skip_rows}")
-    log.info(f"pandas.read_csv start: {csv_path}")
+    dialect = dex.csv_parser.get_dialect(csv_path)
+    skip_rows, header_row = dex.csv_parser.find_header_row(csv_path)
+    log.debug(f"skip_rows: {skip_rows}")
+    log.debug(f"pandas.read_csv start: {csv_path}")
     start_ts = time.time()
 
     csv_arg_dict.pop("skiprows", None)
 
     csv_df = pd.read_csv(
         csv_path,
-        dialect=get_native_dialect(dialect),
+        dialect=dialect,
         parse_dates=True,
         # parse_dates=['TS'],
         # date_parser=parse_date
@@ -181,89 +180,6 @@ def _load_csv_to_df_slow(csv_path):
     csv_df = clevercsv.read_dataframe(csv_path, skiprows=skip_rows)
     log.info(f"CleverCSV - read_dataframe: {time.time() - start_ts:.02f}s")
     return csv_df
-
-
-def find_header_row(csv_path):
-    """Return the index of the first row that looks like the headers in a CSV file.
-
-    This returns the index of the first row that:
-
-        - Has the same number of columns as most of the other rows in the CSV file
-        - Does not have pure numbers in any of the fields
-        - Does not have any empty fields
-
-    If none of the rows that are checked fill the criteria, returns 0, the index of
-    the top row.
-    """
-    dialect = detect_dialect(csv_path)
-
-    count_dict = {}
-    with open(csv_path, "r", newline="") as f:
-        for i, row in enumerate(clevercsv.reader(f, dialect)):
-            if i == 100:
-                break
-            count_dict.setdefault(len(row), 0)
-            count_dict[len(row)] += 1
-
-    max_row_count = max(count_dict.values())
-    for col_count, row_count in count_dict.items():
-        if row_count == max_row_count:
-            column_count = col_count
-            break
-    else:
-        assert False
-
-    log.debug(f"column_count: {column_count}")
-
-    with open(csv_path, "r", newline="") as f:
-        for i, row in enumerate(clevercsv.reader(f, dialect)):
-            if i == 100:
-                break
-            # log.debug(f"checking row: {row}")
-            if len(row) != column_count:
-                continue
-            if any(s.isnumeric() for s in row):
-                continue
-            if any(not s for s in row):
-                continue
-            return i
-
-    return 0
-
-
-# def uniform_columns(df):
-#     for col_name in df.columns:
-#         # df['Price'] = pd.to_numeric(df['Price'])
-#         numeric_list = df[df.columns].select_dtypes('number').columns.tolist()
-#         df = df.sort_values(numeric_list, ascending=[False] * len(numeric_list))
-
-
-def detect_dialect(csv_path):
-    log.info("CleverCSV - start dialect discovery")
-    with open(csv_path, "r", newline="") as fp:
-        start_ts = time.time()
-        dialect = clevercsv.Sniffer().sniff(
-            fp.read(flask.current_app.config["CSV_SNIFF_THRESHOLD"]),
-            verbose=True,
-        )
-        log.info(f"CleverCSV - detect dialect: {time.time() - start_ts:.02f}s")
-    return dialect
-
-
-def get_native_dialect(clever_dialect):
-    """Translate from clevercsv.SimpleDialect() to csv.Dialect()"""
-    dialect = csv.excel
-    dialect.delimiter = clever_dialect.delimiter
-    dialect.quotechar = clever_dialect.quotechar if clever_dialect.quotechar else '"'
-    dialect.escapechar = (
-        clever_dialect.escapechar if clever_dialect.escapechar else None
-    )
-    return dialect
-
-
-def get_subsel_through_cache(rid):
-    c = get_stats(rid)
-    return c.iloc[:, 0:1]
 
 
 def get_dt_df(df):
