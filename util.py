@@ -255,3 +255,42 @@ def get_etree_as_pretty_printed_xml(el):
     for e in el:
         buf.write(lxml.etree.tostring(e, pretty_print=True))
     return buf.getvalue().decode('utf-8')
+
+
+# JSON
+
+
+class DatetimeEncoder(flask.json.JSONEncoder):
+    def default(self, o):
+        try:
+            return super().default(o)
+        except TypeError:
+            if isinstance(o, datetime.date):
+                return o.isoformat()
+            return str(o)
+
+
+class DatetimeDecoder(flask.json.JSONDecoder):
+    # def decode(self, s, w=flask.json.decoder.WHITESPACE.match):
+    import json
+
+    def decode(self, s, w=json.decoder.WHITESPACE.match):
+        try:
+            return super().decode(s, w)
+        except TypeError:
+            try:
+                return dateutil.parser.isoparse(s)
+            except Exception:
+                return s
+
+
+def date_to_iso(**g_dict):
+    return flask.json.loads(flask.json.dumps(g_dict))
+    # return flask.json.loads(flask.json.dumps(g_dict, cls=DatetimeEncoder))
+
+
+def json_enc(**g_dict):
+    logpp(g_dict, 'g_dict', log.debug)
+    j = flask.json.htmlsafe_dumps(g_dict)
+    log.debug(j)
+    return j
