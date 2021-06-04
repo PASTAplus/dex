@@ -65,13 +65,22 @@ def register_redirect_handler():
 @app.before_request
 def before_request():
     # log.debug(f"{flask.request.method} {flask.request.path}")
-    pass
+    flask.g.debug_panel = (
+        True  # flask.request.cookies.get('debug-panel', 'false') == 'true'
+    )
 
 
 @app.after_request
 def after_request(response):
     if response.status_code != 200:
         log.error(f"-> {response.status}")
+
+    if 'toggle-debug' in flask.request.args:
+        is_enabled = flask.request.cookies.get('debug-panel', 'false') == 'true'
+        response = flask.make_response(flask.redirect(''))
+        response.set_cookie('debug-panel', 'true' if not is_enabled else 'false')
+        return response
+
     return response
 
 
@@ -87,6 +96,7 @@ def favicon():
 def index_get():
     return flask.render_template(
         'index.html',
+        g_dict={},
         rid=None,
         entity_tup=None,
         csv_list=get_sample_data_entity_list(None),
