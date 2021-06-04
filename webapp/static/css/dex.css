@@ -549,10 +549,20 @@ div.root-page ul {
     margin: 1rem;
 }
 
-#dbg h1,
-#dbg h2 {
+#dbg h1 {
+/*     font-weight: bold; */
     font-size: 1.6rem;
     margin: 2rem 0 1rem 0;
+}
+#dbg h2 {
+/*     font-weight: bold; */
+    font-size: 1.4rem;
+    margin: 1.5rem 0 1rem 0;
+}
+#dbg h3 {
+/*     font-weight: bold; */
+    font-size: 1.2rem;
+    margin: 1rem 0 0 0;
 }
 
 
@@ -567,5 +577,23 @@ div.root-page ul {
 
 #dbg table {
     margin: 0.5rem;
-    
+}
+
+#nav {
+    margin-bottom: 0;
+/*     scrollbar-width: 2rem;  */
+/*     position: sticky; */
+/*     top: 0 */
+}
+
+#sticky-section {
+     position: sticky;
+     top: 0;
+     z-index: 1000;
+/*      overflow: scroll; */
+     scrollbar-width: 2rem;
+}
+
+#csv-table .unselected {
+    color: #8b4444;
 }
