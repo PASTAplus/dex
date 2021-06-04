@@ -125,13 +125,11 @@ def debug(rid):
                 dialect=dex.csv_parser.get_dialect_as_dict(ctx2['dialect']),
             ),
             'derived_dtype_html': pd.DataFrame.from_dict(
-                {
-                    d['col_name']: d
-                    for d in dex.csv_parser.get_derived_dtypes_from_eml(rid)
-                }
+                {d['col_name']: d for d in derived_dtype_list}
             )
             .style.applymap(highlight_types)
             .render(),
+            'derived_dtype_summary_html': dict_to_kv_html(derived_dtype_summary),
         },
         'col_info_txt': col_info_txt,
         'parsers_html': to_html(
