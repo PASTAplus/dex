@@ -91,8 +91,17 @@ def debug(rid):
     buf = io.StringIO()
     csv_df.info(buf=buf)
     col_info_txt = buf.getvalue()
+    flask_g_html = dict_to_kv_html(flask.g)
+
+    derived_dtype_list = dex.csv_parser.get_derived_dtypes_from_eml(rid)
+    unique_dtype_list = list(set(d['type_str'] for d in derived_dtype_list))
+    derived_dtype_summary = {
+        k: derived_dtype_list.count(k) for k in sorted(unique_dtype_list)
+    }
 
     dbg = {
+        'flask_g_html': flask_g_html,
+        # 'derived_dtype_list': to_html(),
         **{
             **ctx1,
             **ctx2,
@@ -135,6 +144,12 @@ def debug(rid):
     }
 
     return dbg
+
+
+def dict_to_kv_html(d, key_name='Key', val_name='Value'):
+    d = {k: v for k, v in sorted(flask.current_app.config.items())}
+    d = {key_name: d.keys(), val_name: d.values()}
+    return pd.DataFrame.from_dict(d).to_html()
 
 
 def highlight_types(val):
