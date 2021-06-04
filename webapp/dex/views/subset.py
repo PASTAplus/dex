@@ -64,23 +64,18 @@ def csv_fetch(rid):
     """
     http://127.0.0.1:5000/dex/csv_fetch?
         draw=1
-
         columns[0][data]=0
         columns[0][name]=
         ...
         columns[1][data]=1
         columns[1][name]=0
         ...
-
         order[0][column]=0
         order[0][dir]=asc
-
         start=0
         length=10
-
         search[value]=
         search[regex]=false
-
         _=1597606359676
     """
     # log.debug(pprint.pformat(flask.request.args, indent=2, sort_dicts=True))
@@ -90,6 +85,7 @@ def csv_fetch(rid):
     start_int = args.get("start", type=int)
     row_count = args.get("length", type=int)
     search_str = args.get("search[value]")
+
     sort_col_idx = args.get("order[0][column]", type=int)
     is_ascending = args.get("order[0][dir]") == "asc"
 
@@ -146,6 +142,7 @@ def csv_fetch(rid):
 
     j = json.loads(csv_df.to_json(orient="split", index=True))
     d = [(a, *b) for a, b in zip(j["index"], j["data"])]
+
     for i in range(len(d), 10):
         d.append(('', *[''] * len(csv_df.columns)))
 

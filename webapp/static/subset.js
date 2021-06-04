@@ -36,8 +36,8 @@ $(document).ready(
     async function () {
       register_global_error_handler();
 
-      // Numeric input boxes
-      $('.dex-numeric').setNumeric(value => /^\d*$/.test(value));
+    // Numeric input boxes
+    $('.dex-numeric').setNumeric(value => /^\d*$/.test(value));
 
       // Row index filter
       $('#row-start, #row-end').keyup(() => {
@@ -45,11 +45,11 @@ $(document).ready(
       });
       update_row_filter_msg();
 
-      // Post a form without triggering a reload (not supported by regular form post).
-      async function post_form(v)
-      {
-        $('#download-spinner').Loading('Creating CSV subset');
-        $('#download-container').addClass('dex-hidden');
+// Post a form without triggering a reload (not supported by regular form post).
+async function post_form(v)
+{
+  $('#download-spinner').Loading('Creating CSV subset');
+  $('#download-container').addClass('dex-hidden');
 
         let filename = (
             `${g.entity_tup.scope_str}.` +
@@ -64,26 +64,26 @@ $(document).ready(
         })
             .then(async (response) => {
 
-              $('#download-spinner').Destroy();
-              $('#download-container').removeClass('dex-hidden');
+      $('#download-spinner').Destroy();
+      $('#download-container').removeClass('dex-hidden');
 
-              // mode="no-cors" causes the body of the response to be unavailable, so we can only
-              // check status.
-              if (response.ok) {
-                // TODO: Use stream instead.
-                download(await response.blob(), filename, 'text/csv');
-              }
-              else {
-                throw `Error ${response.status}: ${await response.text()}`;
-              }
-            })
-            .catch(async (error) => {
-              // console.error(`Creating subset failed with error: ${error.toString()}`)
-              window.document.write(error);
-            });
-        // Prevent form submit
-        return false;
+      // mode="no-cors" causes the body of the response to be unavailable, so we can only
+      // check status.
+      if (response.ok) {
+        // TODO: Use stream instead.
+        download(await response.blob(), filename, 'text/csv');
       }
+      else {
+        throw `Error ${response.status}: ${await response.text()}`;
+      }
+    })
+    .catch(async (error) => {
+      // console.error(`Creating subset failed with error: ${error.toString()}`)
+      window.document.write(error);
+    });
+  // Prevent form submit
+  return false;
+}
 
       // Filter by Pandas Query
 
@@ -816,49 +816,41 @@ $(document).ready(
         return sel_el.find('option:selected').toArray().map(item => parseInt(item.value));
       }
 
-      // Color scheme
+// Color scheme
 
-      async function set_color_scheme(scheme)
-      {
-        switch (scheme) {
-          case 'dark':
-            // alert('dark');
-            break;
-          case 'light':
-            // alert('light');
-            break;
-          default:
-            // alert('default');
-            break;
-        }
-        return null;
-      }
+async function set_color_scheme(scheme)
+{
+  switch (scheme) {
+    case 'dark':
+      // alert('dark');
+      break;
+    case 'light':
+      // alert('light');
+      break;
+    default:
+      // alert('default');
+      break;
+  }
+  return null;
+}
 
-      async function get_preferred_color_scheme()
-      {
-        if (window.matchMedia) {
-          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            return 'dark';
-          }
-          else {
-            return 'light';
-          }
-        }
-        return 'light';
-      }
-
-      if (window.matchMedia) {
-        const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        colorSchemeQuery.addEventListener('change', set_color_scheme(get_preferred_color_scheme()));
-      }
-
-      // async function get_cookies() {
-      //   document.cookie.split(';').reduce((cookies, cookie) => {
-      //     const [name, value] = cookie.split('=').map(c => c.trim());
-      //     cookies[name] = value;
-      //     return cookies;
-      //   }, {});
-      // }
+async function get_preferred_color_scheme()
+{
+  if (window.matchMedia) {
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
     }
-)
-;
+    else {
+      return 'light';
+    }
+  }
+  return 'light';
+}
+
+// async function get_cookies() {
+//   document.cookie.split(';').reduce((cookies, cookie) => {
+//     const [name, value] = cookie.split('=').map(c => c.trim());
+//     cookies[name] = value;
+//     return cookies;
+//   }, {});
+// }
