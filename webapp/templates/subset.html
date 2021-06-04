@@ -1,20 +1,6 @@
 {% extends 'base.html' %}
 
-{% block head %}
-
-  <script>
-  const g = {
-    rid: '{{ rid }}',
-    entity_tup: JSON.parse('{{ entity_tup | tojson }}'),
-    row_count: {{ row_count }},
-    ref_col_list: JSON.parse('{{ ref_col_list | tojson }}'),
-    datetime_col_list: JSON.parse('{{ datetime_col_list | tojson }}'),
-    cat_col_map: new Map(JSON.parse('{{ cat_col_map | tojson }}')),
-    prof_type_list: JSON.parse('{{ prof_type_list | safe }}'),
-  };
-  </script>
-
-{% endblock %}
+{% set ns = namespace() %}
 
 {% block body %}
 
@@ -25,22 +11,23 @@
   <div class='instructions'>
     <ul>
       <li>
-        To apply this filter, type a query and/or unselect columns.
+        Type a query to filter out rows, and/or use the checkboxes to filter out full
+        columns.
       </li>
       <li>
-        If a query is supplied, only rows that match the query may be included in the
-        subset.
-      </li>
-      <li>
-        Only selected columns (with checked boxes) will be included in the subset.
+        The query syntax is NumPy <a href='https://numexpr.readthedocs.io'>NumExpr</a>,
+        which is similar to Python. For details, refer to the
+        <a href='https://numexpr.readthedocs.io/projects/NumExpr3/en/latest/user_guide.html'>
+          NumExpr User Guide
+        </a>.
       </li>
       <li>This filter can also be used for viewing the dataset:
         <ul>
           <li>Set the sort order by clicking the column headers,</li>
-          <li>adjust the page size by setting the number of entires to show,</li>
+          <li>adjust the page size by setting the number of entries to show,</li>
           <li>then page through the results.</li>
         </ul>
-        {#TODO: Link to the query syntax.#}
+        {# TODO: Link to the query syntax. #}
       </li>
     </ul>
   </div>

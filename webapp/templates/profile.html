@@ -1,30 +1,17 @@
 {% extends 'base.html' %}
 
-{% block head %}
-
-  <script>
-  const g = {
-    rid: '{{ rid }}',
-    entity_tup: JSON.parse('{{ entity_tup | tojson }}'),
-    is_cached: {{ is_cached }}
-  };
-  </script>
-
-{% endblock %}
-
 {% block header_all %}{% endblock %}
-
-{% block body %}
-  <p id='generate-msg'>
-  </p>
-
-  <iframe id='profile' src='/dex/profile/doc/{{ rid }}'></iframe>
-
-{% endblock %}
 
 {% block scripts %}
   <script src='/static/profile.js'></script>
   {#<script>#}
   {#  $('#nav_profile').addClass('active')#}
   {#</script>#}
+{% endblock %}
+
+{% block body %}
+  <p id='spinner'></p>
+
+  <iframe id='profile' src='/dex/profile/doc/{{ rid }}'></iframe>
+
 {% endblock %}

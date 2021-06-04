@@ -1,14 +1,5 @@
+{# Set up the basic template and initialize the global client side variable 'g'. #}
 {% extends 'base.html' %}
-
-{% block head %}
-
-  <script>
-  const g = {
-    rid: '{{ rid }}',
-  };
-  </script>
-
-{% endblock %}
 
 {% block body %}
 
