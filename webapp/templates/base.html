@@ -34,7 +34,59 @@
 
   <title>{% block title %}{% endblock %}</title>
 
-  {% block head %}{% endblock %}
+  <script>
+  let log = console;
+  // Make parameters available to client   side script under a single global JS object,
+  // 'g'. Within jinja2 tags, 'g' refers to Flask's server side Python variable that
+  // holds the context for the current request.
+
+  {#const g = JSON.parse('{{ g | tojson }}')#}
+  {#const g_plot = JSON.parse('{{ g | safe }}')#}
+
+  // Prove type hints for working with the JS scripts in the IDE.
+
+  /**
+   * @type {Object}
+   * @property {Object} entity_tup
+   * @property {Object} base_url
+   * @property {Object} border
+   * @property {Object} cat_col_map
+   * @property {Object} classes
+   * @property {Object} col_list
+   * @property {Object} cols_x
+   * @property {Object} cols_y
+   * @property {Object} csv_html
+   * @property {Object} csv_list
+   * @property {Object} data_url
+   * @property {Object} dbg
+   * @property {Object} derived_dtypes_list
+   * @property {Object} eml_css
+   * @property {Object} eml_html
+   * @property {Object} entity_tup
+   * @property {Object} filter_not_applied_str
+   * @property {Object} formatters
+   * @property {Object} id_str
+   * @property {Object} index
+   * @property {Object} index_names
+   * @property {Object} is_cached
+   * @property {Object} rid
+   * @property {Object} row_count
+   * @property {Object} table_id
+   * @property {Object} ver_str
+   */
+  const g = JSON.parse('{{ g_dict | tojson }}')
+  </script>
+
+  {#  {{ g.derived_dtypes_list }}#}
+  {#  {% for d in g.derived_dtypes_list %}#}
+  {#  {% endfor %}#}
+
+  {#dot:{{ d.type_str }}</br>#}
+  {#dict1:{{ d[type_str] }}</br>#}
+  {#dict2:{{ d['type_str'] }}</br>#}
+
+  {% block head %}
+  {% endblock %}
 </head>
 
 <body style='height: initial;'>
