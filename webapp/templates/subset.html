@@ -186,20 +186,21 @@
   </h3>
 
   <div class='instructions'>
+    {% set ns.cat_col_list = derived_dtypes_list | selectattr('type_str', '==', 'TYPE_CAT') | list %}
     <ul>
-      {% if cat_col_map != [] %}
+      {% if ns.cat_col_list %}
         <li>Select a column containing categories and select one or more of the
           categories to apply this filter.
         </li>
-        <li>To remove a column from the filter, set it back to 'Filter not applied', or
-          remove the selected categories.
+        <li>To remove a column from the filter, set it back to
+          '{{ filter_not_applied_str }}', or remove the selected categories.
         </li>
         <li>Leaving a column unselected is equivalent to selecting it and all its
-          categories
+          categories.
         </li>
       {% else %}
-        <li>
-          Filter unavailable: This CSV does not appear to contain any categorical data.
+        <li>Filter unavailable: No categorical data columns have been declared in the
+          EML metadata associated with this CSV.
         </li>
       {% endif %}
     </ul>
