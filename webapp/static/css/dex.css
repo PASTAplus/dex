@@ -516,8 +516,8 @@ div.root-page ul {
 /* Debug bar */
 
 #dbg {
-    position: sticky;
-    top: 0;
+    /*position: sticky;*/
+    /*top: 0;*/
     font-size: 60%;
     font-family: monospace;
     margin: 0;
@@ -544,7 +544,6 @@ div.root-page ul {
 #dbg div.debug {
     border: 0;
     padding: 0;
-    margin: 0;
     background-color: black;
     margin: 1rem;
 }

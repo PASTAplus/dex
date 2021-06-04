@@ -29,4 +29,6 @@ export WERKZEUG_DEBUG_PIN='off'
 
 # echo $PYTHONPATH
 
-flask run
+flask run # | tee -a flask.run.out
+
+

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""""""
+"""Wrap pandas_profiling"""
 
 import logging
 import pathlib
@@ -21,6 +21,7 @@ def main():
     app.config.from_object("config")
     with app.app_context():
         return flask_main(app)
+
 
 def flask_main(app):
     is_debug = '--debug' in sys.argv
@@ -43,20 +44,19 @@ def flask_main(app):
     json_str = json_config_path.read_text()
 
     arg = flask.json.loads(json_str)
-    pprint.pp(arg, stream=sys.stderr, indent=2, width=1000)
+    # pprint.pp(arg, stream=sys.stderr, indent=2, width=1000)
 
-    log.debug(f'Reading csv to df. csv={arg["csv_path"]}')
+    report_tree = get_report_tree(arg)
+    rearrange_report(report_tree)
+    html_str = report_tree.to_html()
 
-    ctx = dex.csv_parser.get_parsed_csv_with_context(arg['rid'])
-    csv_df = ctx['csv_df']
+    # Return the profile report HTML doc to caller via stdout
+    print(html_str)
 
-    # Create a tree representation of the report.
-    report_tree = pandas_profiling.ProfileReport(
-        csv_df,
-        config_file=arg['yml_config_path'],
-        dark_mode=arg['dark_mode'],
-    )
+    return 0
 
+
+def rearrange_report(report_tree):
     # Move the Sample section from the end to the front of the report.
     try:
         section_list = report_tree.report.content["body"].content["items"]
@@ -67,15 +67,20 @@ def flask_main(app):
         section_list[0].content['items'][2].content['items'][0].content[
             'name'
         ] = 'Reproducibility'
-    except Exception as e:
+    except Exception:
         log.exception('Unable to reorder the sections of the Pandas Profiling report')
 
-    html_str = report_tree.to_html()
 
-    # Return the profile report HTML doc to caller via stdout
-    print(html_str)
-
-    return 0
+def get_report_tree(arg_dict):
+    ctx = dex.csv_parser.get_parsed_csv_with_context(arg_dict['rid'])
+    csv_df = ctx['csv_df']
+    # Create a tree representation of the report.
+    report_tree = pandas_profiling.ProfileReport(
+        csv_df,
+        config_file=arg_dict['yml_config_path'],
+        dark_mode=arg_dict['dark_mode'],
+    )
+    return report_tree
 
 
 if __name__ == '__main__':

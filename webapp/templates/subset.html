@@ -126,7 +126,7 @@
           </label>
         </div>
       </div>
-      <div class="line-item">
+      <div class='line-item'>
         <div class='line-inner'>
           <label>
             End:
@@ -149,31 +149,30 @@
         Type starting and ending row indexes to apply this filter.
       </li>
       <li>
-        The row indexes can be found in the CSV Viewer above.
+        The row indexes can be found with Filter by Query above.
       </li>
     </ul>
   </div>
 
   <div class='widgets'>
     <div class='line'>
-      <div class="line-item">
+      <div class='line-item'>
         <div class='line-inner'>
           <label>
             {#<label class='hidden'>#}
             First row:
             <input id='row-start' name='row-start' type='text'
-                   class='dex-numeric form-control' placeholder="first row" value='1'>
+                   class='dex-numeric form-control' placeholder='first row'>
           </label>
         </div>
       </div>
-      <div class="line-item">
+      <div class='line-item'>
         <div class='line-inner'>
           <label>
             {#<label class='hidden'>#}
             Last row:
             <input id='row-end' name='row-end' type='text'
-                   class='dex-numeric form-control' placeholder="last row"
-                   value='{{ row_count }}'>
+                   class='dex-numeric form-control' placeholder='last row'>
           </label>
         </div>
       </div>
@@ -224,7 +223,7 @@
   <template id='category-filter-template'>
     {#
     This is the only div that has the 'category-filter' class, which we use as a reference
-    point in each column/category group. Since these elements get cloned, we use classes
+    in each column/category group. Since these elements get cloned, we use classes
     instead of IDs.
     #}
     <div class='cat-filter-block'>

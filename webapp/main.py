@@ -2,6 +2,7 @@
 
 """Dex entry point"""
 
+import mimetypes
 import logging
 import os
 import pathlib
@@ -60,6 +61,22 @@ def register_redirect_handler():
         return flask.redirect("/", 302)
 
     app.register_error_handler(dex.exc.RedirectToIndex, handle_redirect_to_index)
+
+    # def handle_custom_exceptions(e):
+    #     log.exception('Exception')
+    #     raise
+    #
+    # app.register_error_handler(dex.exc.DexError, handle_custom_exceptions)
+    # app.register_error_handler(dex.exc.EMLError, handle_custom_exceptions)
+    # app.register_error_handler(dex.exc.CSVError, handle_custom_exceptions)
+    # app.register_error_handler(dex.exc.CacheError, handle_custom_exceptions)
+
+
+# @app.url_value_preprocessor
+# def url_value_preprocessor(_, q):
+#     if 'toggle-debug' in q:
+#         app.config['DEBUG_PANEL'] = not app.config['DEBUG_PANEL']
+#         return flask.redirect("/", 302)
 
 
 @app.before_request

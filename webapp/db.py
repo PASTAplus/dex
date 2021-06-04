@@ -89,7 +89,6 @@ def add_entity(data_url):
     of the new row.
     """
     entity_tup = dex.pasta.get_entity_tup(data_url)
-
     # 'replace into' causes the id to increase, which could break existing URLs. We want
     # the id to remain constant, so have to do things in a bit of a cumbersome way here.
     connection = get_db()

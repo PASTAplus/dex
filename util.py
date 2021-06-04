@@ -1,3 +1,4 @@
+import datetime
 import builtins
 import collections
 import contextlib
@@ -10,7 +11,8 @@ import tempfile
 import threading
 import time
 import types
-
+import dateutil.parser
+import dateutil
 import fasteners
 import flask
 import flask.json
@@ -65,20 +67,6 @@ class Counter:
 
     def p(self, s, print_func=None):
         (print_func or log.debug)(s)
-
-
-def date_to_iso(**g_dict):
-    return flask.json.loads(flask.json.dumps(g_dict))
-    # return flask.json.loads(flask.json.dumps(g_dict, cls=DatetimeEncoder))
-
-
-def json_enc(**g_dict):
-    log.info('-' * 100)
-    logpp(g_dict, 'g_dict', log.info)
-    log.info('-' * 100)
-    j = flask.json.htmlsafe_dumps(g_dict)
-    log.info(j)
-    return j
 
 
 class CombinedLock:
@@ -207,6 +195,8 @@ builtins.N = types.SimpleNamespace
 
 def logpp(obj, msg=None, logger=log.debug, sort_keys=False):
     """pprint to a logger"""
+    # if not logging.isEnabledFor(logging.DEBUG):
+    #     return
     if lxml.etree.iselement(obj):
         obj_str = get_etree_as_pretty_printed_xml(obj)
     else:
@@ -218,13 +208,15 @@ def logpp(obj, msg=None, logger=log.debug, sort_keys=False):
         logger(f'  {line}')
     logger("-" * 100)
 
+
 # builtins.dd = logpp
+
 
 def first_existing_dir(*path_tup):
     path_tup = [pathlib.Path(p).resolve() for p in path_tup]
     for path in path_tup:
         if path.is_dir():
-            log.info(f'Using dir: {path.as_posix()}')
+            log.debug(f'Using dir: {path.as_posix()}')
             return path
     raise AssertionError(
         "None of the provided alternate paths are valid: {}".format(
@@ -237,6 +229,7 @@ def first_existing_dir(*path_tup):
 
 
 def get_etree_as_highlighted_html(el):
+    """Return a (css, html) tuple"""
     xml_str = get_etree_as_pretty_printed_xml(el)
     html_formatter = pygments.formatters.HtmlFormatter(
         style=app.config['EML_STYLE_NAME']
