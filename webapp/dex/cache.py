@@ -38,10 +38,10 @@ class NamedThreadLocks:
         self.p(f'{name}: waiting')
         with self.locks[name]:
             acq_ts = time.time() - ts
-            self.p(f'{name}: acquired after {acq_ts :.2f}s')
+            self.p(f'{name}: acquired after {acq_ts:.2f}s')
             yield
         release_ts = time.time() - ts
-        self.p(f'{name}: released after {release_ts - acq_ts :.2f}s')
+        self.p(f'{name}: released after {release_ts - acq_ts : .2f}s')
 
     def p(self, *a, **kw):
         print(*a, **kw, file=self.out)
@@ -52,7 +52,6 @@ named_thread_locks = NamedThreadLocks()
 threading_lock = threading.RLock()
 
 log = logging.getLogger(__name__)
-
 
 LOCK_ROOT = pathlib.Path(tempfile.gettempdir(), "DEX-LOCK")
 LOCK_ROOT.mkdir(0o755, parents=True, exist_ok=True)

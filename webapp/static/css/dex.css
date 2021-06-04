@@ -313,7 +313,7 @@ table.dataTable tbody th, table.dataTable tbody td {
 }
 
 .datatable td:empty {
-    background-color: #e0e0e0;
+    background-color: #202020;
 }
 
 .datatable td:empty::before {
@@ -331,7 +331,7 @@ table.datatable td:first-child {
 
 /* Profiling page */
 
-#counter-msg, #generate-msg, #spinner-msg {
+#counter-msg, #spinner, #spinner-msg {
 }
 
 iframe {

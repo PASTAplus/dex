@@ -8,8 +8,8 @@ import pathlib
 import re
 import shutil
 
-import flask
 import requests
+from flask import current_app as app
 
 DATA_RX_TUP = re.compile(
     r"""
@@ -118,7 +118,12 @@ def get_eml_url(entity_tup):
     -> EML path: https://pasta-d.lternet.edu/package/metadata/eml/knb-lter-ble/9/1
     """
     return '/'.join(
-        [entity_tup.base_url, 'metadata', 'eml', get_pkg_id(entity_tup, '/')]
+        [
+            entity_tup.base_url,
+            'metadata',
+            'eml',
+            get_pkg_id(entity_tup, '/'),
+        ]
     )
 
 
@@ -129,7 +134,7 @@ def get_eml_path(entity_tup):
     -> EML file path: /pasta/data/backup/data1/knb-lter-ble.9.1/Level-1-EML.xml
     """
     return pathlib.Path(
-        flask.current_app.config["CSV_ROOT_DIR"],
+        app.config["CSV_ROOT_DIR"],
         get_pkg_id(entity_tup),
         'Level-1-EML.xml',
     ).resolve()
@@ -157,9 +162,14 @@ def get_data_path(entity_tup):
     -> File path: /pasta/data/backup/data1/knb-lter-ble.9.1/0be92831cb9e173a828416a954778598
     """
     return pathlib.Path(
-        flask.current_app.config["CSV_ROOT_DIR"],
+        app.config["CSV_ROOT_DIR"],
         get_pkg_id(entity_tup, entity=True),
     ).resolve()
+
+
+# def get_pkg_id(rid):
+#     t = db.get_entity(rid)
+#     return f'{t.scope_str}.{t.identifier_int}.{t.version_int}'
 
 
 def get_pkg_id(entity_tup, sep_str='.', entity=False):
@@ -172,6 +182,11 @@ def get_pkg_id(entity_tup, sep_str='.', entity=False):
             *((t.entity_str,) if entity else ()),
         )
     )
+
+
+def get_pkg_id_as_url(entity_tup):
+    t = entity_tup
+    return f'{t.scope_str}/{t.identifier_int}/{t.version_int}/{t.entity_str}'
 
 
 def get_entity_tup(data_url):

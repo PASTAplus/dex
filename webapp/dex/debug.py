@@ -36,9 +36,7 @@ WATCH_SET = {
 
 def debug(rid):
     if not flask.g.get('debug_panel', False):
-        return dict(
-            debug_panel='',
-        )
+        return dict()
 
     ctx1 = dex.csv_parser.get_raw_csv_with_context(rid)
     # csv_df = ctx1.csv_df,
@@ -69,15 +67,6 @@ def debug(rid):
     # tuple(tuple(d.items()) + tuple(((None, None),) * (maxlen - len(d))) for d in x)
     # padded_list = tuple(tuple(d.items()) + tuple(((None, None),) * (maxlen - len(d))) for d in derived_dtype_list)
     # dtypes_df = pd.DataFrame.from_dict(padded_list)
-
-    def is_all_scalar(o):
-        if isinstance(o, dict):
-            return all(isinstance(s, str) for s in o.values())
-        elif isinstance(o, list):
-            return all(isinstance(s, str) for s in o)
-        elif isinstance(o, str):
-            return True
-        return False
 
     def to_html(**kv):
         """With an index, pandas uses dict keys for column names and dict values for

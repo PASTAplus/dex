@@ -7,7 +7,7 @@ import pathlib
 import flask
 
 # import util
-import pandas
+import pandas as pd
 import pytest
 
 import db as _db
@@ -128,7 +128,7 @@ def entity_tup():
 @pytest.fixture
 def df_random():
     """DataFrame with randomized content"""
-    df = pandas.util.testing.makeDataFrame()
+    df = pd.util.testing.makeDataFrame()
     df.head()
     return df
 
@@ -136,7 +136,7 @@ def df_random():
 @pytest.fixture
 def df_missing():
     """DataFrame with missing values"""
-    df = pandas.util.testing.makeMissingDataframe()
+    df = pd.util.testing.makeMissingDataframe()
     df.head()
     return df
 
@@ -144,7 +144,7 @@ def df_missing():
 @pytest.fixture
 def df_time():
     """DataFrame with time series"""
-    df = pandas.util.testing.makeTimeDataFrame()
+    df = pd.util.testing.makeTimeDataFrame()
     df.head()
     return df
 
@@ -152,7 +152,7 @@ def df_time():
 @pytest.fixture
 def df_mixed():
     """DataFrame with mixed data"""
-    df = pandas.util.testing.makeMixedDataFrame()
+    df = pd.util.testing.makeMixedDataFrame()
     df.head()
     return df
 
@@ -160,23 +160,23 @@ def df_mixed():
 @pytest.fixture
 def df_periodical():
     """DataFrame with periodical data"""
-    df = pandas.util.testing.makePeriodFrame()
+    df = pd.util.testing.makePeriodFrame()
     df.head()
     return df
 
 
-@pytest.fixture(scope='function', autouse=True)
-def client():
-    # db_fd, app.config['DATABASE'] = tempfile.mkstemp()
-    try:
-        app.config['TESTING'] = True
-        app.config["CSV_ROOT_DIR"] = '/tmp/test/root'
-
-        with app.test_client() as client:
-            with app.app_context():
-                #     app.init_db()
-                yield client
-    finally:
-        # os.close(db_fd)
-        # os.unlink(app.config['DATABASE'])
-        pass
+# @pytest.fixture(scope='function', autouse=True)
+# def client(config, test_client, client, app_context):
+#     # db_fd, app.config['DATABASE'] = tempfile.mkstemp()
+#     try:
+#         config['TESTING'] = True
+#         config["CSV_ROOT_DIR"] = '/tmp/test/root'
+#
+#         with test_client() as client:
+#             with app_context():
+#                 #     app.init_db()
+#                 yield client
+#     finally:
+#         # os.close(db_fd)
+#         # os.unlink(app.config['DATABASE'])
+#         pass

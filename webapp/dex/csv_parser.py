@@ -109,18 +109,18 @@ def cast_to_eml_types(df, rid):
         s = df.iloc[:, d['col_idx']]
 
         if d['type_str'] == 'TYPE_DATE':
-            log.info(f'Column "{d["col_name"]}" -> {d["type_str"]}')
+            log.debug(f'Column "{d["col_name"]}" -> {d["type_str"]}')
             s = pd.to_datetime(s, errors='ignore', format=d['c_date_fmt_str'])
 
         elif d['type_str'] == 'TYPE_NUM':
-            log.info(f'Column "{d["col_name"]}" -> {d["type_str"]}')
+            log.debug(f'Column "{d["col_name"]}" -> {d["type_str"]}')
             s = pd.to_numeric(
                 s,
                 errors='ignore',
             )
 
         elif d['type_str'] == 'TYPE_CAT':
-            log.info(f'Column "{d["col_name"]}" -> {d["type_str"]}')
+            log.debug(f'Column "{d["col_name"]}" -> {d["type_str"]}')
             s = s.astype('category', errors='ignore')
 
         else:
@@ -140,7 +140,7 @@ def get_clevercsv_dialect(csv_path, verbose=False):
     # log.debug("clevercsv - start dialect discovery")
     with open(csv_path, "r", newline="") as fp:
         clever_dialect = clevercsv.Sniffer().sniff(
-            fp.read(app.config["CSV_SNIFF_THRESHOLD"]),
+            fp.read(app.config["CSV_SNIFFER_THRESHOLD"]),
             verbose=verbose,
         )
     return clever_dialect
@@ -248,7 +248,8 @@ def apply_formatters(df, derived_dtypes_list):
     # df = pd.DataFrame()
 
     for i in range(len(derived_dtypes_list)):
-        df.iloc[:, i].map(formatter_list[i]['fn'])
+        df.iloc[:, i] = df.iloc[:, i].map(formatter_list[i]['fn'])
+    return df
 
 
 def get_parser_dict(derived_dtypes_list):
