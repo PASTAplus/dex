@@ -89,7 +89,10 @@ def csv_fetch(rid):
     sort_col_idx = args.get("order[0][column]", type=int)
     is_ascending = args.get("order[0][dir]") == "asc"
 
-    csv_df = dex.csv_cache.get_full_csv(rid)
+    ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
+    csv_df = ctx['csv_df']
+
+    # csv_df = dex.csv_cache.get_full_csv(rid)
     total_count = len(csv_df)
 
     # Filter the full CSV by the search string. A row is included if one or more of the

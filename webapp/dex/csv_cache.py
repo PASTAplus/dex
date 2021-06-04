@@ -22,9 +22,18 @@ log = logging.getLogger(__name__)
 @dex.cache.disk("full", "df")
 def get_full_csv(rid, **csv_arg_dict):
     try:
-        return _load_csv_to_df(rid, **csv_arg_dict)
+        df = _load_csv_to_df(rid, **csv_arg_dict)
+        dex.csv_parser.cast_to_eml_types(df, rid)
+        return df
     except FileNotFoundError:
         raise dex.exc.RedirectToIndex()
+
+
+@dex.cache.disk("full-cast", "df")
+def get_full_csv_with_eml_cast(rid, **csv_arg_dict):
+    df = get_full_csv(rid, **csv_arg_dict)
+    dex.csv_parser.cast_to_eml_types(df, rid)
+    return df
 
 
 @dex.cache.disk("head", "df")
@@ -39,11 +48,11 @@ def get_csv_tail(rid):
 
 @dex.cache.disk("sample", "df")
 def get_csv_sample(rid):
-    """Return a DataFrame containing at most `config.CSV_SAMPLE_THRESHOLD` rows from
+    """Return a DataFrame containing at most `config['CSV_SAMPLE_THRESHOLD']` rows from
     the CSV file.
     """
     df = get_full_csv(rid)
-    return df.sample(min(len(df), flask.current_app.config["CSV_SAMPLE_THRESHOLD"]))
+    return df.sample(min(len(df), app.config["CSV_SAMPLE_THRESHOLD"]))
 
 
 @dex.cache.disk("describe", "df")
@@ -91,14 +100,10 @@ def get_stats(rid):
 # Columns
 
 
-@dex.cache.disk("ref-col", "list")
-def get_ref_col_list(rid):
-    df = get_description(rid)
-    return df.columns.to_list()
-
-
-def get_col_name_by_index(rid, col_idx):
-    return get_ref_col_list(rid)[col_idx]
+# @dex.cache.disk("ref-col", "list")
+# def get_derived_dtypes_list(rid):
+#     df = get_description(rid)
+#     return df.columns.to_list()
 
 
 def get_col_series_by_index(rid, col_idx):
@@ -113,15 +118,13 @@ def is_nan(x):
 
 # @dex.cache.disk("cat-cat", "list")
 def get_categories_for_column(rid, col_idx):
-    csv_df = dex.csv_cache.get_full_csv(rid)
+    """Return a list of the unique values in a categorical column. This assumes that
+    the column at the given index is already known to be of type `TYPE_CAT`.
+    """
+    csv_df = dex.csv_parser.get_parsed_csv(rid)
     col_series = csv_df.iloc[:, int(col_idx)]
-    res_list = pd.Series(col_series.unique())  # .tolist()
-    if res_list.dtype == "object":
-        res_list = res_list.apply(lambda x: str(x))
-    res_list = res_list.sort_values(na_position="last")
-    res_list = res_list.fillna("-")
-    res_list = res_list.to_list()
-    return res_list
+    # return list([x for x in col_series.unique() if not is_nan(x)])
+    return list(x for x in col_series.unique() if not is_nan(x))
 
 
 def is_csv(_rid, csv_path):
@@ -145,7 +148,7 @@ def is_csv(_rid, csv_path):
 def _load_csv_to_df(rid, **csv_arg_dict):
     """Read CSV file to DataFrame.
 
-    This uses clevercsv to determine the dialect of the CSV, then reads it with the
+    This uses CleverCSV to determine the dialect of the CSV, then reads it with the
     standard csv module to save time.
     """
     csv_path = dex.csv_tmp.get_data_path_by_row_id(rid)
@@ -168,8 +171,8 @@ def _load_csv_to_df(rid, **csv_arg_dict):
         **csv_arg_dict,
     )
 
-    log.info(f"pandas.read_csv: {time.time() - start_ts:.02f}s")
-    # log.info(f"Memory used by DataFrame: {csv_df.memory_usage(deep=True)}")
+    log.debug(f"pandas.read_csv: {time.time() - start_ts:.02f}s")
+    # log.debug(f"Memory used by DataFrame: {csv_df.memory_usage(deep=True)}")
     return csv_df
 
 
@@ -177,12 +180,12 @@ def _load_csv_to_df_slow(csv_path):
     """This method handles various broken CSV files but is too slow for use in
     production.
     """
-    skip_rows = find_header_row(csv_path)
-    log.info(f"skip_rows: {skip_rows}")
-    log.info("CleverCSV - read_dataframe start")
+    skip_rows, header_row = dex.csv_parser.find_header_row(csv_path)
+    log.debug(f"skip_rows: {skip_rows}")
+    log.debug("clevercsv - read_dataframe start")
     start_ts = time.time()
     csv_df = clevercsv.read_dataframe(csv_path, skiprows=skip_rows)
-    log.info(f"CleverCSV - read_dataframe: {time.time() - start_ts:.02f}s")
+    log.debug(f"clevercsv - read_dataframe: {time.time() - start_ts:.02f}s")
     return csv_df
 
 
@@ -205,18 +208,18 @@ def get_dt_df(df):
     return dt_df
 
 
-@dex.cache.disk("dt-col", "df")
-def get_dt_col(rid, col_idx):
-    """Return the column with index `col_idx` as a date-time series.
-
-    In mixed value columns, the NaT (not a time) rows are filled in with interpolated
-    date-times.
-    """
-    df = get_csv_sample(rid)
-    dt_series = df.iloc[:, col_idx]
-    dt_series = pd.to_datetime(dt_series, errors="coerce")
-    dt_series.fillna(method="ffill")
-    return dt_series
+# @dex.cache.disk("dt-col", "df")
+# def get_dt_col(rid, col_idx):
+#     """Return the column with index `col_idx` as a date-time series.
+#
+#     In mixed value columns, the NaT (not a time) rows are filled in with interpolated
+#     date-times.
+#     """
+#     df = get_csv_sample(rid)
+#     dt_series = df.iloc[:, col_idx]
+#     dt_series = pd.to_datetime(dt_series, errors="coerce", format=)
+#     dt_series.fillna(method=  "ffill")
+#     return dt_series
 
 
 def get_mixed_columns(df):
