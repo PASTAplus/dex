@@ -38,6 +38,8 @@ root_logger.addHandler(flask.logging.default_handler)
 
 log = logging.getLogger(__name__)
 
+mimetypes.add_type('application/javascript', '.js')
+
 app = flask.Flask(
     __name__,
     static_url_path="/static/",
@@ -47,6 +49,8 @@ app = flask.Flask(
 
 app.config.from_object("config")
 app.debug = app.config["FLASK_DEBUG"]
+
+root_logger.setLevel(logging.DEBUG if app.debug else logging.INFO)
 
 app.register_blueprint(bokeh_server.views.bokeh_server)
 app.register_blueprint(dex.views.profile.profile_blueprint)
