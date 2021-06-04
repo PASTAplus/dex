@@ -35,9 +35,9 @@ def test_0000():
 
 
 def p(msg):
-    log.info(f'Start {threading.get_native_id()} {os.getpid()}: {msg}')
+    log.debug(f'Start {threading.get_native_id()} {os.getpid()}: {msg}')
     time.sleep(random.random() * 3)
-    log.info(f'End   {threading.get_native_id()} {os.getpid()}: {msg}')
+    log.debug(f'End   {threading.get_native_id()} {os.getpid()}: {msg}')
 
 
 @fasteners.interprocess_locked('/tmp/twet')

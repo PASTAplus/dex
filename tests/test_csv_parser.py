@@ -10,7 +10,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
-p = lambda *a, **kw: util.logpp(*a, **kw, logger=log.info)
+p = lambda *a, **kw: util.logpp(*a, **kw, logger=log.debug)
 
 # Dialects
 # See also: pandas/tests/io/parser/test_dialect.py
