@@ -42,6 +42,12 @@ def get_parsed_csv_with_context(rid):
         ctx['header_list'][k]: d['fn'] for k, d in ctx['parser_dict'].items()
     }
 
+    missing_code_set = set()
+    for type_dict in ctx['derived_dtypes_list']:
+        if isinstance(type_dict['missing_code_list'], list):
+            for code_str in type_dict['missing_code_list']:
+                missing_code_set.add(code_str)
+
     csv_df = get_parsed_csv(
         rid,
         header_row_idx=ctx['header_row_idx'],
@@ -227,15 +233,16 @@ def get_col_agg_dict(df, derived_dtypes_list):
     for i, col_name in enumerate(df.columns):
         fmt_fn = formatter_list[i]['fn']
         with contextlib.suppress(Exception):
-            d[col_name] = dict(
-                v_max=fmt_fn(df.iloc[:, i].max()),
-                v_min=fmt_fn(df.iloc[:, i].min()),
+            d[i] = dict(
+                col_name=col_name,
+                v_max=fmt_fn(df.iloc[:, i].max(skipna=True)),
+                v_min=fmt_fn(df.iloc[:, i].min(skipna=True)),
             )
     return d
 
 
 def apply_formatters(df, derived_dtypes_list):
-    log.error(type(df))
+    # log.error(type(df))
 
     formatter_list = get_formatter_list(derived_dtypes_list)
     # df = pd.DataFrame()
@@ -512,7 +519,8 @@ def get_parsed_csv(rid, header_row_idx, parser_dict, dialect, na_list=None):
         filepath_or_buffer=csv_path,
         index_col=False,
         skiprows=header_row_idx,
-        # na_filter=False,
+        na_filter=True,
+        na_values=na_list or [],
         # skip_blank_lines=False,
         # nrows=col_idx,
         converters=parser_dict,
@@ -520,8 +528,6 @@ def get_parsed_csv(rid, header_row_idx, parser_dict, dialect, na_list=None):
         dialect=dialect,
         header=0,
         # names=[0]*100,
-        # index_col=False,
-        # formatters=dex.eml_types.get_formatter_dict(derived_dtypes_list),
         # cache_dates, which defaults to True, speeds up datetime parsing for cases
         # having many repeated dates. This goes into effect only if the column is not
         # parsed by Dex.
