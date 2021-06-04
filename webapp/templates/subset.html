@@ -80,35 +80,44 @@
   <h3>
     Filter by Time Period
   </h3>
-
   <div class='instructions'>
     <ul>
+      {% set ns.date_col_list = derived_dtypes_list | selectattr('type_str', '==', 'TYPE_DATE') | list %}
+      {# value = index of the column in the CSV file #}
+      {# text = name of the column from the CSV file #}
       <li>
-        Select a column containing dates to apply this filter.
+        {% if ns.date_col_list %}
+          Select a column containing dates to apply this filter.
+        {% else %}
+          Filter unavailable: No supported date columns have been declared in the EML
+          metadata associated with this CSV.
+        {% endif %}
       </li>
+
     </ul>
   </div>
-
   <div class='widgets'>
     <div class='line'>
-      <div class="line-item">
+      <div class='line-item'>
         <div class='line-inner'>
           <label>
             Column:
             <select class='dex-date-picker form-control' id='time-period-filter'
                     name='date-dropdown'>
-              <option value='-1'>Filter not applied</option>
-              {% for dt_col_dict in datetime_col_list %}
+              <option value='-1'>{{ filter_not_applied_str }}</option>
+              {% for d in ns.date_col_list %}
                 {# value = index of the column in the CSV file #}
                 {# text = name of the column from the CSV file #}
                 <option
-                    value='{{ dt_col_dict.col_idx }}'>{{ ref_col_list[dt_col_dict.col_idx] }}</option>
+                    value='{{ d.col_name }}'>{{ d.col_name }}
+                  {#value='{{ dt_col_dict.col_idx }}'>{{ derived_dtypes_list[dt_col_dict.col_idx] }}#}
+                </option>
               {% endfor %}
             </select>
           </label>
         </div>
       </div>
-      <div class="line-item">
+      <div class='line-item'>
         <div class='line-inner'>
           <label>
             Start:
