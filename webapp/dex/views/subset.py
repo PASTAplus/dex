@@ -4,8 +4,7 @@ import logging
 import pprint
 
 import flask
-import maya
-import numpy as np
+import flask.json
 import pandas as pd
 
 import db
@@ -68,18 +67,9 @@ def csv_fetch(rid):
 
         columns[0][data]=0
         columns[0][name]=
-        columns[0][searchable]=true
-        columns[0][orderable]=true
-        columns[0][search][value]=
-        columns[0][search][regex]=false
-
+        ...
         columns[1][data]=1
-        columns[1][name]=
-        columns[1][searchable]=true
-        columns[1][orderable]=true
-        columns[1][search][value]=
-        columns[1][search][regex]=false
-
+        columns[1][name]=0
         ...
 
         order[0][column]=0
@@ -93,9 +83,7 @@ def csv_fetch(rid):
 
         _=1597606359676
     """
-    # return
-
-    # log.info(pprint.pformat(flask.request.args, indent=2, sort_dicts=True))
+    # log.debug(pprint.pformat(flask.request.args, indent=2, sort_dicts=True))
 
     args = flask.request.args
     draw_int = args.get("draw", type=int)
@@ -135,12 +123,26 @@ def csv_fetch(rid):
         )
 
     # Get the requested page of results (selected with the [1], [2]... buttons).
-    csv_df = csv_df[start_int : len(csv_df) if not row_count else start_int + row_count]
+    csv_df = csv_df[start_int : start_int + row_count]
+
+    # formatter_dict = dex.csv_parser.get_formatter_dict(ctx.derived_dtypes_list)
+    # csv_df.style.format(formatter_dict)
 
     # csv_df = csv_df.set_index('Name').sort_index(ascending=is_ascending)
     # csv_df = csv_df.sort_values(
     #     csv_df.columns[sort_col_idx], ascending=is_ascending
     # )
+    # derived_dtype_list = dex.csv_cache.get_derived_dtype_list(rid)
+    # for i, (col_name, col) in enumerate(csv_df.iteritems()):
+    #     csv_df.iloc[:, i] = col.apply(dex.eml_types.get_formatter(derived_dtype_list[i]))
+
+    # for c in csv_df.columns:
+    # csv_df = csv_df.apply(v for i, v in enumerate(format_mapping.values()))
+
+    # csv_df.style.format(format_mapping)
+
+    # Apply the EML derived formatting to the section of the CSV that will be displayed.
+    new_df = dex.csv_parser.apply_formatters(csv_df, ctx['derived_dtypes_list'])
 
     j = json.loads(csv_df.to_json(orient="split", index=True))
     d = [(a, *b) for a, b in zip(j["index"], j["data"])]
@@ -176,20 +178,25 @@ def fetch_category(rid, col_idx):
     """
     res_list = dex.csv_cache.get_categories_for_column(rid, col_idx)
 
+    log.debug('res_list', res_list)
+
     # Simulate large obj/slow server
     # import time
     # time.sleep(5)
 
-    return json.dumps(res_list)
+    json_str = json.dumps(list(res_list))
+    # json_str = json.dumps(list(res_list), cls=util.DatetimeEncoder)
+    log.debug('json_str', json_str)
+    return json_str
 
 
-def parse_date(s):
-    try:
-        x = maya.parse(s).epoch
-        # print(x)
-        return x
-    except ValueError:
-        return 0.0
+# def parse_date(s):
+#     try:
+#         x = maya.parse(s).epoch
+#         # print(x)
+#         return x
+#     except ValueError:
+#         return 0.0
 
 
 def get_package_id(purl: str) -> str:
@@ -201,9 +208,11 @@ def get_package_id(purl: str) -> str:
     return package_id
 
 
-def cell_formatter(x):
-    """Formatter that is applied to each cell in a DataFrame when rendering to HTML"""
-    if isinstance(x, np.float):
-        return f"{x:.02f}"
-    else:
-        return str(x)
+# def cell_formatter(x):
+#     """Formatter that is applied to each cell in a DataFrame when rendering to HTML"""
+#     print('1'*100)
+#     print(x)
+#     if isinstance(x, np.float):
+#         return f"{x:.02f}"
+#     else:
+#         return str(x)
