@@ -48,24 +48,33 @@ def get_derived_dtypes_from_eml(dt_el):
     declarations and descriptions. The columns for which we are able to derive a dtype
     are supported with additional functionality in other areas of of the app.
 
+    Pandas         dtype         Python type       NumPy type       Usage
+    object         str or mixed  string_, unicode_, mixed types    Text or mixed numeric and non-numeric values
+    int64          int           int_, int8, int16, int32, int64, uint8, uint16, uint32, uint64    Integer numbers
+    float64        float         float_, float16, float32, float64    Floating point numbers
+    bool           bool          bool_    True/False values
+    datetime64     datetime      datetime64[ns]    Date and time values
+    timedelta[ns]  NA            NA    Differences between two datetimes
+    category       NA            NA    Finite list of text values
+
     TYPE_DATE           - A date variable
     TYPE_NUM            - A numeric variable
     TYPE_CAT            - A categorical variable
     S_TYPE_UNSUPPORTED  - An unsupported variable
 
-    # dtype_dict = {
-    #     'col_idx': col_idx,
-    #     'col_name': col_name,
-    #     'type_str': 'S_TYPE_UNSUPPORTED',
-    #     'storage_type': storage_type,
-    #     'date_fmt_str': date_fmt_str,
-    #     'c_date_fmt_str': None,
-    #     'number_type': number_type,
-    #     'numeric_domain': numeric_domain,
-    #     'ratio': ratio,
-    #     'missing_value_list': missing_value_list,
-    #     'col_agg_dict': col_agg_dict,
-    # }
+    dtype_dict = {
+        'col_idx': col_idx,
+        'col_name': col_name,
+        'type_str': 'S_TYPE_UNSUPPORTED',
+        'storage_type': storage_type,
+        'date_fmt_str': date_fmt_str,
+        'c_date_fmt_str': None,
+        'number_type': number_type,
+        'numeric_domain': numeric_domain,
+        'ratio': ratio,
+        'missing_value_list': missing_value_list,
+        'col_agg_dict': col_agg_dict,
+    }
     """
     default_dt = get_default_begin_end_datetime_range(dt_el)
 
