@@ -2,7 +2,10 @@
 https://pytest-flask.readthedocs.io/en/latest/
 """
 import csv
+import logging
+import os
 import pathlib
+import tempfile
 
 import flask
 
@@ -10,13 +13,16 @@ import flask
 import pandas as pd
 import pytest
 
-import db as _db
+import db #as _db
 import dex.pasta
 
-from flask import current_app as app
+import webapp.main
 
-# 1
+import wsgi
+
 DATA_URL_1 = 'https://pasta-d.lternet.edu/package/data/eml/knb-lter-cce/72/2/f12ac76be131821d245316854f7ddf44'
+
+logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
 
 class Dialect1(csv.excel):
@@ -32,28 +38,6 @@ class Dialect1(csv.excel):
 DEX_ROOT = pathlib.Path(__file__).parent.resolve()
 WEBAPP_ROOT = DEX_ROOT / 'webapp'
 TEST_DOCS = DEX_ROOT / 'tests/test_docs'
-
-
-@pytest.fixture(autouse=True)
-def app():
-    app = flask.Flask(
-        __name__,
-        # instance_path=DEX_ROOT.as_posix(),
-        # instance_relative_config['T']rue,
-        static_url_path="/static/",
-        static_folder=(WEBAPP_ROOT / "static").resolve().as_posix(),
-        template_folder=(WEBAPP_ROOT / "templates").resolve().as_posix(),
-    )
-    app.config.from_object("config")
-    # util.logpp(app.config, 'app.config', sort_keys=True)
-    app.debug = app.config["FLASK_DEBUG"]
-    # app.config = N(app.config)
-    return app
-
-
-# @pytest.fixture(autouse=True, scope='session')
-# def util():
-#     return util
 
 
 @pytest.fixture()
@@ -79,16 +63,6 @@ def tmpdir(config, tmpdir):
     return pathlib.Path(tmpdir)
 
 
-@pytest.fixture(autouse=True)
-def db(config, tmpdir):
-    config['SQLITE_PATH'] = tmpdir / 'sqlite.db'
-    _db.init_db()
-    # rm -rf ../cache
-    # rm -rf ../dex-cache
-    # rm sqlite.db
-    # sqlite3 < schema.sql sqlite.db
-
-
 @pytest.fixture
 def docs_path():
     return TEST_DOCS
@@ -106,7 +80,7 @@ def csv_root(docs_path, config):
 @pytest.fixture
 def rid(enable_cache, csv_root):
     # docs_path / '1.csv'
-    rid = _db.add_entity(DATA_URL_1)
+    rid = db.add_entity(DATA_URL_1)
     return rid
 
 
@@ -165,18 +139,32 @@ def df_periodical():
     return df
 
 
+# DB and client
+
+
+@pytest.fixture(scope='function', autouse=True)
+def expose_errors(config):
+    """Disable automatic error handling during request."""
+    config['TESTING'] = True
+
+
+@pytest.fixture
+def app_context(app):
+    """App context with initialized. temporary DB.
+    """
+    db_fd, db_path = tempfile.mkstemp()
+    app.config['SQLITE_PATH'] = pathlib.Path(db_path)
+    try:
+        with app.app_context() as ctx:
+            db.init_db()
+            yield ctx
+    finally:
+        os.close(db_fd)
+        os.unlink(app.config['SQLITE_PATH'])
+
+
 # @pytest.fixture(scope='function', autouse=True)
-# def client(config, test_client, client, app_context):
-#     # db_fd, app.config['DATABASE'] = tempfile.mkstemp()
-#     try:
-#         config['TESTING'] = True
-#         config["CSV_ROOT_DIR"] = '/tmp/test/root'
-#
-#         with test_client() as client:
-#             with app_context():
-#                 #     app.init_db()
-#                 yield client
-#     finally:
-#         # os.close(db_fd)
-#         # os.unlink(app.config['DATABASE'])
-#         pass
+@pytest.fixture
+def client(app, app_context):
+    with app.test_client() as client:
+        yield client
