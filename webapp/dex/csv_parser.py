@@ -22,6 +22,7 @@ import dex.eml_cache
 import dex.eml_types
 import dex.exc
 import dex.pasta
+import util
 
 log = logging.getLogger(__name__)
 
@@ -38,23 +39,27 @@ DTYPE_TO_FRIENDLY_DICT = {
 def get_parsed_csv_with_context(rid):
     """Get CSV with values parsed according to their EML types."""
     ctx = get_csv_context(rid)
-    parser_func_dict = {
-        ctx['header_list'][k]: d['fn'] for k, d in ctx['parser_dict'].items()
+    parser_func_dict = {ctx['header_list'][k]: d['fn'] for k, d in ctx['parser_dict'].items()}
+    pandas_type_dict = {
+        ctx['header_list'][k]: d['pandas_type'] for k, d in ctx['parser_dict'].items()
     }
-
     missing_code_set = set()
     for type_dict in ctx['derived_dtypes_list']:
         if isinstance(type_dict['missing_code_list'], list):
             for code_str in type_dict['missing_code_list']:
                 missing_code_set.add(code_str)
 
+    missing_code_set.add('')
+
     csv_df = get_parsed_csv(
         rid,
         header_row_idx=ctx['header_row_idx'],
         parser_dict=parser_func_dict,  # ctx['parser_dict'],
         dialect=ctx['dialect'],
+        pandas_type_dict=pandas_type_dict,
         na_list=list(missing_code_set),
     )
+
     return dict(
         csv_df=csv_df,
         csv_path=ctx['csv_path'],
@@ -63,6 +68,7 @@ def get_parsed_csv_with_context(rid):
         header_row_idx=ctx['header_row_idx'],
         parser_dict=ctx['parser_dict'],
         col_agg_dict=get_col_agg_dict(csv_df, ctx['derived_dtypes_list']),
+        dialect=ctx['dialect'],
     )
 
 
@@ -74,7 +80,7 @@ def get_csv_context(rid):
     csv_path = dex.csv_tmp.get_data_path_by_row_id(rid)
     dialect = get_dialect(csv_path)
     header_row_idx, header_list = find_header_row(csv_path)
-    return dict(
+    ctx = dict(
         dialect=dialect,
         csv_path=csv_path,
         derived_dtypes_list=derived_dtypes_list,
@@ -82,6 +88,8 @@ def get_csv_context(rid):
         header_row_idx=header_row_idx,
         parser_dict=parser_dict,
     )
+    util.logpp(ctx, msg='Parsed CSV context', logger=log.debug)
+    return ctx
 
 
 def get_derived_dtype_list(rid):
@@ -253,16 +261,12 @@ def apply_formatters(df, derived_dtypes_list):
 
 
 def get_parser_dict(derived_dtypes_list):
-    return {
-        eml_dict['col_idx']: get_parser(eml_dict) for eml_dict in derived_dtypes_list
-    }
+    return {eml_dict['col_idx']: get_parser(eml_dict) for eml_dict in derived_dtypes_list}
 
 
 def get_formatter_dict(derived_dtypes_list):
     # util.logpp(derived_dtypes_list)
-    return {
-        eml_dict['col_idx']: get_formatter(eml_dict) for eml_dict in derived_dtypes_list
-    }
+    return {eml_dict['col_idx']: get_formatter(eml_dict) for eml_dict in derived_dtypes_list}
 
 
 def get_parser_list(derived_dtypes_list):
@@ -302,6 +306,7 @@ def get_formatter(dtype_dict):
             fmt=None,
             dtype=d['type_str'],
             fn=string_formatter,
+            pandas_type='object',
         )
 
     elif d['type_str'] == 'TYPE_DATE':
@@ -310,6 +315,7 @@ def get_formatter(dtype_dict):
             fmt=None,
             dtype=d['type_str'],
             fn=functools.partial(date_formatter, fmt_str=d['c_date_fmt_str']),
+            pandas_type='datetime64',
         )
 
     elif d['type_str'] == 'TYPE_INT' or d['type_str'] == 'TYPE_NUM':
@@ -319,6 +325,7 @@ def get_formatter(dtype_dict):
                 fmt=None,
                 dtype=None,
                 fn=int_formatter,
+                pandas_type='int64',
             )
         elif d['number_type'] in ('real', 'integer', 'whole', 'natural', 'integer'):
             return dict(
@@ -326,6 +333,7 @@ def get_formatter(dtype_dict):
                 fmt=d['number_type'],
                 dtype=None,
                 fn=float_formatter,
+                pandas_type='int64',
             )
         elif d['number_type'] in ('float', 'floating-point'):
             return dict(
@@ -333,6 +341,7 @@ def get_formatter(dtype_dict):
                 fmt=d['number_type'],
                 dtype=None,
                 fn=float_formatter,
+                pandas_type='float64',
             )
         else:
             return dict(
@@ -340,6 +349,7 @@ def get_formatter(dtype_dict):
                 fmt=None,
                 dtype=None,
                 fn=string_formatter,
+                pandas_type='object',
             )
 
     elif d['type_str'] == 'TYPE_CAT':
@@ -348,6 +358,7 @@ def get_formatter(dtype_dict):
             fmt=d['number_type'],
             dtype=None,
             fn=string_formatter,
+            pandas_type='category',
         )
 
     else:
@@ -356,6 +367,7 @@ def get_formatter(dtype_dict):
             fmt=None,
             dtype=None,
             fn=string_formatter,
+            pandas_type='object',
         )
 
 
@@ -410,6 +422,7 @@ def get_parser(dtype_dict):
             fmt=None,
             dtype=d['type_str'],
             fn=string_parser,
+            pandas_type='object',
         )
 
     elif d['type_str'] == 'TYPE_DATE':
@@ -418,6 +431,7 @@ def get_parser(dtype_dict):
             fmt=d["c_date_fmt_str"],
             dtype=d['type_str'],
             fn=functools.partial(date_parser, fmt_str=d['c_date_fmt_str']),
+            pandas_type='datetime64',
         )
 
     elif d['type_str'] == 'TYPE_INT' or d['type_str'] == 'TYPE_NUM':
@@ -427,6 +441,7 @@ def get_parser(dtype_dict):
                 fmt='integer',
                 dtype=d['type_str'],
                 fn=int_parser,
+                pandas_type='int64',
             )
         elif d['number_type'] in ('real', 'integer', 'whole', 'natural', 'integer'):
             return dict(
@@ -434,6 +449,7 @@ def get_parser(dtype_dict):
                 fmt=d['number_type'],
                 dtype=d['type_str'],
                 fn=int_parser,
+                pandas_type='int64',
             )
         elif d['number_type'] in ('float', 'floating-point'):
             return dict(
@@ -441,6 +457,7 @@ def get_parser(dtype_dict):
                 fmt=d['number_type'],
                 dtype=d['type_str'],
                 fn=float_parser,
+                pandas_type='float64',
             )
         else:
             return dict(
@@ -448,6 +465,7 @@ def get_parser(dtype_dict):
                 fmt=None,
                 dtype=d['type_str'],
                 fn=string_parser,
+                pandas_type='object',
             )
 
     elif d['type_str'] == 'TYPE_CAT':
@@ -456,6 +474,7 @@ def get_parser(dtype_dict):
             fmt=None,
             dtype=d['type_str'],
             fn=string_parser,
+            pandas_type='category',
         )
     else:
         return dict(
@@ -463,6 +482,7 @@ def get_parser(dtype_dict):
             fmt=None,
             dtype=d['type_str'],
             fn=string_parser,
+            pandas_type='object',
         )
 
 
@@ -504,7 +524,7 @@ def get_raw_context(rid):
 
 
 @dex.cache.disk("parsed", "df")
-def get_parsed_csv(rid, header_row_idx, parser_dict, dialect, na_list=None):
+def get_parsed_csv(rid, header_row_idx, parser_dict, dialect, pandas_type_dict, na_list):
     """Read a CSV and parse each value (cell) to the type declared for its column in the
     EML.
 
@@ -514,14 +534,18 @@ def get_parsed_csv(rid, header_row_idx, parser_dict, dialect, na_list=None):
     remaining columns are handles by Pandas.
 
     - This is split out to a separate function so that the CSV can be cached separately.
+
+    - Empty field ("") is unconditionally added as a NaN value here, as it's not always
+    declared in the EML.
     """
     csv_path = dex.csv_tmp.get_data_path_by_row_id(rid)
-    return pd.read_csv(
+    csv_df = pd.read_csv(
         filepath_or_buffer=csv_path,
         index_col=False,
         skiprows=header_row_idx,
         na_filter=True,
-        na_values=na_list or [],
+        na_values=list(set(na_list) | {''}),
+        keep_default_na=True,
         # skip_blank_lines=False,
         # nrows=col_idx,
         converters=parser_dict,
@@ -534,6 +558,11 @@ def get_parsed_csv(rid, header_row_idx, parser_dict, dialect, na_list=None):
         # parsed by Dex.
         cache_dates=True,
     )
+
+    # csv_df['PET'].replace(to_replace=[''], value=np.nan, inplace=True)
+    # csv_df.replace(value=np.nan, regex='^\s*\$', inplace=True)
+
+    return csv_df.astype(pandas_type_dict, errors='ignore')
 
 
 def get_raw_csv(csv_path, dialect, header_row_idx, max_rows):
