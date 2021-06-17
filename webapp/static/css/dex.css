@@ -20,7 +20,7 @@ body {
 }
 
 .dex-container {
-    margin: 0 2rem 0 2rem;
+     margin: 0 2rem 0 2rem;
 }
 
 
@@ -75,6 +75,7 @@ table.sample-csv-list {
     border-collapse: collapse;
     white-space: nowrap;
     border: none;
+    font-family: monospace;
 }
 
 table.sample-csv-list tr {
@@ -95,6 +96,15 @@ table.sample-csv-list th {
     padding: 0 1em 0 0;
     text-align: left;
     border: none;
+}
+
+table.sample-csv-list .mono {
+    /*font-family: monospace;*/
+}
+
+table.sample-csv-list .right {
+    text-align: right;
+    /*font-family: monospace;*/
 }
 
 /* */
@@ -395,11 +405,6 @@ Full CSS path to column checkboxes:
 }
 
 
-div.stretchh {
-    color: yellow;
-    background-color: lightyellow;
-}
-
 .ui-state-default {
     align-self: baseline;
     border: 0;
@@ -451,7 +456,6 @@ is a child of DataTables_sort_wrapper, but in the browser, it appears in the are
   <div class="DataTables_sort_wrapper">
     <div class="pq-column-select-checkbox-container">
       <input id="chk_4" class="pq-column-select-checkbox" type="checkbox" checked="checked">
-      <div class="stretchh"></div>
     </div>
     Column Name Goes Here
     <span class="DataTables_sort_icon css_right ui-icon ui-icon-caret-2-n-s"></span>
@@ -503,10 +507,6 @@ div.col-supp {
     color: green !important;
 }
 
-div.col-unsupp {
-    color: red !important;
-}
-
 /* Root page */
 
 div.root-page ul {
@@ -525,7 +525,7 @@ div.root-page ul {
     max-height: 30rem;
     overflow: scroll;
     background-color: black;
-/*     color: darkgreen; */
+    /*     color: darkgreen; */
     z-index: 100;
 }
 
@@ -537,8 +537,8 @@ div.root-page ul {
     padding: 0;
     margin: 0;
     white-space: pre-wrap;
-/*     width: 80%; */
-/*     overflow: visible; */
+    /*     width: 80%; */
+    /*     overflow: visible; */
 }
 
 #dbg div.debug {
@@ -549,17 +549,19 @@ div.root-page ul {
 }
 
 #dbg h1 {
-/*     font-weight: bold; */
+    /*     font-weight: bold; */
     font-size: 1.6rem;
     margin: 2rem 0 1rem 0;
 }
+
 #dbg h2 {
-/*     font-weight: bold; */
+    /*     font-weight: bold; */
     font-size: 1.4rem;
     margin: 1.5rem 0 1rem 0;
 }
+
 #dbg h3 {
-/*     font-weight: bold; */
+    /*     font-weight: bold; */
     font-size: 1.2rem;
     margin: 1rem 0 0 0;
 }
@@ -580,17 +582,45 @@ div.root-page ul {
 
 #nav {
     margin-bottom: 0;
-/*     scrollbar-width: 2rem;  */
-/*     position: sticky; */
-/*     top: 0 */
 }
 
+/*#dbg tbody td:first-child {*/
+/*#dbg th {*/
+/*    position: sticky;*/
+/*}*/
+
+
+thead th {
+    position: sticky;
+    top: 0;
+    background: linear-gradient(
+            to bottom,
+            rgba(20, 20, 20, 1),
+            rgba(20, 20, 20, 1),
+            rgba(20, 20, 20, 0)
+    );
+}
+
+tbody th {
+    position: sticky;
+    left: 0;
+    background: linear-gradient(
+            to right,
+            rgba(20, 20, 20, 1),
+            rgba(20, 20, 20, 1),
+            rgba(20, 20, 20, 0)
+    );
+
+    text-align: right;
+}
+
+
+/*noinspection CssUnknownProperty,CssBrowserCompatibilityForProperties*/
 #sticky-section {
-     position: sticky;
-     top: 0;
-     z-index: 1000;
-/*      overflow: scroll; */
-     scrollbar-width: 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    scrollbar-width: 2rem;
 }
 
 #csv-table .unselected {

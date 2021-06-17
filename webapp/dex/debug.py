@@ -72,7 +72,7 @@ def debug(rid):
         """With an index, pandas uses dict keys for column names and dict values for
         each of the index values: {column -> {index -> value}}
         """
-        util.logpp(kv)
+        util.logpp(kv, msg="Created HTML from DF", logger=log.debug)
         return (
             pd.DataFrame()
             .from_dict(kv)
