@@ -19,6 +19,19 @@ def init_db():
         db.commit()
 
 
+def clear_entities():
+    """Delete all rows in the entity table. Used together with clearing the
+    filesystem caches, to force everything to be reprocessed.
+    """
+    log.debug('Clearing entities from DB')
+    cnx = get_db()
+    try:
+        cur = query_db("""delete from entity;""", (), db=(cnx))
+        cur.fetchall()
+        cur.close()
+    finally:
+        cnx.commit()
+
 def namedtuple_factory(cursor, row):
     """
     Usage:
@@ -73,15 +86,15 @@ def query_id(query, args=(), db=None):
     """Query with automatic commit and return last row ID.
     Typically used for insert and update queries.
     """
-    connection = db or get_db()
+    cnx = db or get_db()
     try:
-        cur = connection.execute(query, args)
+        cur = cnx.execute(query, args)
         # rv = cur.fetchall()
         row_id = cur.lastrowid
         cur.close()
         return row_id
     finally:
-        connection.commit()
+        cnx.commit()
 
 
 def add_entity(data_url):
@@ -91,12 +104,12 @@ def add_entity(data_url):
     entity_tup = dex.pasta.get_entity_tup(data_url)
     # 'replace into' causes the id to increase, which could break existing URLs. We want
     # the id to remain constant, so have to do things in a bit of a cumbersome way here.
-    connection = get_db()
+    cnx = get_db()
     try:
         row_id = query_db(
             """select id from entity e where data_url = ?""",
             (entity_tup.data_url,),
-            db=connection,
+            db=cnx,
         )
         if row_id:
             return row_id[0].id
@@ -107,10 +120,10 @@ def add_entity(data_url):
             values (?, ?, ?, ?, ?, ?)
             """,
             entity_tup,
-            db=connection,
+            db=cnx,
         )
     finally:
-        connection.commit()
+        cnx.commit()
 
 
 def get_entity(row_id):

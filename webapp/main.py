@@ -2,12 +2,20 @@
 
 """Dex entry point"""
 
+import matplotlib
+
+matplotlib.use('Agg')
+
 import mimetypes
-import logging
 import os
 import pathlib
 import random
 import re
+
+import logging
+import logging.config
+
+# logging.config.dictConfig(config.LOG_CONFIG)
 
 os.environ.setdefault("FLASK_ENV", "production")
 os.environ.setdefault("FLASK_DEBUG", "0")
