@@ -194,6 +194,9 @@ def get_entity_tup(data_url):
     m = DATA_RX_TUP.match(data_url)
     if m:
         d = dict(m.groupdict())
+        log.info(f'data_url={data_url}')
+        log.info(f'entity d={d}')
+        data_url = data_url.replace("/pasta-d/", "/pasta/")
         d["identifier_int"] = int(d.pop("id_str"))
         d["version_int"] = int(d.pop("ver_str"))
         return EntityTup(data_url=data_url, **d)

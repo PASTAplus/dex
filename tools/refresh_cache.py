@@ -14,7 +14,7 @@ import requests
 
 import dex.cache
 
-sys.path.append(pathlib.Path('./webapp').resolve().as_posix())
+sys.path.append(pathlib.Path('../webapp').resolve().as_posix())
 # print('\n'.join([s.as_posix(), sys.path))
 
 import db

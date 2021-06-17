@@ -51,7 +51,7 @@ def plot(rid):
         cols_y=sel_list_y,
     )
 
-    util.logpp(g_dict, 'g_dict', log.debug)
+    util.logpp(g_dict, msg='Plot g_dict', logger=log.debug)
 
     return flask.render_template(
         "plot.html",
