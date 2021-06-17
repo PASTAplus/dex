@@ -1,12 +1,10 @@
+import io
 import logging
-import pathlib
-import shlex
-import subprocess
-import tempfile
 
 import flask
 import flask.json
-from flask import current_app as app
+import pandas as pd
+import pandas_profiling
 
 import db
 import dex.cache
@@ -37,10 +35,12 @@ def profile(rid):
 
 @profile_blueprint.route("/doc/<rid>")
 def doc(rid):
+    """Return the Pandas Profiling HTML doc for the given rid. If the profile has not
+    been generated, this holds the connection until the doc is ready, then returns it."""
     if not dex.cache.is_cached(rid, "profile", "html"):
         render_profile(rid)
 
-    def generate():
+    def chunks_gen():
         with dex.cache.open_file(rid, 'profile', 'html') as f:
             while True:
                 b = f.read(flask.current_app.config["CHUNK_SIZE_BYTES"])
@@ -51,47 +51,52 @@ def doc(rid):
         # return flask.send_file(f, mimetype='text/html')
         # return flask.Response(flask.stream_with_context(f), status=200, mimetype='text/html')
 
-    return flask.Response(
-        flask.stream_with_context(generate()), status=200, mimetype='text/html'
-    )
+    return flask.Response(flask.stream_with_context(chunks_gen()), status=200,
+                          mimetype='text/html')
+
 
 
 @dex.cache.disk("profile", "html")
 def render_profile(rid):
-    # csv_path = dex.csv_tmp.get_data_path_by_row_id(rid).resolve().as_posix()
-    webapp_path = pathlib.Path(__file__).resolve().parents[2]
+    ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
+    csv_df = ctx['csv_df']
 
-    py_interpreter_path = app.config["PYTHON_BIN"]
-    py_proc_path = (webapp_path / 'profiling_proc.py').as_posix()
-    sh_proc_path = (webapp_path / 'profiling_proc.sh').as_posix()
-    yml_config_path = (webapp_path / 'profiling_config.yml').as_posix()
+    log.debug('Calling pandas_profiling.ProfileReport()...')
 
-    with tempfile.NamedTemporaryFile(
-        mode='wt',
-        encoding='utf-8',
-        prefix=f'profile_args_{rid}',
-        suffix='.json',
-        delete=False,
-    ) as f:
-        flask.json.dump(
-            dict(
-                # For profiling_proc.sh:
-                py_interpreter_path=py_interpreter_path,
-                py_proc_path=py_proc_path,
-                sh_proc_path=sh_proc_path,
-                # For profiling_proc.py:
-                rid=rid,
-                yml_config_path=yml_config_path,
-                dark_mode=True,
-            ),
-            f,
-        )
-        cmd_list = [sh_proc_path, py_interpreter_path, py_proc_path, f.name]
-        log.debug("Running: {}".format(" ".join([shlex.quote(s) for s in cmd_list])))
-        # start_ts = time.time()
+    # Create a tree representation of the report.
+    report_tree = pandas_profiling.ProfileReport(
+        csv_df,
+        # config_file=arg_dict['yml_config_path'],
+        # dark_mode=arg_dict['dark_mode'],
+        infer_dtypes=False,
+    )
+
+    # rearrange_report(report_tree)
+
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+        csv_df: pd.DataFrame
+        # log.error('Final DF passed to Pandas Profiling:')
+        log.error('DataFrame:')
+        log.error(csv_df)
+        log.error('Info:')
+        info_buf = io.StringIO()
+        csv_df.info(verbose=True, buf=info_buf)
+        log.error(info_buf.getvalue())
+
+    html_str = report_tree.to_html()
+
+    return html_str
+
+
+def rearrange_report(report_tree):
+    # Move the Sample section from the end to the front of the report.
     try:
-        html_bytes = subprocess.check_output(cmd_list)
-    except subprocess.CalledProcessError as e:
-        raise Exception(f'stdout="{e.stdout}" stderr="{e.stderr}"')
+        section_list = report_tree.report.content["body"].content["items"]
+        section_list.insert(1, section_list.pop(-1))
 
-    return html_bytes.decode("utf-8")
+        section_list[0].content['items'][1].content['name'] = 'Notes'
+        section_list[0].content['items'][2].content['name'] = 'Reproducibility'
+        section_list[0].content['items'][2].content['items'][0].content[
+            'name'] = 'Reproducibility'
+    except Exception:
+        log.exception('Unable to reorder the sections of the Pandas Profiling report')
