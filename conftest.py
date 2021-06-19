@@ -7,22 +7,18 @@ import os
 import pathlib
 import tempfile
 
-import flask
-
-# import util
 import pandas as pd
 import pytest
 
-import db #as _db
+import dex.db
+import dex.main
+import dex.main
 import dex.pasta
-
-import webapp.main
-
-import wsgi
 
 DATA_URL_1 = 'https://pasta-d.lternet.edu/package/data/eml/knb-lter-cce/72/2/f12ac76be131821d245316854f7ddf44'
 
-logging.getLogger('matplotlib').setLevel(logging.ERROR)
+DEX_ROOT = pathlib.Path(__file__).parent.resolve()
+TEST_DOCS = DEX_ROOT / 'tests/test_docs'
 
 
 class Dialect1(csv.excel):
@@ -35,9 +31,37 @@ class Dialect1(csv.excel):
     skipinitialspace = False
 
 
-DEX_ROOT = pathlib.Path(__file__).parent.resolve()
-WEBAPP_ROOT = DEX_ROOT / 'webapp'
-TEST_DOCS = DEX_ROOT / 'tests/test_docs'
+logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+
+@pytest.fixture
+def app():
+    app = dex.main.create_app()
+    return app
+
+
+@pytest.fixture
+def app_context(app):
+    """App context with initialized temporary DB."""
+    db_fd, db_path = tempfile.mkstemp()
+    app.config['SQLITE_PATH'] = pathlib.Path(db_path)
+    try:
+        with app.app_context() as ctx:
+            dex.db.init_db()
+            yield ctx
+    finally:
+        os.close(db_fd)
+        os.unlink(app.config['SQLITE_PATH'])
+
+
+@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture
+def client(app, app_context):
+    with app.test_client() as client:
+        yield client
+
+
+#
 
 
 @pytest.fixture()
@@ -80,7 +104,7 @@ def csv_root(docs_path, config):
 @pytest.fixture
 def rid(enable_cache, csv_root):
     # docs_path / '1.csv'
-    rid = db.add_entity(DATA_URL_1)
+    rid = dex.db.add_entity(DATA_URL_1)
     return rid
 
 
@@ -146,25 +170,3 @@ def df_periodical():
 def expose_errors(config):
     """Disable automatic error handling during request."""
     config['TESTING'] = True
-
-
-@pytest.fixture
-def app_context(app):
-    """App context with initialized. temporary DB.
-    """
-    db_fd, db_path = tempfile.mkstemp()
-    app.config['SQLITE_PATH'] = pathlib.Path(db_path)
-    try:
-        with app.app_context() as ctx:
-            db.init_db()
-            yield ctx
-    finally:
-        os.close(db_fd)
-        os.unlink(app.config['SQLITE_PATH'])
-
-
-# @pytest.fixture(scope='function', autouse=True)
-@pytest.fixture
-def client(app, app_context):
-    with app.test_client() as client:
-        yield client

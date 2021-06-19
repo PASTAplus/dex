@@ -10,7 +10,7 @@ import time
 
 import fasteners
 
-import util
+import dex.util
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def proc3():
 def thread4(*args):
     # for i in range(3):
     #     p(f'proc4 - thread: {args}')
-    lock = util.Lock('testlock')
+    lock = dex.util.Lock('testlock')
     with lock(123, 'test_key', 'test_obj'):
         p('1')
 
@@ -79,7 +79,7 @@ def proc2():
 
 
 def proc():
-    lock = util.Lock('testlock')
+    lock = dex.util.Lock('testlock')
     with lock(123, 'test_key', 'test_obj'):
         with lock(123, 'test_key', 'test_obj'):
             with lock(123, 'test_key', 'test_obj'):

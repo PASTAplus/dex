@@ -1,0 +1,628 @@
+/*
+This file is arranged with general styles (applying to many elements) closer to the top
+and specific styles closer to the end.
+
+CSS Selector: .ui-multiselect-checkboxes
+CSS Path: html body div.container div.widgets label div.ui-multiselect-menu.ui-widget.ui-widget-content.ui-corner-all.ui-multiselect-listbox ul.ui-multiselect-checkboxes.ui-helper-reset
+XPath: /html/body/div[1]/div[6]/label/div/ul
+*/
+
+/* #y-col, #x-col { */
+/*    margin-top: 1rem; */
+/*    margin-left: 1rem; */
+/* } */
+
+body {
+    --ind-level: 2.0rem;
+    --ind-0: 0;
+    --ind-1: var(--ind-level);
+    --ind-2: calc(2 * var(--ind-level));
+}
+
+.dex-container {
+     margin: 0 2rem 0 2rem;
+}
+
+
+* {
+}
+
+
+/*
+Vertical spacing for top-level blocks.
+Remember: Vertical margins auto-collapse while padding does not.
+*/
+
+/*ul, */
+.result-msg {
+    margin: 2.5rem 0;
+}
+
+
+/* Headers */
+
+h1, h2, h3, h4, h5 {
+    white-space: nowrap;
+}
+
+h2 {
+    margin: .2rem 0 var(--ind-1) 0;
+}
+
+h3 {
+    margin: 5rem 0 1.5rem var(--ind-0);
+}
+
+h1 a, h2 a, h3 a {
+    text-decoration: none;
+}
+
+/* list */
+
+ul {
+    padding-left: 3rem;
+    /*     list-style: circle inside none; */
+}
+
+li {
+}
+
+/* table/ */
+
+
+table.sample-csv-list {
+    margin: 1em 1em 1em 1em;
+    border-collapse: collapse;
+    white-space: nowrap;
+    border: none;
+    font-family: monospace;
+}
+
+table.sample-csv-list tr {
+    border: none;
+    margin: 0;
+}
+
+
+table.sample-csv-list td {
+    margin: 0;
+    padding: 0 1em 0 0;
+    border: none;
+}
+
+table.sample-csv-list th {
+    font-weight: bold;
+    margin: 0;
+    padding: 0 1em 0 0;
+    text-align: left;
+    border: none;
+}
+
+table.sample-csv-list .mono {
+    /*font-family: monospace;*/
+}
+
+table.sample-csv-list .right {
+    text-align: right;
+    /*font-family: monospace;*/
+}
+
+/* */
+
+p {
+    /* margin-top: 1rem; */
+}
+
+/* Stack of boxes, width of the contents of the widest box is applied to all the boxes
+ */
+/*noinspection CssBrowserCompatibilityForProperties*/
+.stack {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+
+    grid-row-gap: .5rem;
+}
+
+/* Labels above boxes instead of to the left. */
+/*noinspection CssBrowserCompatibilityForProperties*/
+.stack-item {
+    display: flex;
+    flex-direction: column;
+    grid-row-gap: .2rem;
+}
+
+label.stack-item {
+}
+
+
+/* Grid */
+
+/*noinspection ALL*/
+.grid-2-col {
+    display: grid;
+    grid-template-columns: repeat(2, min-content);
+    grid-gap: 1rem 1rem;
+}
+
+.grid-item {
+
+}
+
+
+.data-url {
+    /* width: 100rem; */
+    /* padding: .3rem 0; */
+}
+
+.data-url input {
+    /* width: 50rem; */
+}
+
+/* Spacing between the top and bottom of labels and prev/next select dropdowns. */
+label select, label input {
+}
+
+/*noinspection CssBrowserCompatibilityForProperties*/
+.line {
+    display: flex;
+    align-items: stretch;
+    flex-direction: row;
+    grid-column-gap: .5rem;
+    /* padding: 0; */
+    /* margin: 0; */
+
+}
+
+.line-item {
+    align-self: baseline;
+}
+
+select {
+    min-width: 25rem;
+}
+
+.line-inner {
+    width: 100%;
+}
+
+/* Labels above boxes instead of to the left. */
+.line-inner > label {
+}
+
+/* Time period filter */
+
+.hasDatepicker, .dex-date-picker {
+}
+
+
+label.hidden {
+}
+
+label.hidden * {
+}
+
+
+label {
+}
+
+/* Syntax highlighted EML */
+
+.eml-xml {
+}
+
+.eml-xml .highlight {
+    width: max-content;
+}
+
+.highlight pre {
+    font-size: 90%;
+    /*padding: 2rem 0 2rem 0;*/
+    margin-left: var(--ind-1);
+}
+
+/* Remove the arrow down icon from select dropdown boxes */
+/*noinspection CssBrowserCompatibilityForProperties*/
+select {
+    appearance: none;
+}
+
+/* Section containing instructions, widgets and dynamically generated text.
+ */
+
+div.instructions {
+    margin: .5rem 0 0 var(--ind-1);
+}
+
+div.widgets {
+    /* border: blue 2px solid; */
+    margin: 1.5rem 0 0 var(--ind-2);
+}
+
+p.result-msg::before {
+    content: "\27a4";
+    margin-right: 1rem;
+}
+
+p.result-msg {
+}
+
+div.margin {
+    margin: 1.5rem 0 0 0;
+}
+
+/* Misc */
+
+.disabled {
+    pointer-events: none;
+    opacity: 0.4;
+    /* visibility: collapse; */
+}
+
+.dex-numeric {
+    /* width: 8em; */
+}
+
+pre, table, input[type="text"],
+.ui-widget, .hasDatepicker, .select2-selection, select {
+}
+
+.form-control {
+    margin: 0 10rem 0 0;
+}
+
+/* List of CSV test files */
+.index-csv-list {
+    /* display: grid; */
+    /* grid-template-columns: repeat(4, max-content); */
+    /* grid-column-gap: 2em; */
+}
+
+/* Data  header */
+
+h2.data-entity {
+    /* padding: 1rem 0 1rem 0; */
+    /* margin: 0; */
+}
+
+.line .label {
+    font-size: 120%;
+    font-weight: 300;
+}
+
+.line .value {
+    font-size: 120%;
+    font-weight: 600;
+}
+
+/* Buttons */
+
+#download, #plot, #submit-query {
+    font-size: 2.0rem;
+    margin: 1.5rem 0 1.5rem 0;
+}
+
+.btn:disabled {
+    filter: brightness(50%);
+}
+
+/* DataTable */
+
+span.select-item {
+    /* padding: 1em; */
+}
+
+/* DataTables header */
+.dataTables_wrapper {
+}
+
+/* DataTables rows */
+table.dataTable tbody th, table.dataTable tbody td {
+    padding: .3rem 0 .3rem 2rem;
+    white-space: nowrap;
+}
+
+.datatable td:empty {
+    background-color: #202020;
+}
+
+.datatable td:empty::before {
+    top: 0;
+    left: 0;
+    font-size: 50%;
+    color: gray;
+    content: "(no value)";
+}
+
+/* first column */
+table.datatable td:first-child {
+    font-weight: bolder;
+}
+
+/* Profiling page */
+
+#counter-msg, #spinner, #spinner-msg {
+}
+
+iframe {
+    width: 100vw;
+    min-width: 100vw;
+    height: 1000em;
+    border: 0;
+}
+
+/* Loading... */
+
+#loading-outer {
+    display: flex;
+    flex-direction: column;
+}
+
+#download #loading-outer {
+    width: 50rem;
+}
+
+.dex-hidden {
+    display: none;
+}
+
+/* Download */
+
+.dex-space {
+    padding-top: 2rem;
+}
+
+/* Filter by Pandas Query - DataTable */
+
+/*
+Full CSS path to column checkboxes:
+/ html
+/ body
+/ div.dex-container
+/ div.widgets.pq
+/ div.stack
+/ div.stack-item
+/ label
+/ div#csv-table_wrapper.dataTables_wrapper.dt-jqueryui.no-footer
+/ div.dataTables_scroll
+/ div.dataTables_scrollHead.ui-state-default
+/ div.dataTables_scrollHeadInner
+/ table.dataframe.datatable.row-border.dataTable.no-footer
+/ thead
+/ tr
+/ th.sorting.ui-state-default
+/ div.DataTables_sort_wrapper
+/ div.pq-column-select-checkbox-container
+/ input#.pq-column-select-checkbox
+*/
+
+#csv-table_filter {
+    display: none;
+}
+
+#csv-table .unselected {
+    filter: brightness(50%);
+}
+
+
+.ui-state-default {
+    align-self: baseline;
+    border: 0;
+}
+
+/* Add Index column title */
+.dataTables_scrollHead th:nth-child(1)::after {
+    filter: brightness(50%);
+    text-overflow: clip;
+}
+
+.fg-toolbar {
+    display: inline-flex;
+    justify-content: start;
+    align-items: baseline;
+    width: 100%;
+}
+
+.fg-toolbar label {
+    display: inline-block;
+    margin: 0 .5rem 0 .5rem;
+    text-align: left;
+}
+
+#pq-toggle-all {
+    padding: 0 5rem 0 5rem;
+}
+
+#pq-toggle-all-input {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+
+#csv-table_length select {
+    min-width: 6rem;
+}
+
+#csv-table_length > label > select {
+    margin: 0 .5rem 0 .5rem;
+}
+
+/*
+Example table header, <th> and below. Note that the span holding the up/down sort arrows
+is a child of DataTables_sort_wrapper, but in the browser, it appears in the area of the
+<th>, due to collapsed margins (I think that's the reason).
+
+<th class="sorting ui-state-default" tabindex="0" aria-controls="csv-table" rowspan="1" colspan="1" style="width: 75.5px;" aria-label="Order: activate to sort column ascending">
+  <div class="DataTables_sort_wrapper">
+    <div class="pq-column-select-checkbox-container">
+      <input id="chk_4" class="pq-column-select-checkbox" type="checkbox" checked="checked">
+    </div>
+    Column Name Goes Here
+    <span class="DataTables_sort_icon css_right ui-icon ui-icon-caret-2-n-s"></span>
+  </div>
+</th>
+*/
+
+/*noinspection CssBrowserCompatibilityForProperties*/
+div.DataTables_sort_wrapper {
+    all: revert;
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+/*noinspection CssBrowserCompatibilityForProperties*/
+div.pq-column-select-checkbox-container {
+    all: initial;
+    display: flex;
+    width: 2.5rem;
+    min-width: unset;
+    max-width: unset;
+    min-height: unset;
+    max-height: unset;
+}
+
+/*noinspection CssBrowserCompatibilityForProperties*/
+div.pq-column-select-checkbox-item {
+    all: initial;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    align-items: stretch;
+    align-self: stretch;
+}
+
+/*noinspection CssBrowserCompatibilityForProperties*/
+input.pq-column-select-checkbox {
+    width: 1.5rem;
+    flex-grow: 1;
+}
+
+div.col-type {
+    font-size: 75%;
+    /*filter: brightness(60%);*/
+}
+
+div.col-supp {
+    color: green !important;
+}
+
+/* Root page */
+
+div.root-page ul {
+    font-size: 100%;
+}
+
+/* Debug bar */
+
+#dbg {
+    /*position: sticky;*/
+    /*top: 0;*/
+    font-size: 60%;
+    font-family: monospace;
+    margin: 0;
+    padding: 0;
+    max-height: 30rem;
+    overflow: scroll;
+    background-color: black;
+    /*     color: darkgreen; */
+    z-index: 100;
+}
+
+#dbg div.highlight,
+#dbg span,
+#dbg pre {
+    background-color: black;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    white-space: pre-wrap;
+    /*     width: 80%; */
+    /*     overflow: visible; */
+}
+
+#dbg div.debug {
+    border: 0;
+    padding: 0;
+    background-color: black;
+    margin: 1rem;
+}
+
+#dbg h1 {
+    /*     font-weight: bold; */
+    font-size: 1.6rem;
+    margin: 2rem 0 1rem 0;
+}
+
+#dbg h2 {
+    /*     font-weight: bold; */
+    font-size: 1.4rem;
+    margin: 1.5rem 0 1rem 0;
+}
+
+#dbg h3 {
+    /*     font-weight: bold; */
+    font-size: 1.2rem;
+    margin: 1rem 0 0 0;
+}
+
+
+#dbg th,
+#dbg tr,
+#dbg td {
+    text-align: start;
+    vertical-align: top;
+    white-space: nowrap;
+    padding: 0 1rem 0 1rem;
+}
+
+#dbg table {
+    margin: 0.5rem;
+}
+
+#nav {
+    margin-bottom: 0;
+}
+
+/*#dbg tbody td:first-child {*/
+/*#dbg th {*/
+/*    position: sticky;*/
+/*}*/
+
+
+thead th {
+    position: sticky;
+    top: 0;
+    background: linear-gradient(
+            to bottom,
+            rgba(20, 20, 20, 1),
+            rgba(20, 20, 20, 1),
+            rgba(20, 20, 20, 0)
+    );
+}
+
+tbody th {
+    position: sticky;
+    left: 0;
+    background: linear-gradient(
+            to right,
+            rgba(20, 20, 20, 1),
+            rgba(20, 20, 20, 1),
+            rgba(20, 20, 20, 0)
+    );
+
+    text-align: right;
+}
+
+
+/*noinspection CssUnknownProperty,CssBrowserCompatibilityForProperties*/
+#sticky-section {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    scrollbar-width: 2rem;
+}
+
+#csv-table .unselected {
+    color: #8b4444;
+}

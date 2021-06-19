@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% set ns = namespace() %}
+
+{% block body %}
+
+  <h2>CSV file subset</h2>
+
+  <h3>Filter by Query</h3>
+
+  <div class='instructions'>
+    <ul>
+      <li>
+        Type a query to filter out rows, and/or use the checkboxes to filter out full
+        columns.
+      </li>
+      <li>
+        The query syntax is NumPy <a href='https://numexpr.readthedocs.io'>NumExpr</a>,
+        which is similar to Python. For details, refer to the
+        <a href='https://numexpr.readthedocs.io/projects/NumExpr3/en/latest/user_guide.html'>
+          NumExpr User Guide
+        </a>.
+      </li>
+      <li>This filter can also be used for viewing the dataset:
+        <ul>
+          <li>Set the sort order by clicking the column headers,</li>
+          <li>adjust the page size by setting the number of entries to show,</li>
+          <li>then page through the results.</li>
+        </ul>
+        {# TODO: Link to the query syntax. #}
+      </li>
+    </ul>
+  </div>
+
+  <div class='widgets pq'>
+    <div class='stack'>
+      <div class='stack-item'>
+        <label>
+          {{ csv_html | safe }}
+        </label>
+      </div>
+      <div class='stack-item'>
+        <label>
+          <textarea id='pq-text' name='pandas-query' cols='80' rows='3'
+                    class='form-control' placeholder='Query'></textarea>
+        </label>
+      </div>
+      <div class='stack-item'>
+        {# These are hidden with CSS #}
+        <div class='line hide'>
+          <div class='line-item '>
+            <button class='btn btn-primary' id='pq-apply'>Apply</button>
+          </div>
+          <div class='line-item'>
+            <label class='' for='pq-auto'>Apply automatically</label>
+            <input class='' id='pq-auto' name='pq-auto' type='checkbox'
+                   checked='checked'/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class='stack-item'>
+      <p id='pq-result-msg' class='result-msg'>
+    </div>
+  </div>
+
+  <h3>
+    Filter by Time Period
+  </h3>
+  <div class='instructions'>
+    <ul>
+      {% set ns.date_col_list = derived_dtypes_list | selectattr('type_str', '==', 'TYPE_DATE') | list %}
+      {# value = index of the column in the CSV file #}
+      {# text = name of the column from the CSV file #}
+      <li>
+        {% if ns.date_col_list %}
+          Select a column containing dates to apply this filter.
+        {% else %}
+          Filter unavailable: No supported date columns have been declared in the EML
+          metadata associated with this CSV.
+        {% endif %}
+      </li>
+
+    </ul>
+  </div>
+  <div class='widgets'>
+    <div class='line'>
+      <div class='line-item'>
+        <div class='line-inner'>
+          <label>
+            Column:
+            <select class='dex-date-picker form-control' id='time-period-filter'
+                    name='date-dropdown'>
+              <option value='-1'>{{ filter_not_applied_str }}</option>
+              {% for d in ns.date_col_list %}
+                {# value = index of the column in the CSV file #}
+                {# text = name of the column from the CSV file #}
+                <option
+                    value='{{ d.col_name }}'>{{ d.col_name }}
+                  {#value='{{ dt_col_dict.col_idx }}'>{{ derived_dtypes_list[dt_col_dict.col_idx] }}#}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class='line-item'>
+        <div class='line-inner'>
+          <label>
+            Start:
+            <input class='dex-date-picker form-control' id='time-period-start'
+                   name='date-picker-start' placeholder='Start Date' type='text'>
+          </label>
+        </div>
+      </div>
+      <div class='line-item'>
+        <div class='line-inner'>
+          <label>
+            End:
+            <input class='dex-date-picker form-control' id='time-period-end'
+                   name='date-picker-end' placeholder='End Date' type='text'>
+          </label>
+        </div>
+      </div>
+    </div>
+    <p id='time-period-filter-msg' class='result-msg'>
+  </div>
+
+  <h3>
+    Filter by row index
+  </h3>
+
+  <div class='instructions'>
+    <ul>
+      <li>
+        Type starting and ending row indexes to apply this filter.
+      </li>
+      <li>
+        The row indexes can be found with Filter by Query above.
+      </li>
+    </ul>
+  </div>
+
+  <div class='widgets'>
+    <div class='line'>
+      <div class='line-item'>
+        <div class='line-inner'>
+          <label>
+            {#<label class='hidden'>#}
+            First row:
+            <input id='row-start' name='row-start' type='text'
+                   class='dex-numeric form-control' placeholder='first row'>
+          </label>
+        </div>
+      </div>
+      <div class='line-item'>
+        <div class='line-inner'>
+          <label>
+            {#<label class='hidden'>#}
+            Last row:
+            <input id='row-end' name='row-end' type='text'
+                   class='dex-numeric form-control' placeholder='last row'>
+          </label>
+        </div>
+      </div>
+    </div>
+    <p id='row-filter-msg' class='result-msg'>
+  </div>
+
+  <h3>
+    Filter by category
+  </h3>
+
+  <div class='instructions'>
+    {% set ns.cat_col_list = derived_dtypes_list | selectattr('type_str', '==', 'TYPE_CAT') | list %}
+    <ul>
+      {% if ns.cat_col_list %}
+        <li>Select a column containing categories and select one or more of the
+          categories to apply this filter.
+        </li>
+        <li>To remove a column from the filter, set it back to
+          '{{ filter_not_applied_str }}', or remove the selected categories.
+        </li>
+        <li>Leaving a column unselected is equivalent to selecting it and all its
+          categories.
+        </li>
+      {% else %}
+        <li>Filter unavailable: No categorical data columns have been declared in the
+          EML metadata associated with this CSV.
+        </li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <div class='widgets'>
+    <div class='cat-filter-list stack'></div>
+    <p id='category-description-msg' class='result-msg'>
+  </div>
+
+  {#<div class='instructions'></div>#}
+  <div class='space-top'>
+    <p>
+    <div id='download-spinner'></div>
+    <div id='download-container'>
+      <button id='download' class='btn btn-primary'>Download</button>
+    </div>
+    <p>
+  </div>
+
+  <template id='category-filter-template'>
+    {#
+    This is the only div that has the 'category-filter' class, which we use as a reference
+    in each column/category group. Since these elements get cloned, we use classes
+    instead of IDs.
+    #}
+    <div class='cat-filter-block'>
+      <label class='stack-item '>
+        Column:
+        <select class='cat-col form-control'>
+          {#<option disabled selected value></option>#}
+        </select>
+      </label>
+      <label class='stack-item '>
+        Categories:
+        <select class='cat-val form-control' multiple>
+          {#<option disabled selected value></option>#}
+        </select>
+      </label>
+    </div>
+  </template>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src='/static/subset.js' type='module'></script>
+{% endblock %}

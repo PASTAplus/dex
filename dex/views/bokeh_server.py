@@ -8,7 +8,7 @@ import flask
 import dex.cache
 import dex.csv_cache
 import dex.eml_cache
-import util
+import dex.util
 
 bokeh_server = flask.Blueprint("bokeh", "bokeh", url_prefix="/bokeh")
 
@@ -73,7 +73,7 @@ def col_plot(rid, col):
     fig.dot(range(len(d)), d, size=5, color=fg_color)
     plot_json = json.dumps(
         bokeh.embed.json_item(fig),
-        cls=util.DatetimeEncoder,
+        cls=dex.util.DatetimeEncoder,
     )
 
     add_plot_to_cache(rid, col, plot_json, theme_key)
@@ -128,7 +128,7 @@ def xy_plot(rid, x_col_idx, y_col_idx):
     # print(y_list)
     fig.dot(x_list, y_list, size=20, color="#000000")
     # fig.line(x.to_list(), y.to_list(),  color='#000000')
-    plot_json = json.dumps(bokeh.embed.json_item(fig), cls=util.DatetimeEncoder)
+    plot_json = json.dumps(bokeh.embed.json_item(fig), cls=dex.util.DatetimeEncoder)
 
     # Simulate large obj/slow server
     # import time

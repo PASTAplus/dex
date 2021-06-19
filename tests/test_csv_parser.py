@@ -1,6 +1,6 @@
 import csv
 import pprint
-import util
+import dex.util
 
 from flask import current_app as app
 
@@ -10,7 +10,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
-p = lambda *a, **kw: util.logpp(*a, **kw, logger=log.debug)
+p = lambda *a, **kw: dex.util.logpp(*a, **kw, logger=log.debug)
 
 # Dialects
 # See also: pandas/tests/io/parser/test_dialect.py

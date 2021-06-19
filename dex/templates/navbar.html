@@ -1,0 +1,127 @@
+{% macro dexnavbar(entity_tup, rid) %}
+  <script>
+  let $ = jQuery.noConflict();
+  </script>
+  <nav id='nav' class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <table>
+          <tr>
+            <td width="5%"></td>
+            <td><a href="/"><img style="width: 32px; width: 32px;" src="/static/assets/EDI-logo-300DPI_5.png"></a></td>
+            <td width="5%"></td>
+            <td>
+              <button aria-controls="navbar" aria-expanded="false"
+                      class="navbar-toggle collapsed" data-target="#top-navbar"
+                      data-toggle="collapse" type="button">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="/">Dex&nbsp;-&nbsp;Data&nbsp;Explorer</a>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div class="navbar-collapse collapse" id="top-navbar">
+        <ul class="nav navbar-nav">
+          {% if entity_tup and rid %}
+            <li><a id='nav_profile' class="nav-item nav-link nav-" href="/dex/profile/{{ rid }}">Profile</a></li>
+            <li><a id='nav_subset' class="nav-item nav-link" href="/dex/subset/{{ rid }}">Subset</a></li>
+            <li><a id='nav_plot' class="nav-item nav-link" href="/dex/plot/{{ rid }}">Plot</a></li>
+            <li><a id='nav_eml' class="nav-item nav-link" href="/dex/eml/{{ rid }}">EML</a></li>
+          {% endif %}
+        </ul>
+
+        {% if entity_tup and rid %}
+
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              {# "https://portal.edirepository.org/nis/home.jsp" #}
+              <a href="{{ entity_tup.data_url }}" class="nav-item nav-link" style="font-size: 18px;">
+                {% set pkd_id = [entity_tup.scope_str, entity_tup.identifier_int, entity_tup.version_int] | join('.') %}
+                Package ID: {{ pkd_id }}
+              </a>
+            </li>
+          </ul>
+
+        {% endif %}
+
+      </div>
+    </div>
+  </nav>
+
+  {#<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>#}
+  {#<script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>#}
+  <script>
+  $(function () {
+    let nav_check = $("#nav_check");
+    let nav_save = $("#nav_save");
+    let nav_download = $("#nav_download");
+    let nav_close = $("#nav_close");
+    let hidden_check = $("#hidden_check");
+    let hidden_save = $("#hidden_save");
+    let hidden_download = $("#hidden_download");
+    {#let hidden_new = $("#hidden_new");#}
+    {#let hidden_open = $("#hidden_open");#}
+    let hidden_close = $("#hidden_close");
+    let nav_link = $('.nav_link');
+    if (hidden_save.length === 0) {
+      nav_link.hide();
+      nav_save.hide();
+      nav_check.hide();
+    }
+    if (hidden_download.length === 0) {
+      nav_download.hide();
+    }
+    nav_check.on("click", function () {
+      if (hidden_check.length) {
+        hidden_check.click();
+      }
+    })
+    nav_save.on("click", function () {
+      if (hidden_save.length) {
+        hidden_save.click();
+      }
+    })
+    nav_download.on("click", function () {
+      if (hidden_download.length) {
+        hidden_download.click();
+      }
+    })
+    nav_close.on("click", function () {
+      if (hidden_close.length) {
+        hidden_close.click();
+      }
+    })
+  });
+
+  {#<a onclick="nav_save.click();" href="/eml/"><img style="width: 32px; width: 32px;" src="/static/assets/EDI-logo-300DPI_5.png"></a>#}
+  {#<a class="navbar-brand" onclick="nav_save.click();" href="/">Dex&nbsp;-&nbsp;Data&nbsp;Explorer</a>#}
+
+  </script>
+
+  {#<script src="//code.jquery.com/jquery-1.12.4.js"></script>#}
+  {#<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>#}
+  <script>
+  $(function () {
+
+    const __help__contents_dialog = $('#__help__contents_dialog').dialog({
+      autoOpen: false,
+      width: 600,
+      position: {my: "left top", at: "right center", of: "#__help__contents_btn"}
+    });
+    $('#__help__contents_btn').button().on('click', function () {
+      if (__help__contents_dialog.dialog('isOpen')) {
+        __help__contents_dialog.dialog('close');
+      }
+      else {
+        __help__contents_dialog.dialog('open');
+      }
+    });
+
+  });
+  </script>
+
+{% endmacro %}

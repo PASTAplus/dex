@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block header_all %}{% endblock %}
+
+{% block scripts %}
+  <script src='/static/profile.js'></script>
+  {#<script>#}
+  {#  $('#nav_profile').addClass('active')#}
+  {#</script>#}
+{% endblock %}
+
+{% block body %}
+  <p id='spinner'></p>
+
+  <iframe id='profile' src='/dex/profile/doc/{{ rid }}'></iframe>
+
+{% endblock %}

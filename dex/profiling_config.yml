@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/home/dahl/dev/dex/profiling_proc.py", line 90, in <module>
+    sys.exit(main())
+  File "/home/dahl/dev/dex/profiling_proc.py", line 23, in main
+    return flask_main(app)
+  File "/home/dahl/dev/dex/profiling_proc.py", line 46, in flask_main
+    arg = flask.json.loads(json_str)
+  File "/home/dahl/.pyenv/versions/dex-3.9.2/lib/python3.9/site-packages/flask/json/__init__.py", line 253, in loads
+    return _json.loads(s, **kwargs)
+  File "/home/dahl/.pyenv/versions/3.9.2/lib/python3.9/json/__init__.py", line 359, in loads
+    return cls(**kw).decode(s)
+  File "/home/dahl/.pyenv/versions/3.9.2/lib/python3.9/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/home/dahl/.pyenv/versions/3.9.2/lib/python3.9/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
