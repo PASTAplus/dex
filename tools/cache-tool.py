@@ -1,23 +1,24 @@
 #!/usr/bin/env python
 
-"""Perform operations on the Dex cache
+"""Perform operations on the Dex caches
 """
 
 import argparse
 import logging
 import pathlib
 import sys
-import urllib.parse
 
 import flask
 import requests
 
 import dex.cache
+import dex.util
 
 sys.path.append(pathlib.Path('../dex').resolve().as_posix())
 # print('\n'.join([s.as_posix(), sys.path))
 
 import dex.db
+
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ HOST_DICT = {
 
 def flask_main(_ctx):
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        __doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
         '--env',
@@ -38,13 +39,50 @@ def flask_main(_ctx):
         default='dev',
         help=', '.join(f'{k}={v}' for k, v in HOST_DICT.items()),
     ),
-    parser.add_argument('--debug', help='Debug level logging')
-    subparsers = parser.add_subparsers()
-    single_parser = subparsers.add_parser('single')
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Debug level logging',
+    )
+
+    subparsers = parser.add_subparsers(title='Command')
+
+    wipe_parser = subparsers.add_parser(
+        """Delete all cached objects from the filesystem and corresponding information
+        from the database.
+        """
+    )
+    parser.add_argument(
+        '--yes-i-am-sure',
+        action='store_true',
+        help="Required argument acting as speed bump",
+    )
+
+    single_parser = subparsers.add_parser('Single')
     single_parser.add_argument('rid', help='Row ID')
-    all_parser = subparsers.add_parser('all')
+
+    # all_parser = subparsers.add_parser('all')
+
     args = parser.parse_args()
-    refresh_single(args)
+
+    logging.basicConfig(
+        format='%(name)s %(levelname)-8s %(message)s',
+        level=logging.DEBUG if args.debug else logging.INFO,
+        stream=sys.stderr,
+    )
+    logging.getLogger('matplotlib').setLevel(logging.ERROR)
+
+    # refresh_single(args)
+
+    if not args.yes_i_am_sure:
+        log.error('Missing argument')
+        return 1
+
+    dex.util.wipe_cache()
+
+    log.info('Success!')
+
+    return 0
 
 
 class DexCache:
@@ -85,6 +123,6 @@ class DexCache:
 
 if __name__ == '__main__':
     app = flask.Flask(__name__)
-    app.config.from_object("config")
+    app.config.from_object("dex.config")
     with app.app_context() as ctx:
         sys.exit(flask_main(ctx))
