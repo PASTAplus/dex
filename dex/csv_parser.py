@@ -252,8 +252,6 @@ def get_col_agg_dict(df, derived_dtypes_list):
 
 def apply_formatters(df, derived_dtypes_list):
     formatter_list = get_formatter_list(derived_dtypes_list)
-    # df = pd.DataFrame()
-
     for i in range(len(derived_dtypes_list)):
         df.iloc[:, i] = df.iloc[:, i].map(formatter_list[i]['fn'])
     return df
