@@ -108,15 +108,28 @@ def disk(key, obj_type):
         @functools.wraps(fn)
         def wrapper(rid, *args, **kwargs):
             with lock(rid, key, obj_type):
-                if flask.current_app.config["DISK_CACHE_ENABLED"] and is_cached(
-                    rid, key, obj_type
-                ):
-                    return read_from_cache(rid, key, obj_type)
+                if flask.current_app.config["DISK_CACHE_ENABLED"] and is_cached(rid, key, obj_type):
+                    obj = read_from_cache(rid, key, obj_type)
+                    log.debug(
+                        f'Using cached object. key="{key}" obj_type="{obj_type}" '
+                        f'class="{obj.__class__.__name__}" '
+                        f'ram="{sys.getsizeof(obj, -1):,} bytes"'
+                    )
+                    return obj
                 else:
+                    log.debug(
+                        f'Object is not cached. Generating it. key="{key}" obj_type="{obj_type}" '
+                    )
                     # except dex.exc.CacheError as e:
                     #     log.debug(f'Error: {repr(e)}')
                     obj = fn(rid, *args, **kwargs)
                     save_to_cache(rid, key, obj_type, obj)
+                    log.debug(
+                        f'Caching new object, then returning it to client. '
+                        f'key="{key}" obj_type="{obj_type}" '
+                        f'class="{obj.__class__.__name__}" '
+                        f'ram="{sys.getsizeof(obj, -1):,} bytes"'
+                    )
                     return obj
 
         return wrapper
