@@ -7,24 +7,43 @@ import logging
 import pathlib
 import re
 import shutil
+import types
 
 import requests
 from flask import current_app as app
 
 import dex.exc
+import dex.util
 
-DATA_RX_TUP = re.compile(
+DATA_URL_RX = re.compile(
     r"""
     (?P<base_url>https://pasta(?:-d)?.lternet.edu/package)
     /data/eml/
     (?P<scope_str>[^/]+)/
     (?P<id_str>\d+)/
     (?P<ver_str>\d+)/
-    (?P<entity_str>[a-f0-9A-F]{32,})
+    (?P<entity_str>[0-9a-fA-F]{32,})
     $
     """,
     re.VERBOSE,
 )
+
+DATA_PATH_RX = re.compile(
+    r"""
+      (?P<base_url>.*)/
+      (?P<scope_str>[^.]*)\.
+      (?P<id_str>\d+)\.
+      (?P<ver_str>\d+)/
+      (?P<entity_str>[0-9a-fA-F]{32,})
+      $
+    """,
+    re.VERBOSE,
+)
+
+# DATA_PATH_RX = re.compile(
+#     r"""(?P<entity_str>.*)""",
+#     re.VERBOSE,
+# )
 
 log = logging.getLogger(__name__)
 
@@ -33,6 +52,9 @@ TEST_TO_PROD_BASE_URL_DICT = {
     'https://pasta-d.edirepository.org/pasta': 'https://pasta.lternet.edu/pasta',
 }
 
+# TODO. Keeping the base_url in the EntityTup ties the tuple to a location. See how it
+# would work out to keep the tuple more agnostic by leaving out the base_url. Remember
+# though that package identifiers in PASTA are not opaque.
 EntityTup = collections.namedtuple(
     "EntityTup",
     [
@@ -79,7 +101,8 @@ def get_pkgid_list(scope_str):
 
 
 def get_revid_list(scope_str, pkgid_int):
-    response = requests.get(f'{app.config["PASTA_BASE_URL"]}/eml/{scope_str}/{pkgid_int}')
+    response = requests.get(
+        f'{app.config["PASTA_BASE_URL"]}/eml/{scope_str}/{pkgid_int}')
     response.raise_for_status()
     return map(int, response.text.splitlines())
 
@@ -161,45 +184,71 @@ def get_data_path(entity_tup):
     ).resolve()
 
 
-# def get_pkg_id(rid):
-#     t = dex.db.get_entity(rid)
-#     return f'{t.scope_str}.{t.identifier_int}.{t.version_int}'
-
-
 def get_pkg_id(entity_tup, sep_str='.', entity=False):
     t = entity_tup
     return '/'.join(
         (
             sep_str.join(
-                (str(x) for x in (t.scope_str, t.identifier_int, t.version_int))
-            ),
+                (str(x) for x in (t.scope_str, t.identifier_int, t.version_int))),
             *((t.entity_str,) if entity else ()),
         )
     )
 
 
+def get_pkg_id_as_path(entity_tup):
+    """Get the Package ID for use in a filesystem path. In this form, the Package ID has
+    scope, identifier and version separated by periods, which causes those elements to
+    make up a single level in the directory hierarchy. The entity name becomes the
+    filename of the object.
+    """
+    t = entity_tup
+    return f'{t.scope_str}.{t.identifier_int}.{t.version_int}/{t.entity_str}'
+
+
 def get_pkg_id_as_url(entity_tup):
+    """Get the Package ID for use in a PASTA URL. In this form, the Package ID has
+    scope, identifier and version separated by slashes.
+    """
     t = entity_tup
     return f'{t.scope_str}/{t.identifier_int}/{t.version_int}/{t.entity_str}'
 
 
-def get_entity_tup(data_url):
-    # for rx in DATA_RX_TUP:
-    m = DATA_RX_TUP.match(data_url)
-    if m:
-        d = dict(m.groupdict())
-        log.info(f'data_url={data_url}')
-        log.info(f'entity d={d}')
-        data_url = data_url.replace("/pasta-d/", "/pasta/")
-        d["identifier_int"] = int(d.pop("id_str"))
-        d["version_int"] = int(d.pop("ver_str"))
-        return EntityTup(data_url=data_url, **d)
-    raise Exception(f'Not a valid Data or File URL/URI: "{data_url}"')
+def get_entity_by_data_url(data_url):
+    m = DATA_URL_RX.match(data_url)
+    if not m:
+        raise dex.exc.DexError(f'Not a valid PASTA data URL: "{data_url}"')
+    d = dict(m.groupdict())
+    # TODO: I don't think we want to normalize to production environments here.
+    data_url = data_url.replace("/pasta-d/", "/pasta/")
+    d["identifier_int"] = int(d.pop("id_str"))
+    d["version_int"] = int(d.pop("ver_str"))
+    return EntityTup(data_url=data_url, **d)
 
 
-def get_other_base_url(base_url):
-    """Given the name of a production domain, return the test domain and vice versa.
-    """
+def get_entity_by_local_path(data_path):
+    # TODO: This is a lossy operation since the data_path doesn't have all the
+    # info for creating an entity. This is since the entity is tied to a specific
+    # PASTA environment. Should the entity be environment agnostic?
+    m = DATA_PATH_RX.match(data_path.as_posix())
+    if not m:
+        raise dex.exc.DexError(f'Not a valid local data path: "{data_path}"')
+    n = types.SimpleNamespace(**m.groupdict())
+    return EntityTup(
+        data_url=(
+            f'{app.config["PASTA_BASE_URL"]}/data/eml/'
+            f'{n.scope_str}/{n.id_str}/{n.ver_str}/{n.entity_str}'
+        ),
+        base_url=app.config['PASTA_BASE_URL'],
+        scope_str=n.scope_str,
+        identifier_int=int(n.id_str),
+        version_int=int(n.ver_str),
+        entity_str=n.entity_str,
+    )
+
+
+def get_corresponding_base_url(base_url):
+    """Given the BaseURL for a PASTA production environment, return the BaseURL for
+    the corresponding test environment, and vice versa."""
     log.debug(f'Converting base_url: {base_url}')
     for test_url, prod_url in TEST_TO_PROD_BASE_URL_DICT.items():
         if base_url == test_url:

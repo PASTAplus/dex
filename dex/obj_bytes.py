@@ -14,9 +14,9 @@ connected storage. Only objects that were downloaded and accessed recently are l
 be available in the cache. The next step searches general PASTA package storage that is
 available on the filesystem but may have lower bandwidth due to being accessed over a
 local area network, such as NAS. Finally, PASTA web services are searched and, if found,
-the object is downloaded and cached locally. For each search location, if both a
-production and a test instance is available, the production instance is checked first,
-then the test instance.
+the object is downloaded and cached locally. Each PASTA service has a production and a
+test environment. Both environments are searched, with the request from which the
+request originated, searched first.
 
 The eviction policy for the cache is Least Recently Used (LRU), which should keep
 objects available locally during the initial processing. The access pattern for Dex is
@@ -44,6 +44,7 @@ import dex.pasta
 
 log = logging.getLogger(__name__)
 
+
 def open_csv(rid):
     """Given a PASTA entity tuple for a CSV in the form of a Row ID, return a stream
     of object bytes.
@@ -64,7 +65,7 @@ def open_eml(rid):
 
     The returned value is always a seekable stream holding the bytes of the CSV,
     regardless of where the bytes are located, how they are accessed, decoded or
-    decompressed..
+    decompressed.
 
     If the object bytes cannot be found, raises `dex.exc.CacheError`.
     """
@@ -73,47 +74,39 @@ def open_eml(rid):
     return _open_obj(entity_tup, is_eml=True)
 
 
-def _open_obj_with_alternate(entity_tup, is_eml):
+def _open_obj(entity_tup, is_eml):
     """First search the production or test environment designated by the base_url member
     of the entity_tup. If the object is not found there, repeat the search on the
-    alternate environment. So, if the search started on production, then search test and
-    vice versa.
-    """
-    obj = _open_obj(entity_tup, is_eml)
-    if obj:
-        return obj
-    entity_tup.base_url = dex.pasta.get_other_base_url(entity_tup.base_url)
-    obj = _open_obj(entity_tup, is_eml)
-    if obj:
-        return obj
-
-    raise dex.exc.CacheError(f"Cannot get bytes for object: {dex.pasta.get_data_path(entity_tup)}")
-
-def _open_obj(entity_tup, is_eml):
-    """Handle initial retrieval and temporary caching of the source CSV and EML docs
-    that can be processed by Dex.
+    alternate environment.
     """
     obj = _open_obj_from_filesystem_cache(entity_tup, is_eml)
     if obj:
         return obj
-
     obj = _open_obj_from_filesystem_store(entity_tup, is_eml)
     if obj:
         return obj
-
     obj = _open_obj_from_pasta_service(entity_tup, is_eml)
     if obj:
         return obj
-
+    entity_tup.base_url = dex.pasta.get_corresponding_base_url(entity_tup.base_url)
+    obj = _open_obj_from_pasta_service(entity_tup, is_eml)
+    if obj:
+        return obj
+    raise dex.exc.CacheError(
+        f'Cannot find bytes for object. entity_tup="{entity_tup}" is_eml="{is_eml}"'
+    )
 
 
 def _open_obj_from_filesystem_cache(entity_tup, is_eml):
-    # log.info('Checking filesystem cache...')
-    pass
+    log.debug(f'Checking filesystem cache. entity_tup="{entity_tup}" is_eml="{is_eml}"')
+    try:
+        return _get_cache_path(entity_tup, is_eml).open('rb')
+    except OSError:
+        pass
 
 
 def _open_obj_from_filesystem_store(entity_tup, is_eml):
-    log.info('Checking filesystem package store...')
+    log.debug(f'Checking filesystem package store. entity_tup="{entity_tup}" is_eml="{is_eml}"')
     if is_eml:
         return _get_eml_path(entity_tup)
     else:
@@ -121,8 +114,8 @@ def _open_obj_from_filesystem_store(entity_tup, is_eml):
 
 
 def _open_obj_from_pasta_service(entity_tup, is_eml):
-    # log.info('Checking PASTA web service')
-    pass
+    log.debug(f'Checking PASTA web service. entity_tup="{entity_tup}" is_eml="{is_eml}"')
+    return _download_through_cache(entity_tup, is_eml)
 
 
 def _get_csv_path(entity_tup):
@@ -136,32 +129,35 @@ def _get_eml_path(entity_tup):
 
 
 def _get_existing_path(obj_path):
-    log.info(f'Looking for object bytes at: {obj_path.as_posix()}')
+    log.debug(f'Looking for object bytes at: {obj_path.as_posix()}')
     if obj_path.exists() and obj_path.stat().st_size:
-        log.info('-> Found!')
+        log.debug('-> Found!')
         return obj_path
-    log.info('-> Invalid path')
+    log.debug('-> Invalid path')
 
 
 # Cache of downloaded objects
 
 
-def _download_through_cache(obj_url):
-    file_name = dex.filesystem.get_safe_reversible_path_element(obj_url)
-    obj_path = app.config["TMP_CACHE_ROOT"] / file_name
+def _open_from_filesystem_cache(entity_tup, is_eml):
+    log.debug(f'Checking local filesystem cache. entity_tup={entity_tup} is_eml="{is_eml}"')
+    obj_path = _get_cache_path(entity_tup, is_eml)
     try:
-        return obj_path.open('rb')
+        return obj_path #.open('rb')
     except OSError:
-        return _download_to_cache(obj_path, obj_url)
+        pass
 
 
-def _download_to_cache(obj_path, obj_url):
+def _download_through_cache(entity_tup, is_eml):
     """Download object and return opened stream"""
-    assert isinstance(obj_path, pathlib.Path)
-
+    log.debug(f'Downloading from PASTA service. entity_tup="{entity_tup}" is_eml="{is_eml}"')
+    obj_path = _get_cache_path(entity_tup, is_eml)
+    assert not obj_path.exists()
     obj_path.parent.mkdir(0o755, parents=True, exist_ok=True)
 
     _limit_cache_size()
+
+    obj_url = _get_obj_url(entity_tup, is_eml)
 
     with obj_path.with_suffix('tmp').open('wb') as f:
         with requests.get(obj_url, stream=True) as r:
@@ -174,7 +170,7 @@ def _download_to_cache(obj_path, obj_url):
 
     obj_path.with_suffix('tmp').rename(obj_path)
 
-    return obj_path.open('rb')
+    return obj_path # .open('rb')
 
 
 def _limit_cache_size():
@@ -188,28 +184,16 @@ def _limit_cache_size():
         path_list.remove(oldest_path)
 
 
-# def _is_file_uri(uri):
-#     return uri.startswith('file://')
+def _get_cache_path(entity_tup, is_eml):
+    return (
+        app.config["TMP_CACHE_ROOT"]
+        / pathlib.Path(
+            dex.filesystem.get_safe_reversible_path_element(entity_tup.data_url),
+        ).with_suffix('.eml' if is_eml else '.csv')
+    )
 
-
-# def _is_url(uri):
-#     return uri.startswith('http://') or uri.startswith('https://')
-
-
-# def _uri_to_path(uri):
-#     """Convert a file:// URI to a local path.
-#
-#     Args:
-#         uri: file:// URI
-#
-#     Returns:
-#         pathlib.Path()
-#     """
-#     uri_tup = urllib.parse.urlparse(uri)
-#     p = pathlib.Path(
-#         uri_tup.netloc,
-#         urllib.request.url2pathname(urllib.parse.unquote(uri_tup.path)),
-#     ).resolve()
-#     if not p.exists():
-#         raise dex.exc.CacheError(f"Invalid file URI: {uri}")
-#     return p
+def _get_obj_url(entity_tup, is_eml):
+    if is_eml:
+        return dex.pasta.get_eml_url(entity_tup)
+    else:
+        return dex.pasta.get_data_url(entity_tup)

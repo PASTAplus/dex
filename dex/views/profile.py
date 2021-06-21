@@ -1,9 +1,7 @@
-import io
 import logging
 
 import flask
 import flask.json
-import pandas as pd
 import pandas_profiling
 
 import dex.db
@@ -13,12 +11,14 @@ import dex.csv_parser
 import dex.obj_bytes
 import dex.debug
 import dex.eml_cache
+import dex.util
 
 log = logging.getLogger(__name__)
 
 profile_blueprint = flask.Blueprint("profile", __name__, url_prefix="/dex/profile")
 
 
+# noinspection PyUnresolvedReferences
 @profile_blueprint.route("/<rid>")
 def profile(rid):
     return flask.render_template(
@@ -51,9 +51,7 @@ def doc(rid):
         # return flask.send_file(f, mimetype='text/html')
         # return flask.Response(flask.stream_with_context(f), status=200, mimetype='text/html')
 
-    return flask.Response(flask.stream_with_context(chunks_gen()), status=200,
-                          mimetype='text/html')
-
+    return flask.Response(flask.stream_with_context(chunks_gen()), status=200, mimetype='text/html')
 
 
 @dex.cache.disk("profile", "html")
@@ -66,25 +64,14 @@ def render_profile(rid):
     # Create a tree representation of the report.
     report_tree = pandas_profiling.ProfileReport(
         csv_df,
-        # config_file=arg_dict['yml_config_path'],
+        config_file=flask.current_app.config['PROFILING_CONFIG_PATH'],
         # dark_mode=arg_dict['dark_mode'],
         infer_dtypes=False,
     )
 
     # rearrange_report(report_tree)
-
-    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-        csv_df: pd.DataFrame
-        # log.error('Final DF passed to Pandas Profiling:')
-        log.error('DataFrame:')
-        log.error(csv_df)
-        log.error('Info:')
-        info_buf = io.StringIO()
-        csv_df.info(verbose=True, buf=info_buf)
-        log.error(info_buf.getvalue())
-
+    dex.util.dump_full_dataframe(csv_df)
     html_str = report_tree.to_html()
-
     return html_str
 
 
@@ -96,7 +83,6 @@ def rearrange_report(report_tree):
 
         section_list[0].content['items'][1].content['name'] = 'Notes'
         section_list[0].content['items'][2].content['name'] = 'Reproducibility'
-        section_list[0].content['items'][2].content['items'][0].content[
-            'name'] = 'Reproducibility'
+        section_list[0].content['items'][2].content['items'][0].content['name'] = 'Reproducibility'
     except Exception:
         log.exception('Unable to reorder the sections of the Pandas Profiling report')

@@ -120,7 +120,7 @@ def dialect(csv_path):
 
 @pytest.fixture
 def entity_tup():
-    return dex.pasta.get_entity_tup(DATA_URL_1)
+    return dex.pasta.get_entity_by_data_url(DATA_URL_1)
 
 
 @pytest.fixture

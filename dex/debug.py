@@ -89,7 +89,7 @@ def debug(rid):
         return out_d
 
     buf = io.StringIO()
-    csv_df.info(buf=buf)
+    csv_df.debug(buf=buf)
     col_info_txt = buf.getvalue()
     flask_g_html = dict_to_kv_html(flask.g)
 
@@ -162,6 +162,5 @@ def highlight_types(val):
 
 def get_info_as_html(df):
     buf = io.StringIO()
-    df.info(buf=buf)
     df_info = pd.DataFrame(columns=['DF INFO'], data=buf.getvalue().split('\n'))
     return df_info.to_html()

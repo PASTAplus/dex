@@ -4,6 +4,7 @@ import logging
 import lzma
 import pathlib
 import re
+import sys
 import tempfile
 import threading
 import time
@@ -51,23 +52,22 @@ named_thread_locks = NamedThreadLocks()
 
 threading_lock = threading.RLock()
 
-log = logging.getLogger(__name__)
 
 LOCK_ROOT = pathlib.Path(tempfile.gettempdir(), "DEX-LOCK")
 LOCK_ROOT.mkdir(0o755, parents=True, exist_ok=True)
 
+log = logging.getLogger(__name__)
+
 
 @contextlib.contextmanager
 def lock(rid, key, obj_type):
+    rid = rid or 'global'
     log.debug(f"Waiting to acquire lock: {rid}_{key}_{obj_type}")
     with named_thread_locks(f"{rid}_{key}_{obj_type}"):
         start_ts = time.time()
-        with fasteners.InterProcessLock(
-            (LOCK_ROOT / f"{rid}_{key}_{obj_type}").as_posix()
-        ):
+        with fasteners.InterProcessLock((LOCK_ROOT / f"{rid}_{key}_{obj_type}").as_posix()):
             log.debug(
-                f"Acquired lock after {time.time() - start_ts : .02f}s: "
-                f"{rid}_{key}_{obj_type}"
+                f"Acquired lock after {time.time() - start_ts : .02f}s: " f"{rid}_{key}_{obj_type}"
             )
             yield
         log.debug(f"Released lock: {rid}_{key}_{obj_type}")
@@ -226,15 +226,11 @@ def open_file(rid, key, obj_type, for_write=False):
     cache_path, is_compressed = get_cache_path(rid, key, obj_type)
     if for_write:
         if flask.current_app.config["DISK_CACHE_ENABLED"] and cache_path.exists():
-            raise dex.exc.CacheError(
-                f"Cache file already exists: {cache_path.as_posix()}"
-            )
+            raise dex.exc.CacheError(f"Cache file already exists: {cache_path.as_posix()}")
         cache_path.parent.mkdir(parents=True, exist_ok=True)
     else:
         if not cache_path.exists():
-            raise dex.exc.CacheError(
-                f"Cache file does not exist: {cache_path.as_posix()}"
-            )
+            raise dex.exc.CacheError(f"Cache file does not exist: {cache_path.as_posix()}")
     if is_compressed:
         with lzma.LZMAFile(
             filename=cache_path.as_posix(),

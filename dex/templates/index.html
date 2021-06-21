@@ -87,30 +87,22 @@
               {{ '{:,}'.format(csv_dict.size) }}
             </td>
             <td>
-              {{ csv_dict.scope_str }}
+              {{ csv_dict.entity.scope_str }}
             </td>
             <td>
-              {{ csv_dict.id_str }}
+              {{ csv_dict.entity.identifier_int }}
             </td>
             <td>
-              {{ csv_dict.ver_str }}
+              {{ csv_dict.entity.version_int }}
             </td>
             <td class='mono'>
-              {{ csv_dict.entity_str }}
+              {{ csv_dict.entity.entity_str }}
             </td>
+            {#<td>#}
+            {#  {{ csv_dict.entity.data_url }}#}
+            {#</td>#}
             <td>
-              {% set pkd_id = [
-                'https://pasta-d.lternet.edu/package/data/eml',
-                csv_dict.scope_str,
-                csv_dict.id_str,
-                csv_dict.ver_str,
-                csv_dict.entity_str
-                ] | join('/') %}
-              {#<a href='/sample/{{ pkd_id | urlencode | replace("/", "%2F") }}'>open</a>#}
-              <a href='/{{ pkd_id }}'>open</a>
-            </td>
-            <td>
-              {{ csv_dict.status }}
+              <a href='/{{ csv_dict.entity.data_url|urlencode }}'>open</a>
             </td>
           </tr>
         {% endfor %}

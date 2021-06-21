@@ -251,8 +251,6 @@ def get_col_agg_dict(df, derived_dtypes_list):
 
 
 def apply_formatters(df, derived_dtypes_list):
-    # log.error(type(df))
-
     formatter_list = get_formatter_list(derived_dtypes_list)
     # df = pd.DataFrame()
 

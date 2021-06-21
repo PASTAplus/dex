@@ -17,12 +17,14 @@ import fasteners
 import flask
 import flask.json
 import lxml.etree
+import pandas as pd
 import pygments
 import pygments.formatters
 import pygments.lexers
 from flask import current_app as app
 
 import dex.db
+from dex.views.profile import log
 
 log = logging.getLogger(__name__)
 
@@ -37,7 +39,7 @@ class Counter:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        log.info("-" * 100)
+        log.debug("-" * 100)
         self.print_counters(log.info)
 
     def count(self, id_str, key, detail_obj=None):
@@ -75,7 +77,7 @@ class CombinedLock:
 
     @contextlib.contextmanager
     def lock(self, rid, key, obj_type, write=False):
-        # log.error(f'{self._root_path}, {lock_name}, {is_write}')
+        # log.debug(f'{self._root_path}, {lock_name}, {is_write}')
         lock_name = f'{rid}_{key}_{obj_type}'
         tp = f'{self._root_path / lock_name}_t'
         pp = f'{self._root_path / lock_name}_p'
@@ -282,10 +284,10 @@ def wipe_cache():
         app.config['CACHE_ROOT_DIR'],
     ):
         # p:pathlib.Path
-        log.info(f'Deleting dir tree: {p.as_posix()}')
+        log.debug(f'Deleting dir tree: {p.as_posix()}')
         wipe_dir(p.resolve().absolute())
 
-    log.info(f'Deleting entities from database')
+    log.debug(f'Deleting entities from database')
     dex.db.clear_entities()
 
 
@@ -305,3 +307,42 @@ def wipe_dir(p):
             wipe_dir(item)
         else:
             item.unlink()
+
+
+# def _is_file_uri(uri):
+#     return uri.startswith('file://')
+
+
+# def _is_url(uri):
+#     return uri.startswith('http://') or uri.startswith('https://')
+
+
+# def _uri_to_path(uri):
+#     """Convert a file:// URI to a local path.
+#
+#     Args:
+#         uri: file:// URI
+#
+#     Returns:
+#         pathlib.Path()
+#     """
+#     uri_tup = urllib.parse.urlparse(uri)
+#     p = pathlib.Path(
+#         uri_tup.netloc,
+#         urllib.request.url2pathname(urllib.parse.unquote(uri_tup.path)),
+#     ).resolve()
+#     if not p.exists():
+#         raise dex.exc.CacheError(f"Invalid file URI: {uri}")
+#     return p
+
+def dump_full_dataframe(csv_df):
+    if not log.isEnabledFor(logging.DEBUG):
+        return
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+        # log.debug('Final DF passed to Pandas Profiling:')
+        log.debug('DataFrame:')
+        log.debug(csv_df)
+        log.debug('Info:')
+        info_buf = io.StringIO()
+        csv_df.info(verbose=True, buf=info_buf)
+        log.debug(info_buf.getvalue())

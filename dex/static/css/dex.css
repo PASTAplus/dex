@@ -342,6 +342,7 @@ table.datatable td:first-child {
 /* Profiling page */
 
 #counter-msg, #spinner, #spinner-msg {
+  margin: 2rem;
 }
 
 iframe {

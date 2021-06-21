@@ -167,6 +167,25 @@ def get_data_table(rid):
     return dt_el
 
 
+def is_local_csv_with_eml(entity_tup):
+    """Return True if {entity_tup} is for a data object that has an associated
+    EML doc in the local filesystem package store, and the EML doc has a description
+    for the data object, and the description includes a dataTable section.
+    """
+    eml_path = dex.pasta.get_eml_path(entity_tup)
+    pkg_path = dex.pasta.get_pkg_id_as_url(entity_tup)
+    try:
+        eml_el = lxml.etree.parse(eml_path.as_posix())
+    except Exception as e:
+        log.error(f'Invalid EML doc in local store: {eml_path}. error: {e}')
+        return False
+    try:
+        dex.eml_types.get_data_table_by_package_id(eml_el, pkg_path)
+    except dex.exc.EMLError:
+        return False
+    return True
+
+
 # Full EML
 
 
