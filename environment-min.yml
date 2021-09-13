@@ -1,0 +1,30 @@
+name: dex
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - flask
+  - python=3.9
+  - matplotlib
+  - pygments
+  - pip
+  - python-dateutil
+  - pytest
+  - bokeh
+  - werkzeug
+  - pandas
+  - lxml
+  - requests
+  - fasteners
+  - numpy
+  - uwsgi
+  - bottleneck
+  - htmlmin
+  - imagehash
+  - joblib
+  - missingno
+  - multimethod
+  - networkx
+  - pandas-profiling
+  - regex
+prefix: /home/pasta/anaconda3/envs/dex
