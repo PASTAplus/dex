@@ -10,6 +10,7 @@ import tempfile
 import pandas as pd
 import pytest
 
+
 import dex.db
 import dex.main
 import dex.main
@@ -54,13 +55,11 @@ def app_context(app):
         os.unlink(app.config['SQLITE_PATH'])
 
 
-@pytest.fixture(scope='function', autouse=True)
-@pytest.fixture
-def client(app, app_context):
-    with app.test_client() as client:
-        yield client
-
-
+# @pytest.fixture(scope='function', autouse=True)
+# @pytest.fixture
+# def client(app, app_context):
+#     with app.test_client() as client:
+#         yield client
 #
 
 
