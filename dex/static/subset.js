@@ -40,9 +40,7 @@ async function post_form(v)
   $('#download-container').addClass('dex-hidden');
 
   let filename = (
-    `${g.entity_tup.scope_str}.`
-      `${g.entity_tup.identifier_int}.`
-      `${g.entity_tup.version_int}.csv`
+    `${g.entity_tup.scope_str}.${g.entity_tup.identifier_int}.${g.entity_tup.version_int}.zip`
   );
   fetch(`#`, {
     mode: 'no-cors',

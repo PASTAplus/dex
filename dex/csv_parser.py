@@ -8,19 +8,22 @@ import csv
 import datetime
 import functools
 import logging
+import time
 
 import clevercsv
+import clevercsv.cparser
+import clevercsv.dialect
+import numpy as np
 import pandas as pd
 from flask import current_app as app
 
 import dex.db
-import dex.cache
-import dex.csv_cache
-import dex.obj_bytes
-import dex.eml_cache
+# import dex.cache
+# import dex.csv_cache
 import dex.eml_cache
 import dex.eml_types
 import dex.exc
+import dex.obj_bytes
 import dex.pasta
 import dex.util
 
@@ -152,6 +155,14 @@ def get_clevercsv_dialect(csv_path, verbose=False):
             fp.read(app.config["CSV_SNIFFER_THRESHOLD"]),
             verbose=verbose,
         )
+    if clever_dialect.quotechar == '':
+        clever_dialect.quotechar = '"'
+
+    log.debug(f'clevercsv_dialect="{clever_dialect}"')
+
+    if clever_dialect == clevercsv.dialect.SimpleDialect(',', '', ''):
+        raise dex.exc.CSVError(f'Unable to find header row in CSV. csv_path="{csv_path}"')
+
     return clever_dialect
 
 
@@ -193,11 +204,10 @@ def find_header_row(csv_path):
     the top row.
     """
     clevercsv_dialect = get_clevercsv_dialect(csv_path)
-
     count_dict = {}
     with open(csv_path, "r", newline="") as f:
         for row_idx, row in enumerate(clevercsv.reader(f, clevercsv_dialect)):
-            if row_idx == 100:
+            if row_idx == app.config["CSV_SNIFFER_THRESHOLD"]:
                 break
             count_dict.setdefault(len(row), 0)
             count_dict[len(row)] += 1
@@ -369,8 +379,6 @@ def get_formatter(dtype_dict):
 
 
 def get_parser(dtype_dict):
-    """"""
-
     # TODO: Move parsers to this pattern
     def parse_date_optimized(date_series_in, date_fmt_str=None):
         """Date parser optimized for the common case where the same date appears in

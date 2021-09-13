@@ -24,7 +24,6 @@ import pygments.lexers
 from flask import current_app as app
 
 import dex.db
-from dex.views.profile import log
 
 log = logging.getLogger(__name__)
 

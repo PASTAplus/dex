@@ -1,15 +1,18 @@
 import datetime
+import io
 import json
 import logging
+import pathlib
 import pprint
+import zipfile
 
 import flask
 import flask.json
 import pandas as pd
 
-import dex.db
 import dex.csv_cache
 import dex.csv_parser
+import dex.db
 import dex.debug
 import dex.eml_cache
 import dex.eml_types
@@ -34,9 +37,7 @@ def subset(rid):
         entity_tup=dex.db.get_entity_as_dict(rid),
         row_count=len(csv_df),
         derived_dtypes_list=ctx['derived_dtypes_list'],
-        cat_col_map={
-            d['col_name']: d for d in dex.eml_cache.get_categorical_columns(rid)
-        },
+        cat_col_map={d['col_name']: d for d in dex.eml_cache.get_categorical_columns(rid)},
         filter_not_applied_str='Filter not applied',
     )
     return flask.render_template(
@@ -211,8 +212,7 @@ def download(rid):
         log.debug(f'Date range filter not specified')
     else:
         begin_date, end_date = [
-            datetime.datetime.strptime(v, "%Y-%m-%d") if v else None
-            for v in (begin_str, end_str)
+            datetime.datetime.strptime(v, "%Y-%m-%d") if v else None for v in (begin_str, end_str)
         ]
         log.debug(
             f'Filtering by date range: '
@@ -230,19 +230,12 @@ def download(rid):
 
         if begin_date and end_date:
             csv_df = csv_df[
-                [
-                    (begin_date <= x.tz_localize(None) <= end_date)
-                    for x in csv_df.iloc[:, col_idx]
-                ]
+                [(begin_date <= x.tz_localize(None) <= end_date) for x in csv_df.iloc[:, col_idx]]
             ]
         elif begin_date:
-            csv_df = csv_df[
-                [(begin_date <= x.tz_localize(None)) for x in csv_df.iloc[:, col_idx]]
-            ]
+            csv_df = csv_df[[(begin_date <= x.tz_localize(None)) for x in csv_df.iloc[:, col_idx]]]
         elif end_date:
-            csv_df = csv_df[
-                [(x.tz_localize(None) <= end_date) for x in csv_df.iloc[:, col_idx]]
-            ]
+            csv_df = csv_df[[(x.tz_localize(None) <= end_date) for x in csv_df.iloc[:, col_idx]]]
 
     # Filter columns
     col_list = filter_dict["col_filter"][1:]

@@ -90,7 +90,6 @@ def query_id(query, args=(), db=None):
     cnx = db or get_db()
     try:
         cur = cnx.execute(query, args)
-        # rv = cur.fetchall()
         row_id = cur.lastrowid
         cur.close()
         return row_id

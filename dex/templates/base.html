@@ -38,14 +38,18 @@
 
   <script>
   let log = console;
-  // Make parameters available to client   side script under a single global JS object,
-  // 'g'. Within jinja2 tags, 'g' refers to Flask's server side Python variable that
-  // holds the context for the current request.
 
-  {#const g = JSON.parse('{{ g | tojson }}')#}
-  {#const g_plot = JSON.parse('{{ g | safe }}')#}
+  // Note:
+  // - The templates are rendered server side with jinja2, at which time 'g' refers to
+  // Flask's Python variable that holds the context for the current request.
+  // - Interactive content is handled client side, at which time 'g' refers to a set of
+  // global JS variables parsed from JSON by the client.
 
-  // Prove type hints for working with the JS scripts in the IDE.
+  {# const g = JSON.parse('{{ g | tojson }}') #}
+  {# const g_plot = JSON.parse('{{ g | safe }}') #}
+
+  // Provide a list of attributes for the 'g' global JS object, so that the IDE can
+  // flag invalid use in JS scripts.
 
   /**
    * @type {Object}
@@ -144,18 +148,14 @@
 
 
 <div class="dex-container">
-
   {% block header_all %}
     <h1><a href='/'></a></h1>
     <h1>
       {% block header %}{% endblock %}
     </h1>
-
   {% endblock %}
-
   {% block content %}{% endblock %}
   {% block body %}{% endblock %}
-
 </div>
 
 {# ezEML #}

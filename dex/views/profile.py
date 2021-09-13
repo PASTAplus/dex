@@ -77,10 +77,10 @@ def render_profile(rid):
 
 def rearrange_report(report_tree):
     # Move the Sample section from the end to the front of the report.
-    try:
-        section_list = report_tree.report.content["body"].content["items"]
-        section_list.insert(1, section_list.pop(-1))
+    section_list = report_tree.report.content["body"].content["items"]
+    section_list.insert(1, section_list.pop(-1))
 
+    try:
         section_list[0].content['items'][1].content['name'] = 'Notes'
         section_list[0].content['items'][2].content['name'] = 'Reproducibility'
         section_list[0].content['items'][2].content['items'][0].content['name'] = 'Reproducibility'

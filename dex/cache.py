@@ -219,10 +219,10 @@ def save_gen(rid, key, obj_type, obj):
             return f.write(obj.encode("utf-8"))
         elif obj_type in ("lxml", "etree"):
             with contextlib.suppress(LookupError, TypeError):
-                if len(obj) == 1:
-                    obj = obj[0]
+               if len(obj) == 1:
+                   obj = obj[0]
             try:
-                xml_str = lxml.etree.tostring(obj)
+                xml_str = lxml.etree.tostring(obj, with_tail=False)
                 return f.write(xml_str)
             except TypeError:
                 raise dex.exc.CacheError(

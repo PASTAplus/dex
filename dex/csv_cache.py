@@ -2,7 +2,6 @@ import logging
 import math
 import time
 
-import clevercsv
 import pandas as pd
 
 import dex.cache
@@ -121,7 +120,8 @@ def get_categories_for_column(rid, col_idx):
     """Return a list of the unique values in a categorical column. This assumes that
     the column at the given index is already known to be of type `TYPE_CAT`.
     """
-    csv_df = dex.csv_parser.get_parsed_csv(rid)
+    ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
+    csv_df = ctx['csv_df']
     col_series = csv_df.iloc[:, int(col_idx)]
     # return list([x for x in col_series.unique() if not is_nan(x)])
     return list(x for x in col_series.unique() if not is_nan(x))
@@ -176,19 +176,6 @@ def _load_csv_to_df(rid, **csv_arg_dict):
     return csv_df
 
 
-def _load_csv_to_df_slow(csv_path):
-    """This method handles various broken CSV files but is too slow for use in
-    production.
-    """
-    skip_rows, header_row = dex.csv_parser.find_header_row(csv_path)
-    log.debug(f"skip_rows: {skip_rows}")
-    log.debug("clevercsv - read_dataframe start")
-    start_ts = time.time()
-    csv_df = clevercsv.read_dataframe(csv_path, skiprows=skip_rows)
-    log.debug(f"clevercsv - read_dataframe: {time.time() - start_ts:.02f}s")
-    return csv_df
-
-
 def get_dt_df(df):
     """Return a new DataFrame containing only the columns from `df` that contain
     date-times. Columns containing mixed values where more than `fuzz_percent`
@@ -222,8 +209,8 @@ def get_dt_df(df):
 #     return dt_series
 
 
-def get_mixed_columns(df):
-    """Return indexes of columns that have mixed types or missing values"""
-    return [
-        col.index for col, col_type in df.dtypes.iteritems() if col_type == "object"
-    ]
+# def get_mixed_columns(df):
+#     """Return indexes of columns that have mixed types or missing values"""
+#     return [
+#         col.index for col, col_type in df.dtypes.iteritems() if col_type == "object"
+#     ]

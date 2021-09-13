@@ -132,7 +132,7 @@ def get_solr(**query_dict):
 def get_eml_url(entity_tup):
     """Get the URL to the EML that includes metadata for the given data object. E.g.,
        Data URL: https://pasta-d.lternet.edu/package/data/eml/knb-lter-ble/9/1/0be92831cb9e173a828416a954778598
-    -> EML path: https://pasta-d.lternet.edu/package/metadata/eml/knb-lter-ble/9/1
+    -> EML URL: https://pasta-d.lternet.edu/package/metadata/eml/knb-lter-ble/9/1
     """
     return '/'.join(
         [
@@ -188,8 +188,7 @@ def get_pkg_id(entity_tup, sep_str='.', entity=False):
     t = entity_tup
     return '/'.join(
         (
-            sep_str.join(
-                (str(x) for x in (t.scope_str, t.identifier_int, t.version_int))),
+            sep_str.join((str(x) for x in (t.scope_str, t.identifier_int, t.version_int))),
             *((t.entity_str,) if entity else ()),
         )
     )
@@ -228,7 +227,7 @@ def get_entity_by_data_url(data_url):
 def get_entity_by_local_path(data_path):
     # TODO: This is a lossy operation since the data_path doesn't have all the
     # info for creating an entity. This is since the entity is tied to a specific
-    # PASTA environment. Should the entity be environment agnostic?
+    # PASTA environment.
     m = DATA_PATH_RX.match(data_path.as_posix())
     if not m:
         raise dex.exc.DexError(f'Not a valid local data path: "{data_path}"')

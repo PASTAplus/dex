@@ -23,7 +23,6 @@ import matplotlib
 
 matplotlib.use('Agg')
 
-
 os.environ.setdefault("FLASK_ENV", "production")
 os.environ.setdefault("FLASK_DEBUG", "0")
 
@@ -40,6 +39,7 @@ import dex.views.eml
 import dex.views.plot
 import dex.views.profile
 import dex.views.subset
+import json
 
 # root_logger = logging.getLogger("")
 # root_logger.setLevel(logging.DEBUG)

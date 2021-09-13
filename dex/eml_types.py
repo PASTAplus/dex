@@ -6,6 +6,7 @@ be used without having an `rid`.
 import contextlib
 import datetime
 import logging
+import re
 
 import dateutil.parser
 
@@ -187,7 +188,7 @@ def get_derived_dtypes_from_eml(dt_el):
 
         type_list.append(dtype_dict)
 
-        # This shows the attibute EML fragment and the resulting derived_dtype type info.
+        # This shows the attribute EML fragment and the resulting derived_dtype type info.
         # logpp({'idx': col_idx, 'name': col_name}, '%' * 100, log.debug)
         # logpp(attr_el, 'attr_el', log.debug)
         # logpp(dtype_dict, 'dtype_dict', log.debug)
