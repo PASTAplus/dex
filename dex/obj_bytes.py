@@ -70,27 +70,28 @@ def open_eml(rid):
     If the object bytes cannot be found, raises `dex.exc.CacheError`.
     """
     entity_tup = dex.db.get_entity(rid)
-    log.debug(f'Resolving object bytes for EML entity: {entity_tup}')
+    log.debug(f'Resolving object bytes for EML entity:')
+    log.debug(f'entity_tup="{entity_tup}" PASTA_BASE_URL="{app.config["PASTA_BASE_URL"]}"')
     return _open_obj(entity_tup, is_eml=True)
 
 
 def _open_obj(entity_tup, is_eml):
-    """First search the production or test environment designated by the base_url member
-    of the entity_tup. If the object is not found there, repeat the search on the
-    alternate environment.
-    """
-    obj = _open_obj_from_filesystem_cache(entity_tup, is_eml)
-    if obj:
-        return obj
-    obj = _open_obj_from_filesystem_store(entity_tup, is_eml)
-    if obj:
-        return obj
+    """Search for object in locations going from fastest to slowest access to the object bytes."""
+    # obj = _open_obj_from_filesystem_cache(entity_tup, is_eml)
+    # if obj:
+    #     log.debug(f'_open_obj_from_filesystem_cache ret: {obj}')
+    #     return obj
+    if entity_tup.base_url == app.config['PASTA_BASE_URL']:
+        log.info(f'Performing local file lookup: Local files belong to this PASTA environment.')
+        obj = _open_obj_from_filesystem_store(entity_tup, is_eml)
+        if obj:
+            log.debug(f'_open_obj_from_filesystem_store ret: {obj}')
+            return obj
+    else:
+        log.debug(f'Skipped local file lookup: Local files belong to another PASTA environment.')
     obj = _open_obj_from_pasta_service(entity_tup, is_eml)
     if obj:
-        return obj
-    entity_tup.base_url = dex.pasta.get_corresponding_base_url(entity_tup.base_url)
-    obj = _open_obj_from_pasta_service(entity_tup, is_eml)
-    if obj:
+        log.debug(f'_open_obj_from_pasta_service ret: {obj}')
         return obj
     raise dex.exc.CacheError(
         f'Cannot find bytes for object. entity_tup="{entity_tup}" is_eml="{is_eml}"'
@@ -100,7 +101,8 @@ def _open_obj(entity_tup, is_eml):
 def _open_obj_from_filesystem_cache(entity_tup, is_eml):
     log.debug(f'Checking filesystem cache. entity_tup="{entity_tup}" is_eml="{is_eml}"')
     try:
-        return _get_cache_path(entity_tup, is_eml).open('rb')
+        # return _get_cache_path(entity_tup, is_eml).open('rb')
+        return _get_cache_path(entity_tup, is_eml)
     except OSError:
         pass
 
