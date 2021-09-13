@@ -57,7 +57,7 @@ async function post_form(v)
       // check status.
       if (response.ok) {
         // TODO: Use stream instead.
-        download(await response.blob(), filename, 'text/csv');
+        download(await response.blob(), filename, 'application/zip');
       }
       else {
         throw `Error ${response.status}: ${await response.text()}`;

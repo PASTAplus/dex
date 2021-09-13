@@ -53,7 +53,6 @@
 
   /**
    * @type {Object}
-   * @property {Object} entity_tup
    * @property {Object} base_url
    * @property {Object} border
    * @property {Object} cat_col_map
@@ -69,6 +68,7 @@
    * @property {Object} eml_css
    * @property {Object} eml_html
    * @property {Object} entity_tup
+   * @property {Object} portal_base
    * @property {Object} filter_not_applied_str
    * @property {Object} formatters
    * @property {Object} id_str
@@ -96,6 +96,11 @@
 </head>
 
 <body style='height: initial;'>
+
+{#<pre>#}
+{#  {{ g_dict | tojson_pp }}#}
+{#  {{ g | tojson_pp }}#}
+{#</pre>#}
 
 {# jQuery, jQuery UI #}
 <script type="text/javascript" src='/static/lib/jquery/jquery-3.5.1.js'></script>

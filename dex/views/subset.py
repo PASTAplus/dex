@@ -254,10 +254,29 @@ def download(rid):
     # import time
     # time.sleep(5)
 
-    return flask.Response(
-        csv_df.to_csv(index=filter_dict["col_filter"][0]),
-        mimetype="text/csv",
-        headers={"Content-disposition": f"attachment; filename={rid}.csv"},
+    csv_bytes = csv_df.to_csv(index=filter_dict["col_filter"][0])
+    # json_bytes = flask.json.htmlsafe_dumps(filter_dict)
+    json_bytes = flask.json.dumps(
+        filter_dict,
+        indent=2,
+        # sort_keys=True,
+        cls=dex.util.DatetimeEncoder,
+    )
+
+    return send_zip(rid, csv=csv_bytes, json=json_bytes)
+
+
+def send_zip(zip_name, **zip_dict):
+    zip_bytes = io.BytesIO()
+    with zipfile.ZipFile(zip_bytes, mode='w') as z:
+        for f_name, f_bytes in zip_dict.items():
+            z.writestr(f_name, f_bytes)
+    zip_bytes.seek(0)
+    return flask.send_file(
+        zip_bytes,
+        mimetype='application/zip',
+        as_attachment=True,
+        attachment_filename=f'{zip_name}.zip',
     )
 
 
