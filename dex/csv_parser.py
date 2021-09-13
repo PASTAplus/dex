@@ -65,6 +65,8 @@ def get_parsed_csv_with_context(rid):
         na_list=list(missing_code_set),
     )
 
+    csv_df = apply_nan(csv_df, missing_code_set)
+
     return dict(
         csv_df=csv_df,
         csv_path=ctx['csv_path'],
@@ -586,4 +588,39 @@ def get_raw_csv(csv_path, dialect, header_row_idx, max_rows):
         dtype=str,
         na_values=[],
     )
+    return csv_df
+
+
+def apply_nan(df, nan_set: set):
+    """Set all values in the df that equal a value in the nan_set to Nan (numpy.nan)"""
+    # Add string versions of the various NaN values.
+    nan_set.update([str(x) for x in nan_set])
+    return df.applymap(lambda x: np.nan if x in nan_set else x)
+
+
+def is_csv(_rid, csv_path):
+    try:
+        clevercsv_dialect = dex.csv_parser.get_clevercsv_dialect(csv_path)
+        count_dict = {}
+        with open(csv_path, "r", newline="", encoding='utf-8') as f:
+            for i, row in enumerate(clevercsv.reader(f, clevercsv_dialect)):
+                if i == 100:
+                    break
+                count_dict.setdefault(len(row), 0)
+                count_dict[len(row)] += 1
+        return 1 <= len(count_dict) <= 3
+    except Exception:
+        return False
+
+
+def _load_csv_to_df_slow(csv_path):
+    """This method handles various broken CSV files but is too slow for use in
+    production.
+    """
+    skip_rows, header_row = dex.csv_parser.find_header_row(csv_path)
+    log.debug(f"skip_rows: {skip_rows}")
+    log.debug("clevercsv - read_dataframe start")
+    start_ts = time.time()
+    csv_df = clevercsv.read_dataframe(csv_path, skiprows=skip_rows)
+    log.debug(f"clevercsv - read_dataframe: {time.time() - start_ts:.02f}s")
     return csv_df
