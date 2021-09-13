@@ -127,21 +127,6 @@ def get_categories_for_column(rid, col_idx):
     return list(x for x in col_series.unique() if not is_nan(x))
 
 
-def is_csv(_rid, csv_path):
-    try:
-        clevercsv_dialect = dex.csv_parser.get_clevercsv_dialect(csv_path)
-        count_dict = {}
-        with open(csv_path, "r", newline="", encoding='utf-8') as f:
-            for i, row in enumerate(clevercsv.reader(f, clevercsv_dialect)):
-                if i == 100:
-                    break
-                count_dict.setdefault(len(row), 0)
-                count_dict[len(row)] += 1
-        return 1 <= len(count_dict) <= 3
-    except Exception:
-        return False
-
-
 #
 
 
