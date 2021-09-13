@@ -234,6 +234,15 @@ def save_gen(rid, key, obj_type, obj):
             return pickle.dump(obj, f)
 
 
+def get_tag_str(rid, key, obj_type):
+    t = dex.db.get_entity(rid)
+    return (
+        f'{t.scope_str}.{t.identifier_int}.{t.version_int} '
+        f'key="{key}" type="{obj_type}"'
+    )
+
+
+
 @contextlib.contextmanager
 def open_file(rid, key, obj_type, for_write=False):
     cache_path, is_compressed = get_cache_path(rid, key, obj_type)
