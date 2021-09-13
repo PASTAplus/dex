@@ -127,10 +127,7 @@ def cast_to_eml_types(df, rid):
 
         elif d['type_str'] == 'TYPE_NUM':
             log.debug(f'Column "{d["col_name"]}" -> {d["type_str"]}')
-            s = pd.to_numeric(
-                s,
-                errors='ignore',
-            )
+            s = pd.to_numeric(s, errors='ignore')
 
         elif d['type_str'] == 'TYPE_CAT':
             log.debug(f'Column "{d["col_name"]}" -> {d["type_str"]}')
