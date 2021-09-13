@@ -115,16 +115,19 @@ def get_attributes_as_etree(rid):
     }
 
 
-def get_csv_name(dt_el):
-    return dex.eml_types.first_str(dt_el, './/physical/objectName/text()')
+@dex.cache.disk('csv_name', 'text')
+def get_csv_name(rid):
+    dt_el = get_data_table(rid)
+    return dex.eml_types.first_str_orig(dt_el, './/physical/objectName/text()')
 
 
-@dex.cache.disk('datatable', 'etree')
+# @dex.cache.disk('datatable', 'etree')
 def get_data_table(rid):
     entity_tup = dex.db.get_entity(rid)
     pkg_path = dex.pasta.get_pkg_id_as_url(entity_tup)
     eml_el = get_eml_etree(rid)
     dt_el = dex.eml_types.get_data_table_by_package_id(eml_el, pkg_path)
+    log.debug(f'dt_el="{dex.util.get_etree_as_pretty_printed_xml(dt_el)}"')
     return dt_el
 
 

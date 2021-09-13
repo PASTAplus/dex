@@ -530,7 +530,7 @@ def get_raw_context(rid):
     )
 
 
-@dex.cache.disk("parsed", "df")
+# @dex.cache.disk("parsed", "df")
 def get_parsed_csv(rid, header_row_idx, parser_dict, dialect, pandas_type_dict, na_list):
     """Read a CSV and parse each value (cell) to the type declared for its column in the
     EML.
