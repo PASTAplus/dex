@@ -163,7 +163,7 @@ def csv_fetch(rid):
 
     # util.logpp(result_dict, 'Returning to client', log.debug)
 
-    return flask.json.dumps(
+    return json.dumps(
         result_dict,
         cls=dex.util.DatetimeEncoder,
     )
