@@ -182,7 +182,7 @@ def download(rid):
     derived_dtype_list = dex.csv_parser.get_derived_dtype_list(rid)
 
     # Filter rows
-    a, b = map(lambda x: x - 1, filter_dict["row_filter"])
+    a, b = map(lambda x: x - 1, filter_dict["row_filter"].values())
     if a > 0 or b < unfiltered_row_count - 1:
         log.debug(f"Filtering by rows: {a} - {b}")
         csv_df = csv_df[a : b + 1]
