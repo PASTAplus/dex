@@ -1,57 +1,53 @@
-{% macro debugbar(dbg) %}
-  <div id='dbg'>
+{% macro debug_panel(dbg) %}
+  <div class='debug' id='dbg'>
+    <h1>Debug Panel
+    <a href='?debug=false'>  [disable]</a>
+    </h1>
 
-    <div class='debug'>
-      <h1>DEBUG enabled (config.FLASK_DEBUG == True)</h1>
-      <a href='?toggle-debug'>Toggle panel</a>
-      {% if dbg.debug_panel %}
+    <h2>Derived from EML, dtypes and context</h2>
+    <div>{{ dbg.derived_dtype_html | safe }}</div>
+    <h2>Derived from EML, Summary</h2>
+    <div>{{ dbg.derived_dtype_summary_html | safe }}</div>
 
-        <h2>EML derived dtypes and context</h2>
-        <div>{{ dbg.derived_dtype_html | safe }}</div>
-        <h3>Derived, summary</h3>
-        <div>{{ dbg.derived_dtype_summary_html | safe }}</div>
+    <h2>Flask CTX</h2>
+    <div>{{ dbg.flask_g_html | safe }}</div>
 
-        <h2>Flask ctx</h2>
-        <div>{{ dbg.flask_g_html | safe }}</div>
+    <h2>Source CSV</h2>
+    <div>{{ dbg.source_html | safe }}</div>
+    <h2>Dialect</h2>
+    <div>{{ dbg.dialect | safe }}</div>
+    {#<h2>Columns</h2>#}
+    {#<div>{{ dbg.col_info_html | safe }}</div>#}
+    <h2>Pandas Info</h2>
+    <pre>{{ dbg.col_info_txt }}</pre>
 
-        <h2>Source CSV</h2>
-        <div>{{ dbg.source_html | safe }}</div>
-        <h3>Dialect</h3>
-        <div>{{ dbg.dialect | safe }}</div>
-        {#<h3>Columns</h3>#}
-        {#<div>{{ dbg.col_info_html | safe }}</div>#}
-        <h3>pandas.info()</h3>
-        <pre>{{ dbg.col_info_txt }}</pre>
+    <h2>Parsers</h2>
+    The parsers that have been selected for each column. Applied to the full CSV
+    before storing cached version.
+    <div>{{ dbg.parsers_html | safe }}</div>
 
-        <h2>Parsers</h2>
-        The parsers that have been selected for each column. Applied to the full CSV
-        before storing cached version.
-        <div>{{ dbg.parsers_html | safe }}</div>
+    <h2>Formatters</h2>
+    The formatters that have been selected for each column. Applied to rows that
+    have been selected for display.
+    <div>{{ dbg.formatters_html | safe }}</div>
 
-        <h2>Formatters</h2>
-        The formatters that have been selected for each column. Applied to rows that
-        have been selected for display.
-        <div>{{ dbg.formatters_html | safe }}</div>
+    <h2>CSV Head, {{ dbg.head_row_count }} rows</h2>
+    <div>
+      {{ dbg.head_html | safe }}
+    </div>
 
-        <h2>CSV head, {{ dbg.head_row_count }} rows</h2>
-        <div>
-          {{ dbg.head_html | safe }}
-        </div>
+    <h2>CSV Tail, {{ dbg.tail_row_count }} rows</h2>
+    <div>
+      {{ dbg.tail_html | safe }}
+    </div>
 
-        <h2>CSV tail, {{ dbg.tail_row_count }} rows</h2>
-        <div>
-          {{ dbg.tail_html | safe }}
-        </div>
-
-        <h1>EML attribute fragments</h1>
-        <div>
-          {% for attr_tup in dbg.attr_list %}
-            <h2>{{ attr_tup.0 }}</h2>
-            <style> {{ attr_tup.1 | safe }}</style>
-            <pre>{{ attr_tup.2 | safe }}</pre>
-          {% endfor %}
-        </div>
-      {% endif %}
+    <h2>EML Attribute Fragments</h2>
+    <div>
+      {% for attr_tup in dbg.attr_list %}
+        <h2>{{ attr_tup.0 }}</h2>
+        <style> {{ attr_tup.1 | safe }}</style>
+        <pre>{{ attr_tup.2 | safe }}</pre>
+      {% endfor %}
     </div>
   </div>
 {% endmacro %}

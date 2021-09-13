@@ -77,6 +77,11 @@ def create_app():
 
     logging.getLogger('').setLevel(logging.DEBUG if _app.debug else logging.INFO)
 
+    # Add tojson_pp, a pretty printed version of tojson, to jinja.
+    _app.jinja_env.filters['tojson_pp'] = lambda x: json.dumps(
+        x, sort_keys=True, indent=4, separators=(', ', ': ')
+    )
+
     _app.register_blueprint(dex.views.bokeh_server.bokeh_server)
     _app.register_blueprint(dex.views.profile.profile_blueprint)
     _app.register_blueprint(dex.views.subset.subset_blueprint)
@@ -85,10 +90,8 @@ def create_app():
 
     @_app.before_first_request
     def before_first_request():
-
         import subprocess
         subprocess.run('rm -rf /home/dahl/dev/dex-cache/global', shell=True)
-
 
         def handle_redirect_to_index(_):
             return flask.redirect("/", 302)
@@ -112,9 +115,9 @@ def create_app():
 
     @_app.before_request
     def before_request():
-        # log.debug(f"{flask.request.method} {flask.request.path}")
+        log.debug(f"{flask.request.method} {flask.request.path}")
         # flask.request.cookies.get('debug-panel', 'false') == 'true'
-        flask.g.debug_panel = False
+        flask.g.debug_panel = flask.request.cookies.get('debug-panel', 'false') == 'true'
 
     @_app.after_request
     def after_request(response):

@@ -35,8 +35,8 @@ WATCH_SET = {
 
 
 def debug(rid):
-    if not flask.g.get('debug_panel', False):
-        return dict()
+    if not flask.g.debug_panel:
+        return None
 
     ctx1 = dex.csv_parser.get_raw_csv_with_context(rid)
     # csv_df = ctx1.csv_df,
@@ -58,6 +58,7 @@ def debug(rid):
         (ctx2['header_list'][k], css_str, html_str)
         for k, (html_str, css_str) in attr_dict.items()
     ]
+
     # attr_html = pd.DataFrame.from_dict({'': attr_dict}).to_html(escape=False)
 
     csv_df = ctx1['csv_df']
@@ -89,7 +90,7 @@ def debug(rid):
         return out_d
 
     buf = io.StringIO()
-    csv_df.debug(buf=buf)
+    # csv_df.debug(buf=buf) # ?
     col_info_txt = buf.getvalue()
     flask_g_html = dict_to_kv_html(flask.g)
 

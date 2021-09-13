@@ -133,19 +133,12 @@
 
 {#<script type='module' src='./util.js'></script>#}
 
-{#{% block navbar %}#}
-{#  {% if g.entity_tup and g.rid%}#}
 <div id='sticky-section'>
-  {{ navbar.dexnavbar(entity_tup, rid) }}
-  {% block debug %}
-    {% if dbg %}
-      {{ debug.debugbar(dbg) }}
-    {% endif %}
-  {% endblock %}
+  {{ navbar.dexnavbar(entity_tup, rid, csv_name, portal_base) }}
+  {% if g.debug_panel and dbg %}
+    {{ debug.debug_panel(dbg) }}
+  {% endif %}
 </div>
-{#  {% endif %}#}
-{#{% endblock %}#}
-
 
 <div class="dex-container">
   {% block header_all %}
