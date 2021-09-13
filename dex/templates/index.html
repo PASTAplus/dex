@@ -80,7 +80,6 @@
         <th>Identity</th>
         <th>Version</th>
         <th>Entity</th>
-        <th>Open in Dex</th>
         {% for csv_dict in csv_list %}
           <tr>
             <td class='right'>
@@ -96,13 +95,9 @@
               {{ csv_dict.entity.version_int }}
             </td>
             <td class='mono'>
-              {{ csv_dict.entity.entity_str }}
-            </td>
-            {#<td>#}
-            {#  {{ csv_dict.entity.data_url }}#}
-            {#</td>#}
-            <td>
-              <a href='/{{ csv_dict.entity.data_url|urlencode }}'>open</a>
+              <a href='/{{ csv_dict.entity.data_url|urlencode }}'>
+                {{ csv_dict.entity.entity_str }}
+              </a>
             </td>
           </tr>
         {% endfor %}
