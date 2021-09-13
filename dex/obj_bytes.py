@@ -145,7 +145,7 @@ def _open_from_filesystem_cache(entity_tup, is_eml):
     log.debug(f'Checking local filesystem cache. entity_tup={entity_tup} is_eml="{is_eml}"')
     obj_path = _get_cache_path(entity_tup, is_eml)
     try:
-        return obj_path #.open('rb')
+        return obj_path  # .open('rb')
     except OSError:
         pass
 
@@ -154,14 +154,14 @@ def _download_through_cache(entity_tup, is_eml):
     """Download object and return opened stream"""
     log.debug(f'Downloading from PASTA service. entity_tup="{entity_tup}" is_eml="{is_eml}"')
     obj_path = _get_cache_path(entity_tup, is_eml)
-    assert not obj_path.exists()
+    # assert not obj_path.exists()
     obj_path.parent.mkdir(0o755, parents=True, exist_ok=True)
 
     _limit_cache_size()
 
     obj_url = _get_obj_url(entity_tup, is_eml)
 
-    with obj_path.with_suffix('tmp').open('wb') as f:
+    with obj_path.with_suffix('.tmp').open('wb') as f:
         with requests.get(obj_url, stream=True) as r:
             r.raise_for_status()
             # This is a high performance way of copying a stream.
@@ -170,9 +170,10 @@ def _download_through_cache(entity_tup, is_eml):
     if not r.ok:
         raise dex.exc.CacheError(f"Unable to download: {obj_url}")
 
-    obj_path.with_suffix('tmp').rename(obj_path)
+    obj_path.with_suffix('.tmp').rename(obj_path)
 
-    return obj_path # .open('rb')
+    return obj_path
+    # return obj_path.open('rb')
 
 
 def _limit_cache_size():
