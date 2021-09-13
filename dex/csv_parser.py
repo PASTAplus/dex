@@ -42,6 +42,8 @@ DTYPE_TO_FRIENDLY_DICT = {
 def get_parsed_csv_with_context(rid):
     """Get CSV with values parsed according to their EML types."""
     ctx = get_csv_context(rid)
+    log.debug(f'ctx[\'header_list\']={ctx["header_list"]}')
+    log.debug(f'ctx[\'parser_dict\']={ctx["parser_dict"]}')
     parser_func_dict = {ctx['header_list'][k]: d['fn'] for k, d in ctx['parser_dict'].items()}
     pandas_type_dict = {
         ctx['header_list'][k]: d['pandas_type'] for k, d in ctx['parser_dict'].items()
