@@ -1,7 +1,9 @@
 import logging
+import numpy as np
 
 import flask
 import flask.json
+import pandas as pd
 import pandas_profiling
 
 import dex.db
@@ -29,7 +31,9 @@ def profile(rid):
         # For the base template, should be included in all render_template() calls.
         rid=rid,
         entity_tup=dex.db.get_entity_as_dict(rid),
+        csv_name=dex.eml_cache.get_csv_name(rid),
         dbg=dex.debug.debug(rid),
+        portal_base=dex.pasta.get_portal_base_by_entity(dex.db.get_entity(rid)),
     )
 
 

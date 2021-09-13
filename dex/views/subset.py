@@ -54,9 +54,11 @@ def subset(rid):
         ),
         rid=rid,
         entity_tup=dex.db.get_entity_as_dict(rid),
+        csv_name=dex.eml_cache.get_csv_name(rid),
         derived_dtypes_list=ctx['derived_dtypes_list'],
         filter_not_applied_str='Filter not applied',
         dbg=dex.debug.debug(rid),
+        portal_base=dex.pasta.get_portal_base_by_entity(dex.db.get_entity(rid)),
     )
 
 

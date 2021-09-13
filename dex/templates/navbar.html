@@ -28,27 +28,45 @@
       <div class="navbar-collapse collapse" id="top-navbar">
         <ul class="nav navbar-nav">
           {% if entity_tup and rid %}
-            <li><a id='nav_profile' class="nav-item nav-link nav-" href="/dex/profile/{{ rid }}">Profile</a></li>
-            <li><a id='nav_subset' class="nav-item nav-link" href="/dex/subset/{{ rid }}">Subset</a></li>
-            <li><a id='nav_plot' class="nav-item nav-link" href="/dex/plot/{{ rid }}">Plot</a></li>
-            <li><a id='nav_eml' class="nav-item nav-link" href="/dex/eml/{{ rid }}">EML</a></li>
+            <li>
+              <a id='nav_profile' class="nav-item nav-link nav-"
+                 href="/dex/profile/{{ rid }}">Profile</a>
+            </li>
+            <li>
+              <a id='nav_subset' class="nav-item nav-link"
+                 href="/dex/subset/{{ rid }}">Subset</a>
+            </li>
+            <li>
+              <a id='nav_plot' class="nav-item nav-link"
+                 href="/dex/plot/{{ rid }}">Plot</a>
+            </li>
+            <li>
+              <a id='nav_eml' class="nav-item nav-link"
+              href="{{ portal_base }}/metadataviewer?packageid={{ entity_tup.scope_str }}.{{ entity_tup.identifier_int }}.{{ entity_tup.version_int }}">
+                 EML
+              </a>
+            </li>
           {% endif %}
         </ul>
-
         {% if entity_tup and rid %}
-
           <ul class="nav navbar-nav navbar-right">
             <li>
-              {# "https://portal.edirepository.org/nis/home.jsp" #}
-              <a href="{{ entity_tup.data_url }}" class="nav-item nav-link" style="font-size: 18px;">
-                {% set pkd_id = [entity_tup.scope_str, entity_tup.identifier_int, entity_tup.version_int] | join('.') %}
-                Package ID: {{ pkd_id }}
+              <a href="{{ entity_tup.data_url }}" class="nav-item nav-link"
+                 style="font-size: 18px;">
+                Table:
+                {{ csv_name }}
+              </a>
+            </li>
+            <li>
+              <a href="{{ portal_base }}/mapbrowse?scope={{ entity_tup.scope_str }}&identifier={{ entity_tup.identifier_int }}&revision={{ entity_tup.version_int }}"
+                 class="nav-item nav-link"
+                 style="font-size: 18px;">
+                Package ID:
+                {{ [entity_tup.scope_str, entity_tup.identifier_int, entity_tup.version_int] | join('.') }}
               </a>
             </li>
           </ul>
-
         {% endif %}
-
       </div>
     </div>
   </nav>
