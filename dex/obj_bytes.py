@@ -187,12 +187,18 @@ def _limit_cache_size():
 
 
 def _get_cache_path(entity_tup, is_eml):
-    return (
-        app.config["TMP_CACHE_ROOT"]
-        / pathlib.Path(
-            dex.filesystem.get_safe_reversible_path_element(entity_tup.data_url),
-        ).with_suffix('.eml' if is_eml else '.csv')
+    return app.config["TMP_CACHE_ROOT"] / pathlib.Path(
+        dex.filesystem.get_safe_reversible_path_element(
+            entity_tup.data_url + ('.eml' if is_eml else '.csv') + '.tmp'
+        )
     )
+    # return (
+    #    app.config["TMP_CACHE_ROOT"]
+    #    / pathlib.Path(
+    #        escape(entity_tup.data_url),
+    #    ).with_suffix('.eml' if is_eml else '.csv')
+    # )
+
 
 def _get_obj_url(entity_tup, is_eml):
     if is_eml:

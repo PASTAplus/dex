@@ -8,6 +8,7 @@ import dex.csv_parser
 import dex.debug
 import dex.eml_cache
 import dex.util
+import dex.pasta
 
 log = logging.getLogger(__name__)
 
@@ -61,5 +62,8 @@ def plot(rid):
         # For the base template, should be included in all render_template() calls.
         rid=rid,
         entity_tup=dex.db.get_entity_as_dict(rid),
+        csv_name=dex.eml_cache.get_csv_name(rid),
         dbg=dex.debug.debug(rid),
+        portal_base=dex.pasta.get_portal_base_by_entity(dex.db.get_entity(rid)),
+
     )

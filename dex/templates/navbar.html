@@ -1,4 +1,4 @@
-{% macro dexnavbar(entity_tup, rid) %}
+{% macro dexnavbar(entity_tup, rid, csv_name, portal_base) %}
   <script>
   let $ = jQuery.noConflict();
   </script>
@@ -8,7 +8,8 @@
         <table>
           <tr>
             <td width="5%"></td>
-            <td><a href="/"><img style="width: 32px; width: 32px;" src="/static/assets/EDI-logo-300DPI_5.png"></a></td>
+            <td><a href="/"><img style="width: 32px;"
+                                 src="/static/assets/EDI-logo-300DPI_5.png"></a></td>
             <td width="5%"></td>
             <td>
               <button aria-controls="navbar" aria-expanded="false"

@@ -17,7 +17,7 @@ import dex.util
 
 DATA_URL_RX = re.compile(
     r"""
-    (?P<base_url>https://pasta(?:-d)?.lternet.edu/package)
+    (?P<base_url>.*/package)
     /data/eml/
     (?P<scope_str>[^/]+)/
     (?P<id_str>\d+)/
@@ -40,17 +40,24 @@ DATA_PATH_RX = re.compile(
     re.VERBOSE,
 )
 
+PASTA_PORTAL_DICT = {
+    # https://portal-d.edirepository.org/nis/home.jsp
+    # https://portal.edirepository.org/nis/mapbrowse?scope=knb-lter-luq&identifier=148&revision=1213903
+    'https://pasta.edirepository.org/package': 'https://portal.edirepository.org/nis',
+    'https://pasta-d.edirepository.org/package': 'https://portal-d.edirepository.org/nis',
+    'https://pasta.lternet.edu/package': 'https://portal.edirepository.org/nis',
+    'https://pasta-d.lternet.edu/package': 'https://portal-d.edirepository.org/nis',
+    'https://pasta-s.lternet.edu/package': 'https://portal-s.edirepository.org/nis',
+    # Dev
+    'https://localhost/package': 'https://portal-d.localhost/nis',
+}
+
 # DATA_PATH_RX = re.compile(
 #     r"""(?P<entity_str>.*)""",
 #     re.VERBOSE,
 # )
 
 log = logging.getLogger(__name__)
-
-TEST_TO_PROD_BASE_URL_DICT = {
-    'https://pasta-d.lternet.edu/pasta': 'https://pasta.lternet.edu/pasta',
-    'https://pasta-d.edirepository.org/pasta': 'https://pasta.lternet.edu/pasta',
-}
 
 # TODO. Keeping the base_url in the EntityTup ties the tuple to a location. See how it
 # would work out to keep the tuple more agnostic by leaving out the base_url. Remember
@@ -101,8 +108,7 @@ def get_pkgid_list(scope_str):
 
 
 def get_revid_list(scope_str, pkgid_int):
-    response = requests.get(
-        f'{app.config["PASTA_BASE_URL"]}/eml/{scope_str}/{pkgid_int}')
+    response = requests.get(f'{app.config["PASTA_BASE_URL"]}/eml/{scope_str}/{pkgid_int}')
     response.raise_for_status()
     return map(int, response.text.splitlines())
 
@@ -217,11 +223,11 @@ def get_entity_by_data_url(data_url):
     if not m:
         raise dex.exc.DexError(f'Not a valid PASTA data URL: "{data_url}"')
     d = dict(m.groupdict())
-    # TODO: I don't think we want to normalize to production environments here.
-    data_url = data_url.replace("/pasta-d/", "/pasta/")
     d["identifier_int"] = int(d.pop("id_str"))
     d["version_int"] = int(d.pop("ver_str"))
-    return EntityTup(data_url=data_url, **d)
+    entity_tup = EntityTup(data_url=data_url, **d)
+    log.info(f'Resolved URL. data_url="{data_url}" -> entity_tup="{entity_tup}"')
+    return entity_tup
 
 
 def get_entity_by_local_path(data_path):
@@ -244,17 +250,8 @@ def get_entity_by_local_path(data_path):
         entity_str=n.entity_str,
     )
 
-
-def get_corresponding_base_url(base_url):
-    """Given the BaseURL for a PASTA production environment, return the BaseURL for
-    the corresponding test environment, and vice versa."""
-    log.debug(f'Converting base_url: {base_url}')
-    for test_url, prod_url in TEST_TO_PROD_BASE_URL_DICT.items():
-        if base_url == test_url:
-            log.debug(f'-> {prod_url}')
-            return prod_url
-        if base_url == prod_url:
-            log.debug(f'-> {test_url}')
-            return test_url
-
-    raise dex.exc.DexError(f'Unknown domain: {base_url}')
+def get_portal_base_by_entity(entity_tup):
+    try:
+        return PASTA_PORTAL_DICT[entity_tup.base_url]
+    except LookupError:
+        raise dex.exc.DexError(f'Not a valid PASTA BaseURL: "{entity_tup.base_url}"')

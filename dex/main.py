@@ -124,11 +124,10 @@ def create_app():
         if response.status_code != 200:
             log.debug(f"-> {response.status}")
 
-        if 'toggle-debug' in flask.request.args:
-            is_enabled = flask.request.cookies.get('debug-panel', 'false') == 'true'
+        if 'debug' in flask.request.args:
+            debug_is_enabled = flask.request.args['debug'] == 'true'
             response = flask.make_response(flask.redirect(''))
-            response.set_cookie('debug-panel', 'true' if not is_enabled else 'false')
-            return response
+            response.set_cookie('debug-panel', str(debug_is_enabled).lower())
 
         return response
 
@@ -147,7 +146,10 @@ def create_app():
             g_dict={},
             rid=None,
             entity_tup=None,
+            csv_name=None,
             csv_list=get_sample_data_entity_list(None),
+            portal_base=None,
+            dbg=None,
         )
 
     @_app.route("/<path:data_url>", methods=["GET"])
