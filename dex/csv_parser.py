@@ -1,21 +1,15 @@
-"""Handle initial parsing of .csv files into Pandas DataFrames.
+"""Handle initial parsing of .csv file into Pandas DataFrame.
 
 This parses the .csv files according to the type declarations for each column in the
 corresponding EML documents.
 """
 import contextlib
-import csv
 import datetime
 import functools
 import logging
-import time
 
-import clevercsv
-import clevercsv.cparser
-import clevercsv.dialect
 import numpy as np
 import pandas as pd
-from flask import current_app as app
 
 import dex.db
 # import dex.cache
@@ -41,12 +35,14 @@ DTYPE_TO_FRIENDLY_DICT = {
 # @dex.cache.disk("parsed-csv-context", "df")
 def get_parsed_csv_with_context(rid):
     """Get CSV with values parsed according to their EML types."""
-    ctx = get_csv_context(rid)
-    log.debug(f'ctx[\'header_list\']={ctx["header_list"]}')
-    log.debug(f'ctx[\'parser_dict\']={ctx["parser_dict"]}')
-    parser_func_dict = {ctx['header_list'][k]: d['fn'] for k, d in ctx['parser_dict'].items()}
+    ctx = get_eml_ctx(rid)
+    dex.util.logpp(ctx, msg='EML CTX', logger=log.debug)
+
+    parser_func_dict = {ctx['col_name_list'][k]: d['fn'] for k, d in ctx['parser_dict'].items()}
+    dex.util.logpp(ctx, msg='parser_func_dict', logger=log.debug)
+
     pandas_type_dict = {
-        ctx['header_list'][k]: d['pandas_type'] for k, d in ctx['parser_dict'].items()
+        ctx['col_name_list'][k]: d['pandas_type'] for k, d in ctx['parser_dict'].items()
     }
     missing_code_set = set()
     for type_dict in ctx['derived_dtypes_list']:
@@ -58,8 +54,9 @@ def get_parsed_csv_with_context(rid):
 
     csv_df = get_parsed_csv(
         rid,
-        header_row_idx=ctx['header_row_idx'],
-        parser_dict=parser_func_dict,  # ctx['parser_dict'],
+        header_line_count=ctx['header_line_count'],
+        footer_line_count=ctx['footer_line_count'],
+        parser_dict=parser_func_dict,
         dialect=ctx['dialect'],
         pandas_type_dict=pandas_type_dict,
         na_list=list(missing_code_set),
@@ -69,37 +66,34 @@ def get_parsed_csv_with_context(rid):
 
     return dict(
         csv_df=csv_df,
-        csv_path=ctx['csv_path'],
         derived_dtypes_list=ctx['derived_dtypes_list'],
-        header_list=ctx['header_list'],
-        header_row_idx=ctx['header_row_idx'],
+        col_name_list=ctx['col_name_list'],
+        header_line_count=ctx['header_line_count'],
         parser_dict=ctx['parser_dict'],
         col_agg_dict=get_col_agg_dict(csv_df, ctx['derived_dtypes_list']),
         dialect=ctx['dialect'],
     )
 
 
-# @dex.cache.disk("csv-context", "pickle")
-def get_csv_context(rid):
-    """Get the information that is required for parsing the CSV."""
-    derived_dtypes_list = get_derived_dtypes_from_eml(rid)
-    parser_dict = get_parser_dict(derived_dtypes_list)
-    csv_stream = dex.obj_bytes.open_csv(rid)
-    dialect = get_dialect(csv_stream)
-    header_row_idx, header_list = find_header_row(csv_stream)
-    ctx = dict(
-        dialect=dialect,
-        csv_path=csv_stream,
+# @dex.cache.disk("eml-ctx", "pickle")
+def get_eml_ctx(rid):
+    """Get the EML information that is required for parsing the CSV."""
+    dt_el = dex.eml_cache.get_data_table(rid)
+    derived_dtypes_list = dex.eml_types.get_derived_dtypes_from_eml(dt_el)
+    return dict(
         derived_dtypes_list=derived_dtypes_list,
-        header_list=header_list,
-        header_row_idx=header_row_idx,
-        parser_dict=parser_dict,
+        dialect=dex.eml_types.get_dialect(dt_el),
+        header_line_count=dex.eml_types.get_header_line_count(dt_el),
+        footer_line_count=dex.eml_types.get_footer_line_count(dt_el),
+        parser_dict=get_parser_dict(derived_dtypes_list),
+        col_name_list=[d['col_name'] for d in derived_dtypes_list],
     )
-    dex.util.logpp(ctx, msg='Parsed CSV context', logger=log.debug)
-    return ctx
 
 
-def get_derived_dtype_list(rid):
+# def get_csv_stream(rid):
+
+
+def _get_derived_dtype_list(rid):
     entity_tup = dex.db.get_entity(rid)
     pkg_id = dex.pasta.get_pkg_id_as_url(entity_tup)
     # eml_url = dex.pasta.get_eml_url(entity_tup)
@@ -112,138 +106,9 @@ def get_derived_dtype_list(rid):
     return derived_dtype_list
 
 
-def cast_to_eml_types(df, rid):
-    """In-place conversion of columns from their Pandas types as detected by Pandas to
-    the EML derived_dtype types.
-    """
-    derived_dtype_list = get_derived_dtype_list(rid)
-
-    for col_idx, dtype_dict in enumerate(derived_dtype_list):
-        assert col_idx == col_idx
-        d = dict(**dtype_dict)
-        s = df.iloc[:, d['col_idx']]
-
-        if d['type_str'] == 'TYPE_DATE':
-            log.debug(f'Column "{d["col_name"]}" -> {d["type_str"]}')
-            s = pd.to_datetime(s, errors='ignore', format=d['c_date_fmt_str'])
-
-        elif d['type_str'] == 'TYPE_NUM':
-            log.debug(f'Column "{d["col_name"]}" -> {d["type_str"]}')
-            s = pd.to_numeric(s, errors='ignore')
-
-        elif d['type_str'] == 'TYPE_CAT':
-            log.debug(f'Column "{d["col_name"]}" -> {d["type_str"]}')
-            s = s.astype('category', errors='ignore')
-
-        else:
-            pass
-
-        df.iloc[:, d['col_idx']] = s
-
-
-def get_dialect(csv_path, verbose=False):
-    """Get the dialect (type of delimiter, quotes and escape characters) for the CSV.
-    The dialect is passed to pandas.read_csv() to improve parsing.
-    """
-    clever_dialect = get_clevercsv_dialect(csv_path, verbose)
-    return _get_native_dialect(clever_dialect)
-
-
-def get_clevercsv_dialect(csv_path, verbose=False):
-    # log.debug("clevercsv - start dialect discovery")
-    with open(csv_path, "r", newline="") as fp:
-        clever_dialect = clevercsv.Sniffer().sniff(
-            fp.read(app.config["CSV_SNIFFER_THRESHOLD"]),
-            verbose=verbose,
-        )
-    if clever_dialect.quotechar == '':
-        clever_dialect.quotechar = '"'
-
-    log.debug(f'clevercsv_dialect="{clever_dialect}"')
-
-    if clever_dialect == clevercsv.dialect.SimpleDialect(',', '', ''):
-        raise dex.exc.CSVError(f'Unable to find header row in CSV. csv_path="{csv_path}"')
-
-    return clever_dialect
-
-
-def _get_native_dialect(clever_dialect):
-    """Translate from clevercsv.SimpleDialect() to csv.Dialect()"""
-    dialect = csv.excel
-    c = clever_dialect
-    dialect.delimiter = c.delimiter
-    dialect.quotechar = c.quotechar if c.quotechar else '"'
-    dialect.escapechar = c.escapechar if c.escapechar else None
-    return dialect
-
-
-def get_dialect_as_dict(native_dialect):
+def get_dialect_as_dict(dialect):
     """Can be used as kwargs for creating a new dialect object"""
-    n = native_dialect
-    return dict(
-        delimiter=n.delimiter,
-        doublequote=n.doublequote,
-        escapechar=n.escapechar,
-        lineterminator=n.lineterminator,
-        quotechar=n.quotechar,
-        quoting=n.quoting,
-        skipinitialspace=n.skipinitialspace,
-    )
-
-
-def find_header_row(csv_path):
-    """Return a 2-tuple with the index of the first row that looks like the headers in a
-    CSV file, and a list of the header names.
-
-    This returns the first row that:
-
-        - Has the same number of columns as most of the other rows in the CSV file
-        - Does not have pure numbers in any of the fields
-        - Does not have any empty fields
-
-    If none of the rows that are checked fill the criteria, returns 0, the index of
-    the top row.
-    """
-    clevercsv_dialect = get_clevercsv_dialect(csv_path)
-    count_dict = {}
-    with open(csv_path, "r", newline="") as f:
-        for row_idx, row in enumerate(clevercsv.reader(f, clevercsv_dialect)):
-            if row_idx == app.config["CSV_SNIFFER_THRESHOLD"]:
-                break
-            count_dict.setdefault(len(row), 0)
-            count_dict[len(row)] += 1
-
-    max_row_count = max(count_dict.values()) if count_dict else 0
-    for col_count, row_count in count_dict.items():
-        if row_count == max_row_count:
-            column_count = col_count
-            break
-    else:
-        # assert False
-        raise dex.exc.RedirectToIndex()
-
-    log.debug(f"column_count: {column_count}")
-
-    with open(csv_path, "r", newline="") as f:
-        for row_idx, row in enumerate(clevercsv.reader(f, clevercsv_dialect)):
-            if row_idx == 100:
-                break
-            # log.debug(f"checking row: {row}")
-            if len(row) != column_count:
-                continue
-            if any(s.isnumeric() for s in row):
-                continue
-            if any(not s for s in row):
-                continue
-            return row_idx, row
-
-    raise dex.exc.CSVError(f'Unable to find header row in CSV. csv_path="{csv_path}"')
-
-
-def apply_parsers(df, derived_dtypes_list):
-    parser_list = get_parser_list(derived_dtypes_list)
-    for i, (parser_dict, column_name) in enumerate(zip(parser_list, df.columns)):
-        df.iloc[:, i].map(parser_dict['fn'])
+    return dialect.__dict__
 
 
 def get_col_agg_dict(df, derived_dtypes_list):
@@ -301,11 +166,6 @@ def get_formatter(dtype_dict):
     def int_formatter(x):
         return str(x)
 
-    # if isinstance(dtype_dict, dict):
-    #     d = dict(**dtype_dict)
-    # else:
-    #     d = dtype_dict
-
     d = dict(**dtype_dict)
 
     if d['type_str'] == 'S_TYPE_UNSUPPORTED':
@@ -318,6 +178,7 @@ def get_formatter(dtype_dict):
         )
 
     elif d['type_str'] == 'TYPE_DATE':
+        #     s = pd.to_datetime(s, errors='ignore', format=d['c_date_fmt_str'])
         return dict(
             name=f'format datetime to "{d["c_date_fmt_str"]}"',
             fmt=None,
@@ -424,7 +285,7 @@ def get_parser(dtype_dict):
 
     if d['type_str'] == 'S_TYPE_UNSUPPORTED':
         return dict(
-            name='string pass',
+            name='string passthrough',
             fmt=None,
             dtype=d['type_str'],
             fn=string_parser,
@@ -440,16 +301,9 @@ def get_parser(dtype_dict):
             pandas_type='datetime64',
         )
 
-    elif d['type_str'] == 'TYPE_INT' or d['type_str'] == 'TYPE_NUM':
-        if d['date_fmt_str'] is not None:
-            return dict(
-                name='parse integer',
-                fmt='integer',
-                dtype=d['type_str'],
-                fn=int_parser,
-                pandas_type='int64',
-            )
-        elif d['number_type'] in ('real', 'integer', 'whole', 'natural', 'integer'):
+    elif d['type_str'] in ('TYPE_INT', 'TYPE_NUM'):
+
+        if d['number_type'] in ('real', 'integer', 'whole', 'natural', 'integer'):
             return dict(
                 name='parse integer',
                 fmt=d['number_type'],
@@ -467,7 +321,7 @@ def get_parser(dtype_dict):
             )
         else:
             return dict(
-                name='unknown pass',
+                name='unknown passthrough',
                 fmt=None,
                 dtype=d['type_str'],
                 fn=string_parser,
@@ -476,7 +330,7 @@ def get_parser(dtype_dict):
 
     elif d['type_str'] == 'TYPE_CAT':
         return dict(
-            name='categorical pass',
+            name='categorical passthrough',
             fmt=None,
             dtype=d['type_str'],
             fn=string_parser,
@@ -484,7 +338,7 @@ def get_parser(dtype_dict):
         )
     else:
         return dict(
-            name='unknown pass',
+            name='unknown passthrough',
             fmt=None,
             dtype=d['type_str'],
             fn=string_parser,
@@ -503,34 +357,31 @@ def get_raw_csv_with_context(rid, max_rows=1000):
     ctx = get_raw_context(rid)
     # ctx['top_list']
     csv_df = get_raw_csv(
-        csv_path=ctx['csv_path'],
+        csv_stream=ctx['csv_stream'],
         dialect=ctx['dialect'],
-        header_row_idx=ctx['header_row_idx'],
+        header_line_count=ctx['header_line_count'],
         max_rows=max_rows,
     )
     return dict(
         csv_df=csv_df,
-        csv_path=ctx['csv_path'],
-        header_row_idx=ctx['header_row_idx'],
-        header_list=ctx['header_list'],
+        csv_stream=ctx['csv_stream'],
+        header_line_count=ctx['header_line_count'],
+        col_name_list=ctx['col_name_list'],
         raw_line_count=len(csv_df),
     )
 
 
-def get_raw_context(rid):
-    csv_stream = dex.obj_bytes.open_csv(rid)
-    dialect = get_dialect(csv_stream)
-    header_row_idx, header_list = find_header_row(csv_stream)
-    return dict(
-        dialect=dialect,
-        csv_path=csv_stream,
-        header_row_idx=header_row_idx,
-        header_list=header_list,
-    )
-
-
 # @dex.cache.disk("parsed", "df")
-def get_parsed_csv(rid, header_row_idx, parser_dict, dialect, pandas_type_dict, na_list):
+def get_parsed_csv(
+    rid,
+    header_line_count,
+    footer_line_count,
+    parser_dict,
+    dialect,
+    pandas_type_dict,
+    na_list,
+    max_rows=None,
+):
     """Read a CSV and parse each value (cell) to the type declared for its column in the
     EML.
 
@@ -545,40 +396,98 @@ def get_parsed_csv(rid, header_row_idx, parser_dict, dialect, pandas_type_dict, 
     declared in the EML.
     """
     csv_stream = dex.obj_bytes.open_csv(rid)
+
+    dex.util.logpp(parser_dict, msg='parser_dict', logger=log.error)
+
+
     csv_df = pd.read_csv(
+        # Commented lines show the defaults
         filepath_or_buffer=csv_stream,
-        index_col=False,
-        skiprows=header_row_idx,
-        na_filter=True,
-        na_values=list(set(na_list) | {''}),
-        keep_default_na=True,
-        # skip_blank_lines=False,
-        # nrows=col_idx,
-        converters=parser_dict,
-        #
-        dialect=dialect,
         header=0,
-        # names=[0]*100,
-        # cache_dates, which defaults to True, speeds up datetime parsing for cases
-        # having many repeated dates. This goes into effect only if the column is not
-        # parsed by Dex.
-        cache_dates=True,
+        # header=None,  # Do not use column names from the CSV (we get them from the EML)
+        names=pandas_type_dict.keys(),  # Use column names from EML
+
+        index_col=False,  # Do not use the first column as the index
+
+        # Only get the number of columns that are declared in the EML.
+        # Thi resolves issues where lines have trailing empty columns.
+        usecols=range(len(pandas_type_dict)),
+
+        # squeeze=False,
+        # prefix=NoDefault.no_default,
+        # mangle_dupe_cols=True,
+        # engine=None,
+        converters=parser_dict,
+        # true_values=None,
+        # false_values=None,
+        skiprows=header_line_count,
+        skipfooter=footer_line_count,  # Not required when setting nrows
+        nrows=max_rows,  # Read the number of rows declared in the EML
+        na_filter=True,
+        na_values=list(set(na_list)),
+        # Add common NaNs:
+        # ‘’, ‘#N/A’, ‘#N/A N/A’, ‘#NA’, ‘-1.#IND’, ‘-1.#QNAN’, ‘-NaN’, ‘-nan’, ‘1.#IND’, ‘1.#QNAN’,
+        # ‘<NA>’, ‘N/A’, ‘NA’, ‘NULL’, ‘NaN’, ‘n/a’, ‘nan’, ‘null’
+        keep_default_na=True,
+        dialect=dialect,  # Use dialect from EML, not inferred
+        # delimiter=None, # Alias for 'sep'. Overridden by setting dialect
+        # doublequote=True, # Overridden by setting dialect
+        # escapechar=None, # Overridden by setting dialect
+        # quotechar='"', # Overridden by setting dialect
+        # quoting=0, # Overridden by setting dialect
+        # sep=NoDefault.no_default, # Alias for 'delimiter'. Overridden by setting dialect
+        # skipinitialspace=False, # Overridden by setting dialect
+        skip_blank_lines=False,
+        # verbose=False,
+        # parse_dates=False,
+        # infer_datetime_format=False,
+        # keep_date_col=False,
+        # date_parser=None,
+        # dayfirst=False,
+        # Speeds up datetime parsing for cases having many repeated dates. This goes
+        # into effect only if the column is not parsed by Dex.
+        # cache_dates=True,
+        # iterator=False,
+        # chunksize=None,
+        # compression='infer',
+        # thousands=None,
+        # decimal='.',
+        # lineterminator=None,
+        # comment=None,
+        # encoding=None,
+        # encoding_errors='strict',
+        # error_bad_lines=None,
+        # warn_bad_lines=None,
+        # on_bad_lines=None,
+        # delim_whitespace=False,
+        # low_memory=True,
+        # memory_map=False,
+        # float_precision=None,
+        # storage_options=None,
     )
+
+    # print(csv_df.describe())
+    csv_df.info()
+
+    return csv_df
 
     # csv_df['PET'].replace(to_replace=[''], value=np.nan, inplace=True)
     # csv_df.replace(value=np.nan, regex='^\s*\$', inplace=True)
 
-    return csv_df.astype(pandas_type_dict, errors='ignore')
+    # return csv_df.astype(pandas_type_dict, errors='ignore')
 
 
-def get_raw_csv(csv_path, dialect, header_row_idx, max_rows):
+def get_raw_csv(csv_stream, dialect, header_line_count, max_rows):
+    """Read CSV to DF with minimal processing
+
+    The purpose of this function is to provide a view of the source CSV data.
+    """
     csv_df = pd.read_csv(
-        # index_col=False,
-        header=0,
+        filepath_or_buffer=csv_stream,
         index_col=False,
-        filepath_or_buffer=csv_path,
-        skiprows=header_row_idx,
+        skiprows=header_line_count,
         na_filter=False,
+        header=0,
         skip_blank_lines=False,
         nrows=max_rows,
         dialect=dialect,
@@ -598,29 +507,29 @@ def apply_nan(df, nan_set: set):
     return df.applymap(lambda x: np.nan if x in nan_set else x)
 
 
-def is_csv(_rid, csv_path):
-    try:
-        clevercsv_dialect = dex.csv_parser.get_clevercsv_dialect(csv_path)
-        count_dict = {}
-        with open(csv_path, "r", newline="", encoding='utf-8') as f:
-            for i, row in enumerate(clevercsv.reader(f, clevercsv_dialect)):
-                if i == 100:
-                    break
-                count_dict.setdefault(len(row), 0)
-                count_dict[len(row)] += 1
-        return 1 <= len(count_dict) <= 3
-    except Exception:
-        return False
+# def is_csv(_rid, csv_stream):
+#     try:
+#         clevercsv_dialect = dex.csv_parser.get_clevercsv_dialect(csv_stream)
+#         count_dict = {}
+#         with open(csv_stream, "r", newline="", encoding='utf-8') as f:
+#             for i, row in enumerate(clevercsv.reader(f, clevercsv_dialect)):
+#                 if i == 100:
+#                     break
+#                 count_dict.setdefault(len(row), 0)
+#                 count_dict[len(row)] += 1
+#         return 1 <= len(count_dict) <= 3
+#     except Exception:
+#         return False
 
 
-def _load_csv_to_df_slow(csv_path):
-    """This method handles various broken CSV files but is too slow for use in
-    production.
-    """
-    skip_rows, header_row = dex.csv_parser.find_header_row(csv_path)
-    log.debug(f"skip_rows: {skip_rows}")
-    log.debug("clevercsv - read_dataframe start")
-    start_ts = time.time()
-    csv_df = clevercsv.read_dataframe(csv_path, skiprows=skip_rows)
-    log.debug(f"clevercsv - read_dataframe: {time.time() - start_ts:.02f}s")
-    return csv_df
+# def _load_csv_to_df_slow(csv_stream):
+#     """This method handles various broken CSV files but is too slow for use in
+#     production.
+#     """
+#     skip_rows, header_row = dex.csv_parser.find_header_row(csv_stream)
+#     log.debug(f"skip_rows: {skip_rows}")
+#     log.debug("clevercsv - read_dataframe start")
+#     start_ts = time.time()
+#     csv_df = clevercsv.read_dataframe(csv_stream, skiprows=skip_rows)
+#     log.debug(f"clevercsv - read_dataframe: {time.time() - start_ts:.02f}s")
+#     return csv_df
