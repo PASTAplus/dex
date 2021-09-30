@@ -63,16 +63,6 @@ def render_profile(rid):
     ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
     csv_df = ctx['csv_df']
 
-    for i, col_name in enumerate(csv_df.columns):
-        # TODO: We have similar logic in cast_to_eml_types(). Check if they can be merged.
-        derived_dict = ctx['derived_dtypes_list'][i]
-        if   derived_dict['type_str'] == 'TYPE_CAT' or derived_dict['is_enumerated']:
-            csv_df[col_name] = csv_df[col_name].astype('category', errors='ignore')
-        elif derived_dict['type_str'] == 'TYPE_NUM':
-            csv_df[col_name] = csv_df[col_name].astype(np.float, errors='ignore')
-        elif derived_dict['c_date_fmt_str']: # derived_dict['type_str'] == 'TYPE_DATE' and
-            csv_df[col_name] = pd.to_datetime(csv_df[col_name], errors='ignore', format=derived_dict['c_date_fmt_str'])
-
     log.debug('Calling pandas_profiling.ProfileReport()...')
 
     # Create a tree representation of the report.
