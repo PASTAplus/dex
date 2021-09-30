@@ -147,7 +147,18 @@ LOG_CONFIG = {
         }
     },
     'root': {
-        'handlers': ['stdout'],
-        'level': logging.DEBUG,
+    },
+    'loggers': {
+        '': {
+            'handlers': ['stdout'],
+            # 'handlers': ['console'],
+            # 'level': logging.DEBUG,
+            'propagate': True,
+            'level': 'DEBUG',  # 'INFO'
+        },
+        # Increase logging level on loggers that are noisy at debug level.
+        'matplotlib': {
+            'level': 'ERROR',
+        },
     },
 }
