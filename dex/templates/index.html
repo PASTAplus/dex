@@ -34,11 +34,11 @@
     <div class='widgets'>
       <form action='/' method='post'>
         <div class='form-group required'>
-          <label class="control-label" for='open_url'>Data Entity URL for a CSV
+          <label class="control-label" for='package_url'>Data Entity URL for a CSV
             file to open</label>
-          <input class="form-control" id='open_url' name='open_url'
+          <input class="form-control" id='package_url' name='package_url'
                  width='80'
-                 placeholder='https://pasta-d/lternet/edu/package/data/eml/knb-lter-ble/9/1/0be92831cb9e173a828416a954778598'/>
+                 placeholder='https://pasta-d.lternet.edu/package/data/eml/knb-lter-ble/9/1/0be92831cb9e173a828416a954778598'/>
         </div>
         <div class='form-group required'>
           <button class="btn btn-primary" type='submit'>Open</button>
@@ -52,13 +52,31 @@
     <div class='instructions'>
       <ul>
         <li>
-          Display debug information about the currently displayed CSV file
+          Display debug information
         </li>
-        <li>
-          The debug information is displayed at the top of the page, just below the
-          navigation bar
-        </li>
+        {% if g.debug_panel %}
+          <li>
+            Debug panel is enabled and will display after selecting a CSV
+          </li>
+        {% endif %}
       </ul>
+    </div>
+
+    <div class='widgets'>
+      <form action='/' method='post'>
+        <div class='form-group required'>
+          {% if not g.debug_panel %}
+            <a href="?debug=true">
+              <button class="btn btn-primary" type='button'>Enable Debug Panel</button>
+            </a>
+          {% else %}
+            <a href="?debug=false">
+              <button class="btn btn-primary" type='button'>Disable Debug Panel</button>
+            </a>
+          {% endif %}
+
+        </div>
+      </form>
     </div>
 
 
