@@ -517,16 +517,11 @@ div.root-page ul {
 /* Debug bar */
 
 #dbg {
-    /*position: sticky;*/
-    /*top: 0;*/
-    font-size: 60%;
     font-family: monospace;
     margin: 0;
     padding: 0;
     max-height: 30rem;
     overflow: scroll;
-    background-color: black;
-    /*     color: darkgreen; */
     z-index: 100;
 }
 
@@ -591,7 +586,7 @@ div.root-page ul {
 /*}*/
 
 
-thead th {
+#dbg thead th {
     position: sticky;
     top: 0;
     background: linear-gradient(
@@ -602,7 +597,7 @@ thead th {
     );
 }
 
-tbody th {
+#dbg tbody th {
     position: sticky;
     left: 0;
     background: linear-gradient(
