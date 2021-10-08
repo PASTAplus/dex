@@ -3,7 +3,6 @@ import functools
 import logging
 import lzma
 import pathlib
-import re
 import sys
 import tempfile
 import threading
@@ -12,7 +11,6 @@ import time
 import fasteners
 import flask
 import lxml.etree
-import pandas as pd
 
 import dex.db
 import dex.exc
@@ -149,27 +147,7 @@ def is_cached(rid, key, obj_type):
 
 
 def read_from_cache(rid, key, obj_type):
-    if obj_type == "df":
-        return read_df(rid, key, obj_type)
-    else:
-        return read_gen(rid, key, obj_type)
-
-
-def read_df(rid, key, obj_type):
-    cache_path, is_compressed = get_cache_path(rid, key, obj_type)
-    if is_compressed:
-        raise AssertionError(
-            "HDF (.m5) files use compression internally. "
-            "Compression with external tools is not supported"
-        )
-    try:
-        return pd.read_hdf(cache_path, key=re.sub("[^a-z0-9]", key, "_"))
-    except AttributeError:
-        # https://github.com/pandas-dev/pandas/issues/31199
-        delete_cache_file(rid, key, obj_type)
-        raise dex.exc.CacheError("Discarded corrupted HDF file")
-    except FileNotFoundError:
-        raise dex.exc.CacheError("File not in cache")
+    return read_gen(rid, key, obj_type)
 
 
 def read_gen(rid, key, obj_type):
@@ -181,36 +159,12 @@ def read_gen(rid, key, obj_type):
         # elif obj_type in ('path',):
         #     cache_path, is_compressed = get_cache_path(rid, key, obj_type)
         else:
+            log.debug(f'unpickling object type {obj_type}')
             return pickle.load(f)
 
 
 def save_to_cache(rid, key, obj_type, obj):
-    if obj_type == "df":
-        return save_df(rid, key, obj_type, obj)
-    else:
-        return save_gen(rid, key, obj_type, obj)
-
-
-def save_df(rid, key, obj_type, obj):
-    cache_path, is_compressed = get_cache_path(rid, key, obj_type)
-    if is_compressed:
-        raise AssertionError(
-            "HDF (.m5) files use compression internally. "
-            "Compression with external tools is not supported"
-        )
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    obj.to_hdf(
-        # cache_path.with_suffix('.tmp'),
-        cache_path,
-        key=re.sub("[^a-z0-9]", key, "_"),
-        mode="w",
-        complevel=6,
-        complib="bzip2",
-        # > Cannot store a category dtype in a HDF5 dataset that uses format="fixed".
-        # Use format="table".
-        format='table',
-    )
-    # os.rename(cache_path.with_suffix('.tmp'), cache_path)
+    return save_gen(rid, key, obj_type, obj)
 
 
 def save_gen(rid, key, obj_type, obj):
