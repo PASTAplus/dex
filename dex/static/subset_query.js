@@ -118,6 +118,7 @@ async function register_event_listeners()
   });
 
   $('#pq-toggle-all-input').on('change', async (e) => {
+    $('.pq-column-select-checkbox').prop('checked', $('#pq-toggle-all-input').prop('checked'));
     await sync_column_selections();
     e.stopPropagation();
   });
@@ -126,38 +127,6 @@ async function register_event_listeners()
     await sync_column_selections();
     e.stopPropagation();
   });
-
-  // $('input[name="pq-toggle-single-input"]').on('click', async (e) => {
-  //   // alert("111");
-  //   // $('.pq-column-select-checkbox').prop('checked', $('#pq-toggle-all-input').prop('checked'));
-  //   // await sync_column_selections();
-  //   e.stopPropagation();
-  // });
-
-  // col_sel_checkbox.on('change', async function (e) {
-  //   alert("2");
-  //   // Prevent column sorting
-  //   // e.stopPropagation();
-  //   // await sync_column_selections();
-  //   // e.stopPropagation();
-  // });
-
-  // col_sel_checkbox.on('click', async function (e) {
-  //   // alert("3");
-  //   // Prevent column sorting
-  //   // e.stopPropagation();
-  //   // let checkbox_el = $(e.target);
-  //   // let parent_el = checkbox_el.parent();
-  //   // let col_idx = parent_el.parent().children().index(parent_el);
-  //   // $(`td:nth-child(${col_idx + 1})`).toggleClass('unselected', !checkbox_el.checked);
-  // });
-  //
-  // // Listen for all clicks on the document
-  // // document.addEventListener('click', function (event) {
-  // //   // If the click happened inside the the container, bail
-  // //   if (!event.target.closest('pq-column-select-checkbox')) {
-  // //   }
-  // // });
 }
 
 async function add_column_header_checkboxes()

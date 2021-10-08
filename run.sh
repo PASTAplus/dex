@@ -19,16 +19,18 @@ function here() {
   echo -n "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 }
 
-#export FLASK_RUN_PORT=5000
-#export FLASK_RUN_HOST=127.0.0.1
+#eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
+#conda init bash
+#conda activate dex
+
+#padd "$(here)" PYTHONPATH
+#padd "$(here)/dex" PYTHONPATH
+
 export FLASK_RUN_PORT=5000
 export FLASK_RUN_HOST=0.0.0.0
-padd "$(here)" PYTHONPATH
-padd "$(here)/dex" PYTHONPATH
 export FLASK_ENV='development'
 export FLASK_DEBUG='1'
 export WERKZEUG_DEBUG_PIN='off'
 
-# echo $PYTHONPATH
-
-flask run # | tee -a flask.run.out
+#flask run # | tee -a flask.run.out
+/home/dahl/miniconda3/envs/dex/bin/flask run # | tee -a flask.run.out

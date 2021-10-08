@@ -130,7 +130,7 @@ def csv_fetch(rid):
             by=[raw_df.columns[sort_col_idx - 1], "__Index"],
             ascending=is_ascending,
         )
-    page_df = raw_df[start_int : start_int + row_count]
+    page_df = query_result.raw_df[start_int : start_int + row_count]
 
     j = json.loads(page_df.to_json(orient="split", index=True))
     row_list = [(a, *b) for a, b in zip(j["index"], j["data"])]
@@ -293,15 +293,6 @@ def fetch_category(rid, col_idx):
     return json_str
 
 
-# def parse_date(s):
-#     try:
-#         x = maya.parse(s).epoch
-#         # print(x)
-#         return x
-#     except ValueError:
-#         return 0.0
-
-
 def get_package_id(purl: str) -> str:
     path_frags = purl.split("/")
     scope = path_frags[-4]
@@ -309,13 +300,3 @@ def get_package_id(purl: str) -> str:
     revision = path_frags[-2]
     package_id = f"{scope}.{identifier}.{revision}"
     return package_id
-
-
-# def cell_formatter(x):
-#     """Formatter that is applied to each cell in a DataFrame when rendering to HTML"""
-#     print('1'*100)
-#     print(x)
-#     if isinstance(x, np.float):
-#         return f"{x:.02f}"
-#     else:
-#         return str(x)
