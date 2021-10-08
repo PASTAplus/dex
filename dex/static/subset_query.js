@@ -28,7 +28,8 @@ export async function get_column_filter()
   let sel_arr = el_list.map(function () { return this.checked; }).get();
   // Somehow, the DataTable creates a duplicate row of the column select checkboxes. We slice
   // those off here.
-  return sel_arr.slice(0, sel_arr.length / 2);
+  // return sel_arr.slice(0, sel_arr.length / 2);
+  return sel_arr;
 }
 
 // Local
@@ -116,32 +117,47 @@ async function register_event_listeners()
     }
   });
 
-  $('#pq-toggle-all-input').on('change', async () => {
-    $('.pq-column-select-checkbox').prop('checked', $('#pq-toggle-all-input').prop('checked'));
+  $('#pq-toggle-all-input').on('change', async (e) => {
     await sync_column_selections();
-  });
-
-  col_sel_checkbox.on('change', async function (_e) {
-    // Prevent column sorting
-    // e.stopPropagation();
-    await sync_column_selections();
-  });
-
-  col_sel_checkbox.on('click', async function (e) {
-    // Prevent column sorting
     e.stopPropagation();
-    // let checkbox_el = $(e.target);
-    // let parent_el = checkbox_el.parent();
-    // let col_idx = parent_el.parent().children().index(parent_el);
-    // $(`td:nth-child(${col_idx + 1})`).toggleClass('unselected', !checkbox_el.checked);
   });
 
-  // Listen for all clicks on the document
-  // document.addEventListener('click', function (event) {
-  //   // If the click happened inside the the container, bail
-  //   if (!event.target.closest('pq-column-select-checkbox')) {
-  //   }
+  $('input[name="pq-toggle-single-input"]').on('change click', async (e) => {
+    await sync_column_selections();
+    e.stopPropagation();
+  });
+
+  // $('input[name="pq-toggle-single-input"]').on('click', async (e) => {
+  //   // alert("111");
+  //   // $('.pq-column-select-checkbox').prop('checked', $('#pq-toggle-all-input').prop('checked'));
+  //   // await sync_column_selections();
+  //   e.stopPropagation();
   // });
+
+  // col_sel_checkbox.on('change', async function (e) {
+  //   alert("2");
+  //   // Prevent column sorting
+  //   // e.stopPropagation();
+  //   // await sync_column_selections();
+  //   // e.stopPropagation();
+  // });
+
+  // col_sel_checkbox.on('click', async function (e) {
+  //   // alert("3");
+  //   // Prevent column sorting
+  //   // e.stopPropagation();
+  //   // let checkbox_el = $(e.target);
+  //   // let parent_el = checkbox_el.parent();
+  //   // let col_idx = parent_el.parent().children().index(parent_el);
+  //   // $(`td:nth-child(${col_idx + 1})`).toggleClass('unselected', !checkbox_el.checked);
+  // });
+  //
+  // // Listen for all clicks on the document
+  // // document.addEventListener('click', function (event) {
+  // //   // If the click happened inside the the container, bail
+  // //   if (!event.target.closest('pq-column-select-checkbox')) {
+  // //   }
+  // // });
 }
 
 async function add_column_header_checkboxes()
@@ -153,7 +169,7 @@ async function add_column_header_checkboxes()
       .prepend(`
         <div class='pq-column-select-checkbox-container'>
           <div class='pq-column-select-checkbox-item'>
-            <input class='pq-column-select-checkbox' type='checkbox' checked='checked'/>
+            <input name='pq-toggle-single-input' class='pq-column-select-checkbox' type='checkbox' checked='checked'/>
           </div>
         </div>`
       );
