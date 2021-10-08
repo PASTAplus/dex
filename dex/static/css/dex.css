@@ -323,14 +323,12 @@ table.dataTable tbody th, table.dataTable tbody td {
 }
 
 .datatable td:empty {
-    background-color: #202020;
 }
 
 .datatable td:empty::before {
     top: 0;
     left: 0;
     font-size: 50%;
-    color: gray;
     content: "(no value)";
 }
 
@@ -505,7 +503,6 @@ div.col-type {
 }
 
 div.col-supp {
-    color: green !important;
 }
 
 /* Root page */
@@ -522,13 +519,11 @@ div.root-page ul {
     padding: 0;
     max-height: 30rem;
     overflow: scroll;
-    z-index: 100;
 }
 
 #dbg div.highlight,
 #dbg span,
 #dbg pre {
-    background-color: black;
     border: 0;
     padding: 0;
     margin: 0;
@@ -540,7 +535,6 @@ div.root-page ul {
 #dbg div.debug {
     border: 0;
     padding: 0;
-    background-color: black;
     margin: 1rem;
 }
 
@@ -586,28 +580,32 @@ div.root-page ul {
 /*}*/
 
 
+#dbg {
+}
+
 #dbg thead th {
-    position: sticky;
-    top: 0;
-    background: linear-gradient(
-            to bottom,
-            rgba(20, 20, 20, 1),
-            rgba(20, 20, 20, 1),
-            rgba(20, 20, 20, 0)
-    );
+   position: sticky;
+   top: 0;
+/*    background: linear-gradient(
+           to bottom,*!
+           rgba(20, 20, 20, 1),
+           rgba(20, 20, 20, 1),
+           rgba(20, 20, 20, 0)
+   ); */
+   background-color: white;
 }
 
 #dbg tbody th {
-    position: sticky;
-    left: 0;
-    background: linear-gradient(
-            to right,
-            rgba(20, 20, 20, 1),
-            rgba(20, 20, 20, 1),
-            rgba(20, 20, 20, 0)
-    );
-
-    text-align: right;
+   position: sticky;
+   left: 0;
+/*    background: linear-gradient(
+           to right,*!
+           rgba(20, 20, 20, 1),
+           rgba(20, 20, 20, 1),
+           rgba(20, 20, 20, 0)
+   ); */
+   background-color: white;
+   text-align: right;
 }
 
 
@@ -615,10 +613,12 @@ div.root-page ul {
 #sticky-section {
     position: sticky;
     top: 0;
-    z-index: 1000;
-    scrollbar-width: 2rem;
+    scrollbar-width: 1rem;
+    /* Don't want to set the color here, only the opacity. How? */
+    background-color: white;
+    z-index: 100;
+/*     opacity: 1; */
 }
 
 #csv-table .unselected {
-    color: #8b4444;
 }
