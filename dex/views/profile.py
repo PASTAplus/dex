@@ -1,9 +1,7 @@
 import logging
-import numpy as np
 
 import flask
 import flask.json
-import pandas as pd
 import pandas_profiling
 
 import dex.db
@@ -60,8 +58,7 @@ def doc(rid):
 
 @dex.cache.disk("profile", "html")
 def render_profile(rid):
-    ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
-    csv_df = ctx['csv_df']
+    csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
 
     log.debug('Calling pandas_profiling.ProfileReport()...')
 
@@ -72,19 +69,17 @@ def render_profile(rid):
         # dark_mode=arg_dict['dark_mode'],
         infer_dtypes=False,
     )
-
-    # rearrange_report(report_tree)
-    # dex.util.dump_full_dataframe(csv_df)
+    rearrange_report(report_tree)
     html_str = report_tree.to_html()
     return html_str
 
 
 def rearrange_report(report_tree):
-    # Move the Sample section from the end to the front of the report.
-    section_list = report_tree.report.content["body"].content["items"]
-    section_list.insert(1, section_list.pop(-1))
-
     try:
+        # Move the Sample section from the end to the front of the report.
+        section_list = report_tree.report.content["body"].content["items"]
+        section_list.insert(1, section_list.pop(-1))
+
         section_list[0].content['items'][1].content['name'] = 'Notes'
         section_list[0].content['items'][2].content['name'] = 'Reproducibility'
         section_list[0].content['items'][2].content['items'][0].content['name'] = 'Reproducibility'
