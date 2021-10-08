@@ -28,7 +28,8 @@ HOST_DICT = {
 def flask_main(_ctx):
     parser = argparse.ArgumentParser(
         __doc__,
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         '--debug',
         action='store_true',

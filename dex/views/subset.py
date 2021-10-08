@@ -2,7 +2,6 @@ import datetime
 import io
 import json
 import logging
-import pathlib
 import pprint
 import zipfile
 
@@ -29,14 +28,12 @@ DEFAULT_DISPLAY_ROW_COUNT = 10
 
 @subset_blueprint.route("/<rid>", methods=["GET"])
 def subset(rid):
-    ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
-    csv_df = ctx['csv_df']
-    formatter_dict = dex.csv_parser.get_formatter_dict(ctx['derived_dtypes_list'])
+    csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
     g_dict = dict(
         rid=rid,
         entity_tup=dex.db.get_entity_as_dict(rid),
         row_count=len(csv_df),
-        derived_dtypes_list=ctx['derived_dtypes_list'],
+        column_list=eml_ctx['column_list'],
         cat_col_map={d['col_name']: d for d in dex.eml_cache.get_categorical_columns(rid)},
         filter_not_applied_str='Filter not applied',
     )
@@ -47,7 +44,6 @@ def subset(rid):
         csv_html=csv_df.iloc[:DEFAULT_DISPLAY_ROW_COUNT].to_html(
             table_id="csv-table",
             classes="datatable row-border",
-            formatters=formatter_dict,
             index=True,
             index_names=False,
             border=0,
@@ -55,10 +51,39 @@ def subset(rid):
         rid=rid,
         entity_tup=dex.db.get_entity_as_dict(rid),
         csv_name=dex.eml_cache.get_csv_name(rid),
-        derived_dtypes_list=ctx['derived_dtypes_list'],
+        column_list=eml_ctx['column_list'],
         filter_not_applied_str='Filter not applied',
         dbg=dex.debug.debug(rid),
         portal_base=dex.pasta.get_portal_base_by_entity(dex.db.get_entity(rid)),
+    )
+
+
+def get_raw_filtered_by_query(csv_df, raw_df, eml_ctx, query_str=None):
+    # Filter the full CSV by the search string. A row is included if one or more of the
+    # cells in the row have text matching the search string.
+    if not query_str:
+        return N(
+            raw_df=raw_df,
+            status_str='Query not applied',
+            query_is_ok=True,
+        )
+    try:
+        query_df = csv_df.query(query_str)
+        log.debug('QUERY_DF')
+        log.debug(query_str)
+        log.debug(len(csv_df))
+        log.debug(len(query_df))
+    except Exception as e:
+        return N(
+            raw_df=raw_df,
+            status_str=f'Query error: {e.__class__.__name__}: {str(e)}',
+            query_is_ok=False,
+        )
+    raw_df = raw_df.iloc[query_df.index, :]
+    return N(
+        raw_df=raw_df,
+        status_str=f'Query OK: Selected {len(raw_df)} of {len(csv_df)} rows',
+        query_is_ok=True,
     )
 
 
@@ -84,83 +109,44 @@ def csv_fetch(rid):
     # log.debug(pprint.pformat(flask.request.args, indent=2, sort_dicts=True))
 
     args = flask.request.args
+
     draw_int = args.get("draw", type=int)
     start_int = args.get("start", type=int)
     row_count = args.get("length", type=int)
-    search_str = args.get("search[value]")
+    query_str = args.get("search[value]")
 
     sort_col_idx = args.get("order[0][column]", type=int)
     is_ascending = args.get("order[0][dir]") == "asc"
 
-    ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
-    csv_df = ctx['csv_df']
+    csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
+    query_result = get_raw_filtered_by_query(csv_df, raw_df, eml_ctx, query_str)
 
-    # csv_df = dex.csv_cache.get_full_csv(rid)
-    total_count = len(csv_df)
-
-    # Filter the full CSV by the search string. A row is included if one or more of the
-    # cells in the row have text matching the search string.
-
-    filtered_count = len(csv_df)
-    query_is_ok = True
-    if search_str:
-        try:
-            csv_df = csv_df.query(search_str)
-        except Exception as e:
-            result_str = f'{e.__class__.__name__}: {str(e)}'
-            query_is_ok = False
-        else:
-            filtered_count = len(csv_df)
-            result_str = f'Query OK -- Subset contains {filtered_count} rows'
-    else:
-        result_str = 'Filter not applied'
-
+    # Create page of filtered result for display (selected with the [1], [2]... buttons).
     # Sort the rows according to selection
     if not sort_col_idx:
-        csv_df = csv_df.sort_index(ascending=is_ascending)
+        raw_df = raw_df.sort_index(ascending=is_ascending)
     else:
-        csv_df = csv_df.rename_axis("__Index").sort_values(
-            by=[csv_df.columns[sort_col_idx - 1], "__Index"],
+        raw_df = raw_df.rename_axis("__Index").sort_values(
+            by=[raw_df.columns[sort_col_idx - 1], "__Index"],
             ascending=is_ascending,
         )
+    page_df = raw_df[start_int : start_int + row_count]
 
-    # Get the requested page of results (selected with the [1], [2]... buttons).
-    csv_df = csv_df[start_int : start_int + row_count]
+    j = json.loads(page_df.to_json(orient="split", index=True))
+    row_list = [(a, *b) for a, b in zip(j["index"], j["data"])]
 
-    # formatter_dict = dex.csv_parser.get_formatter_dict(ctx.derived_dtypes_list)
-    # csv_df.style.format(formatter_dict)
-
-    # csv_df = csv_df.set_index('Name').sort_index(ascending=is_ascending)
-    # csv_df = csv_df.sort_values(
-    #     csv_df.columns[sort_col_idx], ascending=is_ascending
-    # )
-    # derived_dtype_list = dex.csv_cache.get_derived_dtype_list(rid)
-    # for i, (col_name, col) in enumerate(csv_df.iteritems()):
-    #     csv_df.iloc[:, i] = col.apply(dex.eml_types.get_formatter(derived_dtype_list[i]))
-
-    # for c in csv_df.columns:
-    # csv_df = csv_df.apply(v for i, v in enumerate(format_mapping.values()))
-
-    # csv_df.style.format(format_mapping)
-
-    # Apply the EML derived formatting to the section of the CSV that will be displayed.
-    new_df = dex.csv_parser.apply_formatters(csv_df, ctx['derived_dtypes_list'])
-
-    j = json.loads(csv_df.to_json(orient="split", index=True))
-    d = [(a, *b) for a, b in zip(j["index"], j["data"])]
-
-    for i in range(len(d), 10):
-        d.append(('', *[''] * len(csv_df.columns)))
+    for i in range(len(row_list), 10):
+        row_list.append(('', *[''] * len(raw_df.columns)))
 
     result_dict = {
         # DataTable
         "draw": draw_int,
-        "recordsTotal": total_count,
-        "recordsFiltered": filtered_count,
-        "data": d,
+        "recordsTotal": len(csv_df),
+        "recordsFiltered": len(query_result.raw_df),
+        "data": row_list,
         # Dex
-        "queryResult": result_str,
-        "queryIsOk": query_is_ok,
+        "queryResult": query_result.status_str,
+        "queryIsOk": query_result.query_is_ok,
     }
 
     # util.logpp(result_dict, 'Returning to client', log.debug)
@@ -174,14 +160,24 @@ def csv_fetch(rid):
 @subset_blueprint.route("/<rid>", methods=["POST"])
 def download(rid):
     filter_dict = json.loads(flask.request.data)
+    args = flask.request.args
 
     log.debug("=" * 100)
     log.debug(pprint.pformat({"rid": rid, "filter_dict": filter_dict}))
     log.debug("=" * 100)
 
-    csv_df = dex.csv_cache.get_full_csv(rid)
+    draw_int = args.get("draw", type=int)
+    start_int = args.get("start", type=int)
+    row_count = args.get("length", type=int)
+    query_str = args.get("search[value]")
+
+    sort_col_idx = args.get("order[0][column]", type=int)
+    is_ascending = args.get("order[0][dir]") == "asc"
+
+    csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
+    query_result = get_raw_filtered_by_query(csv_df, raw_df, eml_ctx, query_str)
+
     unfiltered_row_count = len(csv_df)
-    derived_dtype_list = dex.csv_parser.get_derived_dtype_list(rid)
 
     # Filter rows
     a, b = map(lambda x: x - 1, filter_dict["row_filter"].values())
@@ -192,16 +188,9 @@ def download(rid):
     # Filter by category
     for col_idx, cat_list in filter_dict["cat_map"]:
         idx_map = dex.csv_cache.get_categories_for_column(rid, col_idx)
-        # cat_set = {idx_map[i] for i in cat_list}
         cat_set = set(cat_list)
         bool_ser = csv_df.iloc[:, col_idx].isin(cat_set)
         csv_df = csv_df.loc[bool_ser]
-
-    # # Filter by category
-    # for col_idx, cat_list in filter_dict["cat_map"]:
-    #     idx_map = dex.csv_cache.get_categories_for_column(rid, col_idx)
-    #     cat_set = {idx_map[i] for i in cat_list}
-    #     csv_df = csv_df.iloc[:, col_idx].isin(cat_set)
 
     # Filter by date range
     date_filter = filter_dict["date_filter"]
@@ -226,9 +215,8 @@ def download(rid):
                 csv_df.iloc[:, col_idx].apply(str),
                 # infer_datetime_format=True,
                 errors='ignore',
-                format=derived_dtype_list[col_idx].c_date_fmt_str,
+                format=eml_ctx['column_list'][col_idx].c_date_fmt_str,
             )
-            # csv_df.iloc[:, col_idx] = pd.tz_localize(None)
 
         if begin_date and end_date:
             csv_df = csv_df[
@@ -240,11 +228,11 @@ def download(rid):
             csv_df = csv_df[[(x.tz_localize(None) <= end_date) for x in csv_df.iloc[:, col_idx]]]
 
     # Filter columns
-    col_list = filter_dict["col_filter"][1:]
-    if col_list:
-        log.debug(f'Filtering by columns: {", ".join(map(str, col_list))}')
-        # col_name_list = [csv_df.columns[c] for c in col_list]
-        csv_df = csv_df.iloc[:, col_list]
+    # col_list = filter_dict["col_filter"][1:]
+    # if col_list:
+    #     log.debug(f'Filtering by columns: {", ".join(map(str, col_list))}')
+    #     # col_name_list = [csv_df.columns[c] for c in col_list]
+    #     csv_df = csv_df.iloc[:, col_list]
 
     log.debug(
         f'Subset created successfully. '
@@ -255,6 +243,9 @@ def download(rid):
     # Simulate large obj/slow server
     # import time
     # time.sleep(5)
+
+    # Return the raw CSV rows that correspond to the rows we have filtered using the parsed CSV.
+    csv_df = query_result.raw_df.iloc[csv_df.index, :]
 
     csv_bytes = csv_df.to_csv(index=filter_dict["col_filter"][0])
     # json_bytes = flask.json.htmlsafe_dumps(filter_dict)

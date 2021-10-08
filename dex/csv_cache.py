@@ -1,10 +1,8 @@
 import logging
 import math
-import time
 
 import pandas as pd
 
-import csv_parser
 import dex.cache
 import dex.csv_parser
 import dex.obj_bytes
@@ -19,14 +17,19 @@ from flask import current_app as app
 log = logging.getLogger(__name__)
 
 
+def get_full_csv(rid):
+    eml_ctx = dex.csv_parser.get_eml_ctx(rid)
+    return dex.csv_parser.get_parsed_csv(rid, eml_ctx)
+
+
 @dex.cache.disk("head", "df")
 def get_csv_head(rid):
-    return csv_parser.get_parsed_csv(rid).head()
+    return get_full_csv(rid).head()
 
 
 @dex.cache.disk("tail", "df")
 def get_csv_tail(rid):
-    return csv_parser.get_parsed_csv(rid).tail()
+    return get_full_csv(rid).tail()
 
 
 @dex.cache.disk("sample", "df")
@@ -77,6 +80,7 @@ def get_stats(rid):
         axis=1,
     )
     stats_df.columns = "Column", "Min", "Max", "Mean", "Median", "Unique"
+
     return stats_df
 
 
@@ -84,7 +88,7 @@ def get_stats(rid):
 
 
 # @dex.cache.disk("ref-col", "list")
-# def get_derived_dtypes_list(rid):
+# def get_column_list(rid):
 #     df = get_description(rid)
 #     return df.columns.to_list()
 
@@ -104,8 +108,7 @@ def get_categories_for_column(rid, col_idx):
     """Return a list of the unique values in a categorical column. This assumes that
     the column at the given index is already known to be of type `TYPE_CAT`.
     """
-    ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
-    csv_df = ctx['csv_df']
+    csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
     col_series = csv_df.iloc[:, int(col_idx)]
     # return list([x for x in col_series.unique() if not is_nan(x)])
     return list(x for x in col_series.unique() if not is_nan(x))

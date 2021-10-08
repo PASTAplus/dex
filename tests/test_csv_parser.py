@@ -40,9 +40,9 @@ def test_0100(rid, csv_path):
 
 def test_1000(rid, tmp_cache):
     """get_parsed_csv()"""
-    header_row_idx = 0
+    header_line_count = 0
     # parser_dict = {}
-    # df = dex.csv_parser.get_parsed_csv(rid, header_row_idx, parser_dict, Dialect1)
+    # df = dex.csv_parser.get_parsed_csv(rid, header_line_count, parser_dict, Dialect1)
     parser_dict = {
         'studyName': None,
         'Datetime GMT': None,
@@ -83,5 +83,5 @@ def test_1000(rid, tmp_cache):
         derived_dict[k]['col_name']: d['fn'] for k, d in parser_dict.items()
     }
     p(parser_func_dict, 'parser_func_dict')
-    df = dex.csv_parser.get_parsed_csv(rid, header_row_idx, parser_func_dict, Dialect1)
+    df = dex.csv_parser.get_parsed_csv(rid, header_line_count, parser_func_dict, Dialect1)
     df.info()

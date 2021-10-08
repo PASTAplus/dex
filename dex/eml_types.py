@@ -4,6 +4,7 @@ This module works directly with EML XML objects in the lxml.etree domain, and so
 be used without having an `rid`.
 """
 import contextlib
+import csv
 import datetime
 import logging
 import re
@@ -20,7 +21,13 @@ log = logging.getLogger(__name__)
 # Default start and end datetimes used in the UI if the EML lists one or more datetime
 # columns, but no datetime ranges.
 FALLBACK_BEGIN_DATETIME = datetime.datetime(2000, 1, 1)
-FALLBACK_END_DATETIME = datetime.datetime(2040, 1, 1)
+FALLBACK_END_DATETIME = datetime.datetime.now()
+
+DEFAULT_HEADER_LINE_COUNT = 0
+DEFAULT_FOOTER_LINE_COUNT = 0
+DEFAULT_RECORD_DELIMITER = r'\n'
+DEFAULT_FIELD_DELIMITER = ','
+DEFAULT_QUOTE_CHARACTER = '"'
 
 # Supported date-format strings. Ordered by how much information they extract.
 # List of formatting directives:
@@ -39,7 +46,6 @@ DATE_INT_FORMAT_DICT = {
     'MM': '%m',
     'HH:MM:SS': '%H:%M:%S',
 }
-
 
 ISO8601_TO_CTIME_DICT = {
     # %a
@@ -163,6 +169,32 @@ def iso8601_to_c_format(iso_str):
     return c_fmt_str
 
 
+def get_dialect(dt_el):
+    text_format_el = first(dt_el, './/physical/dataFormat/textFormat')
+
+    # https://docs.python.org/3/library/csv.html#csv.Dialect
+    class Dialect(csv.Dialect):
+        delimiter = first_str(text_format_el, 'fieldDelimiter', DEFAULT_FIELD_DELIMITER)
+        doublequote = True
+        escapechar = None
+        lineterminator = first_str(text_format_el, 'recordDelimiter', DEFAULT_RECORD_DELIMITER)
+        quotechar = first_str(text_format_el, 'quoteCharacter', DEFAULT_QUOTE_CHARACTER)
+        quoting = csv.QUOTE_MINIMAL
+        skipinitialspace = True
+        strict = False
+
+    return Dialect
+
+
+def get_header_line_count(dt_el):
+    text_format_el = first(dt_el, './/physical/dataFormat/textFormat')
+    return first_int(text_format_el, 'numHeaderLines', DEFAULT_HEADER_LINE_COUNT)
+
+def get_footer_line_count(dt_el):
+    text_format_el = first(dt_el, './/physical/dataFormat/textFormat')
+    return first_int(text_format_el, 'numFooterLines', DEFAULT_FOOTER_LINE_COUNT)
+
+
 def get_derived_dtypes_from_eml(dt_el):
     """Heuristics to find a Pandas / NumPy type, called dtype, to use when processing
     a CSV file that has EML based type declarations.
@@ -184,20 +216,6 @@ def get_derived_dtypes_from_eml(dt_el):
     TYPE_NUM            - A numeric variable
     TYPE_CAT            - A categorical variable
     S_TYPE_UNSUPPORTED  - An unsupported variable
-
-    dtype_dict = {
-        'col_idx': col_idx,
-        'col_name': col_name,
-        'type_str': 'S_TYPE_UNSUPPORTED',
-        'storage_type': storage_type,
-        'date_fmt_str': date_fmt_str,
-        'c_date_fmt_str': None,
-        'number_type': number_type,
-        'numeric_domain': numeric_domain,
-        'ratio': ratio,
-        'missing_value_list': missing_value_list,
-        'col_agg_dict': col_agg_dict,
-    }
     """
     default_dt = get_default_begin_end_datetime_range(dt_el)
 
@@ -212,9 +230,7 @@ def get_derived_dtypes_from_eml(dt_el):
         col_name = first_str_orig(attr_el, './/attributeName/text()')
 
         storage_type = first_str(attr_el, './/storageType/text()')
-        date_fmt_str = first_str(
-            attr_el, './/measurementScale/dateTime/formatString/text()'
-        )
+        date_fmt_str = first_str(attr_el, './/measurementScale/dateTime/formatString/text()')
         number_type = first_str(
             attr_el, './/measurementScale/ratio/numericDomain/numberType/text()'
         )
@@ -225,16 +241,6 @@ def get_derived_dtypes_from_eml(dt_el):
         ratio = first_str(attr_el, './/measurementScale/ratio/text()')
         missing_code_list = multiple_str(attr_el, './/missingValueCode/code/text()')
 
-        # log.debug(f'Raw extracted:')
-        # log.debug(f'  col_name={col_name}')
-        # log.debug(f'  storage_type={storage_type}')
-        # log.debug(f'  date_fmt_str={date_fmt_str}')
-        # log.debug(f'  number_type={number_type}')
-        # log.debug(f'  is_enumerated ={is_enumerated }')
-        # log.debug(f'  ratio={ratio}')
-        # log.debug(f'  missing_value_list={missing_value_list}')
-        # log.debug(f'  col_agg_dict={col_agg_dict}')
-
         dtype_dict = {
             'col_idx': col_idx,
             'col_name': col_name,
@@ -243,7 +249,7 @@ def get_derived_dtypes_from_eml(dt_el):
             'date_fmt_str': date_fmt_str,
             'c_date_fmt_str': None,
             'number_type': number_type,
-            'is_enumerated': is_enumerated ,
+            'is_enumerated': is_enumerated,
             'ratio': ratio,
             'missing_code_list': missing_code_list,
         }
@@ -261,9 +267,7 @@ def get_derived_dtypes_from_eml(dt_el):
             begin_date_str = first_str(attr_el, './/beginDate/calendarDate/text()')
             end_date_str = first_str(attr_el, './/endDate/calendarDate/text()')
             dtype_dict['begin_dt'] = (
-                try_date_time_parse(begin_date_str)
-                if begin_date_str
-                else default_dt.begin_dt
+                try_date_time_parse(begin_date_str) if begin_date_str else default_dt.begin_dt
             )
             dtype_dict['end_dt'] = (
                 try_date_time_parse(end_date_str) if end_date_str else default_dt.end_dt
@@ -276,9 +280,7 @@ def get_derived_dtypes_from_eml(dt_el):
             begin_date_str = first_str(attr_el, './/beginDate/calendarDate/text()')
             end_date_str = first_str(attr_el, './/endDate/calendarDate/text()')
             dtype_dict['begin_dt'] = (
-                try_date_time_parse(begin_date_str)
-                if begin_date_str
-                else default_dt.begin_dt
+                try_date_time_parse(begin_date_str) if begin_date_str else default_dt.begin_dt
             )
             dtype_dict['end_dt'] = (
                 try_date_time_parse(end_date_str) if end_date_str else default_dt.end_dt
@@ -304,7 +306,7 @@ def get_derived_dtypes_from_eml(dt_el):
 
         # Categorical data
 
-        elif is_enumerated :
+        elif is_enumerated:
             dtype_dict['type_str'] = 'TYPE_CAT'
 
         type_list.append(dtype_dict)
@@ -331,18 +333,34 @@ def first(el, xpath):
     return el
 
 
-def first_str(el, text_xpath):
+def first_str(el, text_xpath, default_val=None):
     """Apply xpath and, if there is a match, assume that the match is a text node, and
-    convert it to an upper case string. {text_xpath} is an xpath that returns a text
-    node. E.g., `.//text()`.
+    convert it to str.
+
+    {text_xpath} is an xpath that returns a text node. E.g., `.//text()`.
     """
-    el = first(el, text_xpath)
-    return str(el).upper().strip() if el else None
+    res_el = first(el, text_xpath)
+    if res_el is None:
+        return default_val
+    return str(res_el).strip()
+    # try:
+    # except (ValueError, TypeError, AttributeError):
+    #     return default_val
 
 
-def first_str_orig(el, text_xpath):
-    el = first(el, text_xpath)
-    return str(el) if el else None
+def first_str_orig(el, text_xpath, default_val=None):
+    try:
+        return str(first(el, text_xpath)).strip()
+    except (ValueError, TypeError, AttributeError):
+        return default_val
+
+
+def first_int(el, text_xpath, default_int=None):
+    try:
+        # int() includes an implicit strip().
+        return int(first(el, text_xpath))
+    except (ValueError, TypeError, AttributeError):
+        return default_int
 
 
 def multiple_str(el, text_xpath):
@@ -366,8 +384,9 @@ def first_date(el, date_xpath, dt_fmt=None):
     If dt_fmt is not providing, or if parsing with dt_fmt fails, parsing is tried
     with ISO formats, then with other common date-time formats.
     """
-    el = first(el, date_xpath)
-    return str(el).upper().strip() if el else None
+    el = first_str(el, date_xpath)
+    if el is not None:
+        return str(el).strip() if el else None
 
 
 def get_data_table_list(root_el):
@@ -387,9 +406,7 @@ def get_default_begin_end_datetime_range(el):
         './/dataset/coverage/temporalCoverage/rangeOfDates/endDate/calendarDate/text()',
     )
     return N(
-        begin_dt=try_date_time_parse(begin_str)
-        if begin_str
-        else FALLBACK_BEGIN_DATETIME,
+        begin_dt=try_date_time_parse(begin_str) if begin_str else FALLBACK_BEGIN_DATETIME,
         end_dt=try_date_time_parse(end_str) if end_str else FALLBACK_END_DATETIME,
     )
 
@@ -425,7 +442,7 @@ def get_data_table_by_data_url(el, data_url):
     for dt_el in el.xpath('.//dataset/dataTable'):
         url = first_str(dt_el, './/physical/distribution/online/url/text()')
         url = url[url.find('/PACKAGE/') :]
-        if url == data_url.as_posix().upper():
+        if url == data_url.as_posix():
             return dt_el
     raise dex.exc.EMLError(f'Missing DataTable in EML. data_url="{data_url}"')
 

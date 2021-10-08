@@ -12,11 +12,13 @@ import random
 import sys
 
 import dex.config
-import dex.eml_cache
 
-# logging.basicConfig(level=dex.config.LOG_LEVEL)
 # pprint.pp(dex.config.LOG_CONFIG)
+import dex.util
+
 # logging.config.dictConfig(dex.config.LOG_CONFIG)
+log = logging.getLogger(__name__)
+
 
 import time
 import matplotlib
@@ -29,39 +31,31 @@ os.environ.setdefault("FLASK_DEBUG", "0")
 import flask
 import flask.logging
 
-import dex.views.bokeh_server
-import dex.db
 import dex.cache
 import dex.csv_cache
+import dex.db
+import dex.eml_cache
 import dex.exc
 import dex.pasta
+import dex.views.bokeh_server
 import dex.views.eml
 import dex.views.plot
 import dex.views.profile
 import dex.views.subset
 import json
 
-# root_logger = logging.getLogger("")
-# root_logger.setLevel(logging.DEBUG)
-# root_logger.addHandler(flask.logging.default_handler)
-
-log = logging.getLogger(__name__)
-
-# log.setLevel(logging.DEBUG)
-
-# log.debug('debug')
 
 mimetypes.add_type('application/javascript', '.js')
 
 
 def create_app():
-    print('Setting up logging...', file=sys.stderr)
+    # print('Setting up logging...', file=sys.stderr)
 
-    logging.basicConfig(
-        format='%(name)s %(levelname)-8s %(message)s',
-        level=logging.DEBUG,  # if is_debug else logging.INFO,
-        stream=sys.stderr,
-    )
+    # logging.basicConfig(
+    #     format='%(name)s %(levelname)-8s %(message)s',
+    #     level=logging.DEBUG,  # if is_debug else logging.INFO,
+    #     stream=sys.stderr,
+    # )
 
     log.debug('Creating the Flask app object...')
 
@@ -90,9 +84,6 @@ def create_app():
 
     @_app.before_first_request
     def before_first_request():
-        import subprocess
-        subprocess.run('rm -rf /home/dahl/dev/dex-cache/global', shell=True)
-
         def handle_redirect_to_index(_):
             return flask.redirect("/", 302)
 
@@ -110,7 +101,7 @@ def create_app():
     # @_app.url_value_preprocessor
     # def url_value_preprocessor(_, q):
     #     if 'toggle-debug' in q:
-    #         _app.config['DEBUG_PANEL'] = not _app.config['DEBUG_PANEL']
+    #         _app.config['DEBUG_PANEL'] = not _app.config['DEBUG_Panel']
     #         return flask.redirect("/", 302)
 
     @_app.before_request
@@ -224,9 +215,8 @@ def create_app():
 
     @_app.route("/", methods=["POST"])
     def index_post():
-        data_url = flask.request.form['data_url']
-        rid = dex.db.add_entity(data_url)
-        return flask.redirect(f"/dex/profile/{rid}")
+        package_url = flask.request.form['package_url']
+        return flask.redirect(f"/{package_url}")
 
     log.debug('Flask app created')
 

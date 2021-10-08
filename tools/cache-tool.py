@@ -31,7 +31,7 @@ HOST_DICT = {
 
 def flask_main(_ctx):
     parser = argparse.ArgumentParser(
-        __doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        __doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         '--env',

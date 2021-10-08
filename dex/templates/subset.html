@@ -69,9 +69,7 @@
   </h3>
   <div class='instructions'>
     <ul>
-      {% set ns.date_col_list = derived_dtypes_list | selectattr('type_str', '==', 'TYPE_DATE') | list %}
-      {# value = index of the column in the CSV file #}
-      {# text = name of the column from the CSV file #}
+      {% set ns.date_col_list = column_list | selectattr('type_str', '==', 'TYPE_DATE') | list %}
       <li>
         {% if ns.date_col_list %}
           Select a column containing dates to apply this filter.
@@ -97,7 +95,6 @@
                 {# text = name of the column from the CSV file #}
                 <option
                     value='{{ d.col_name }}'>{{ d.col_name }}
-                  {#value='{{ dt_col_dict.col_idx }}'>{{ derived_dtypes_list[dt_col_dict.col_idx] }}#}
                 </option>
               {% endfor %}
             </select>
@@ -172,7 +169,7 @@
   </h3>
 
   <div class='instructions'>
-    {% set ns.cat_col_list = derived_dtypes_list | selectattr('type_str', '==', 'TYPE_CAT') | list %}
+    {% set ns.cat_col_list = column_list | selectattr('type_str', '==', 'TYPE_CAT') | list %}
     <ul>
       {% if ns.cat_col_list %}
         <li>Select a column containing categories and select one or more of the

@@ -126,7 +126,7 @@ class Lock(object):
 
     @contextlib.contextmanager
     def lock_all(self):
-        """Lock bost threads and processes."""
+        """Lock both threads and processes."""
         with self._thread_lock:
             with self._process_lock:
                 yield self

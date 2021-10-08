@@ -207,7 +207,7 @@ async function get_selected_category_filters()
       }
     }
     if (cat_name_list.length) {
-      let col_name = g.derived_dtypes_list[col_idx]; //.cat_col_map.get(col_idx);
+      let col_name = g.column_list[col_idx]; //.cat_col_map.get(col_idx);
       cat_map.set(col_idx, cat_name_list);
       // cat_map.set(col_name['col_name'], cat_name_list);
       cat_map.set(col_name['col_name'], cat_name_list);

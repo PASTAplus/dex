@@ -14,7 +14,7 @@ import flask
 
 log = logging.getLogger(__name__)
 
-WATCH_SET = {
+HIGHLIGHT_SET = {
     'TYPE_NUM',
     'TYPE_DATE',
     'TYPE_NUM',
@@ -35,38 +35,27 @@ WATCH_SET = {
 
 
 def debug(rid):
+    return
+
     if not flask.g.debug_panel:
-        return None
+        return
 
-    ctx1 = dex.csv_parser.get_raw_csv_with_context(rid)
-    # csv_df = ctx1.csv_df,
-    # csv_path = ctx1.csv_path,
-    # header_row_idx = ctx1.header_row_idx,
-    # header_list = ctx1.header_list,
-    # raw_line_count = ctx1.raw_line_count,
-
-    ctx2 = dex.csv_parser.get_csv_context(rid)
-    # dialect = ctx2.dialect,
-    # csv_path = ctx2.csv_path,
-    # derived_dtypes_list = ctx2.derived_dtypes_list,
-    # header_list = ctx2.header_list,
-    # header_row_idx = ctx2.header_row_idx,
-    # parser_dict = ctx2.parser_dict,
+    ctx = dex.csv_parser.get_raw_csv_with_context(rid)
+    ctx = N(**{**ctx, **ctx['eml_ctx']})
+    # ctx: csv_df, eml_ctx, dialect, column_list, header_line_count, footer_line_count, parser_dict, col_name_list
 
     attr_dict = dex.eml_cache.get_attributes_as_highlighted_html(rid)
     attr_list = [
-        (ctx2['header_list'][k], css_str, html_str)
-        for k, (html_str, css_str) in attr_dict.items()
+        (ctx.col_name_list[k], css_str, html_str) for k, (html_str, css_str) in attr_dict.items()
     ]
 
     # attr_html = pd.DataFrame.from_dict({'': attr_dict}).to_html(escape=False)
 
-    csv_df = ctx1['csv_df']
-    head_df = csv_df.iloc[:100, :]
-    tail_df = csv_df.iloc[-100:, :]
+    head_df = ctx.csv_df.iloc[:100, :]
+    tail_df = ctx.csv_df.iloc[-100:, :]
 
     # tuple(tuple(d.items()) + tuple(((None, None),) * (maxlen - len(d))) for d in x)
-    # padded_list = tuple(tuple(d.items()) + tuple(((None, None),) * (maxlen - len(d))) for d in derived_dtype_list)
+    # padded_list = tuple(tuple(d.items()) + tuple(((None, None),) * (maxlen - len(d))) for d in ctx.column_list)
     # dtypes_df = pd.DataFrame.from_dict(padded_list)
 
     def to_html(**kv):
@@ -74,13 +63,7 @@ def debug(rid):
         each of the index values: {column -> {index -> value}}
         """
         dex.util.logpp(kv, msg="Created HTML from DF", logger=log.debug)
-        return (
-            pd.DataFrame()
-            .from_dict(kv)
-            .to_html(escape=False)
-            .replace(r'\n', '')
-            .strip()
-        )
+        return pd.DataFrame().from_dict(kv).to_html(escape=False).replace(r'\n', '').strip()
 
     def expose_keys(d_in):
         out_d = {}
@@ -92,73 +75,81 @@ def debug(rid):
     buf = io.StringIO()
     # csv_df.debug(buf=buf) # ?
     col_info_txt = buf.getvalue()
-    flask_g_html = dict_to_kv_html(flask.g)
 
-    derived_dtype_list = dex.csv_parser.get_derived_dtypes_from_eml(rid)
-    unique_dtype_list = list(set(d['type_str'] for d in derived_dtype_list))
-    derived_dtype_summary = {
-        k: derived_dtype_list.count(k) for k in sorted(unique_dtype_list)
-    }
+    # flask_g_html = dict_to_kv_html(dict(flask.g))
+    flask_g_html = dict_to_html(flask.current_app.config, 'Config', 'Value')
+
+    type_list = [d['type_str'] for d in ctx.column_list]
+    type_count = count_unique(type_list)
+
+    number_type_list = [d['number_type'] for d in ctx.column_list]
+    number_type_count = count_unique(number_type_list)
+
+    csv_row_count = dict(
+        header_line_count=ctx.header_line_count,
+        footer_line_count=ctx.footer_line_count,
+    )
 
     dbg = {
         'flask_g_html': flask_g_html,
-        # 'derived_dtype_list': to_html(),
-        **{
-            **ctx1,
-            **ctx2,
-        },
+        # 'column_list': to_html(),
+        # ctx: ctx,
         **{
             'head_html': head_df.to_html(),
             'head_row_count': len(head_df),
             'tail_html': tail_df.to_html(),
             'tail_row_count': len(tail_df),
-            'total_row_count': len(csv_df),
+            'total_row_count': len(ctx.csv_df),
             'debug_panel': flask.g.get('debug_panel'),
             'source_html': to_html(
                 source_csv={
-                    'csv_path': ctx1['csv_path'],
-                    'raw_line_count': ctx1['raw_line_count'],
+                    'csv_path': ctx.csv_path,
+                    # 'raw_line_count': ctx.raw_line_count,
                 }
             ),
             'dialect': to_html(
-                dialect=dex.csv_parser.get_dialect_as_dict(ctx2['dialect']),
+                dialect=dex.csv_parser.get_dialect_as_dict(ctx.dialect),
             ),
             'derived_dtype_html': pd.DataFrame.from_dict(
-                {d['col_name']: d for d in derived_dtype_list}
+                {d['col_name']: d for d in ctx.column_list}
             )
             .style.applymap(highlight_types)
             .render(),
-            'derived_dtype_summary_html': dict_to_kv_html(derived_dtype_summary),
+            'type_count_html': dict_to_html(type_count, 'Type', 'Count'),
+            'number_type_count_html': dict_to_html(number_type_count, 'Type', 'Count'),
+            'csv_row_count': dict_to_html(csv_row_count, 'Value', 'Count')
         },
         'col_info_txt': col_info_txt,
         'parsers_html': to_html(
-            **expose_keys(
-                {ctx1['header_list'][k]: v for k, v in ctx2['parser_dict'].items()}
-            ),
+            **expose_keys({ctx.col_name_list[k]: v for k, v in ctx.parser_dict.items()}),
         ),
-        'formatters_html': to_html(
-            **expose_keys(
-                dex.csv_parser.get_formatter_dict(ctx2['derived_dtypes_list'])
-            )
-        ),
+        # 'formatters_html': to_html(
+        #     **expose_keys(dex.csv_parser.get_formatter_dict(ctx.column_list))
+        # ),
         'attr_list': attr_list,
     }
 
     return dbg
 
 
-def dict_to_kv_html(d, key_name='Key', val_name='Value'):
-    d = {k: v for k, v in sorted(flask.current_app.config.items())}
+def count_unique(val_list):
+    val_list = [str(v) for v in val_list]
+    unique_list = list(set(val_list))
+    return {k: val_list.count(k) for k in sorted(unique_list)}
+
+
+def dict_to_html(d, key_name='Key', val_name='Value'):
     d = {key_name: d.keys(), val_name: d.values()}
+    d = {k: v for k, v in sorted(d.items())}
     return pd.DataFrame.from_dict(d).to_html()
 
 
 def highlight_types(val):
-    bg = '#202020'
+    # bg = '#202020'
     with contextlib.suppress(Exception):
-        if isinstance(val, str) and val in WATCH_SET:
-            bg = 'darkgreen'
-    return f'background-color: {bg}'
+        if isinstance(val, str) and val in HIGHLIGHT_SET:
+            bg = 'lightgreen'
+            return f'background-color: {bg}'
 
 
 def get_info_as_html(df):

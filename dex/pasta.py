@@ -59,7 +59,7 @@ PASTA_PORTAL_DICT = {
 
 log = logging.getLogger(__name__)
 
-# TODO. Keeping the base_url in the EntityTup ties the tuple to a location. See how it
+# TODO: Keeping the base_url in the EntityTup ties the tuple to a location. See how it
 # would work out to keep the tuple more agnostic by leaving out the base_url. Remember
 # though that package identifiers in PASTA are not opaque.
 EntityTup = collections.namedtuple(

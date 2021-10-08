@@ -64,7 +64,7 @@
    * @property {Object} csv_list
    * @property {Object} data_url
    * @property {Object} dbg
-   * @property {Object} derived_dtypes_list
+   * @property {Object} column_list
    * @property {Object} eml_css
    * @property {Object} eml_html
    * @property {Object} entity_tup
@@ -82,14 +82,6 @@
    */
   const g = JSON.parse('{{ g_dict | tojson }}')
   </script>
-
-  {#  {{ g.derived_dtypes_list }}#}
-  {#  {% for d in g.derived_dtypes_list %}#}
-  {#  {% endfor %}#}
-
-  {#dot:{{ d.type_str }}</br>#}
-  {#dict1:{{ d[type_str] }}</br>#}
-  {#dict2:{{ d['type_str'] }}</br>#}
 
   {% block head %}
   {% endblock %}

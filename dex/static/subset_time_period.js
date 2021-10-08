@@ -77,8 +77,7 @@ async function update_datepicker_state(col_el, dt_el, is_start)
   }
   else {
     dt_el.datepicker('option', {'disabled': false});
-    // let dt_dict = g.derived_dtypes_list[col_el.prop("selectedIndex")]
-    let dt_dict = g.derived_dtypes_list[await get_selected_idx()]
+    let dt_dict = g.column_list[await get_selected_idx()]
     let date_str = is_start ? dt_dict.begin_dt : dt_dict.end_dt;
     dt_el.val(date_str);
     dt_el.attr('disabled', false);
@@ -108,7 +107,7 @@ async function update_time_period_filter_msg(col_el)
 
 async function get_selected_name()
 {
-  return g.derived_dtypes_list[await get_selected_idx()].col_name;
+  return g.column_list[await get_selected_idx()].col_name;
 }
 
 async function get_selected_idx()

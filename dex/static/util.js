@@ -2,32 +2,6 @@
   Misc utilities
  */
 
-// TYPE_CAT            - categorical
-// TYPE_BOOL           - boolean
-// TYPE_NUM            - numeric
-// TYPE_DATE           - date
-// TYPE_URL            - URL
-// TYPE_COMPLEX        -
-// TYPE_PA             - Absolute path
-// TYPE_FILE           - File (existing path)
-// TYPE_IMAGE          - Image
-// S_TYPE_UNSUPPORTED  - unsupported
-// const derived_dtypes_list = g.derived_dtypes_list
-
-// dtype_dict = {
-//     'col_idx': col_idx,
-//     'col_name': col_name,
-//     'type_str': 'S_TYPE_UNSUPPORTED',
-//     'storage_type': storage_type,
-//     'date_fmt_str': date_fmt_str,
-//     'c_date_fmt_str': None,
-//     'number_type': number_type,
-//     'numeric_domain': numeric_domain,
-//     'ratio': ratio,
-//     'missing_value_list': missing_value_list,
-//     'col_agg_dict': col_agg_dict,
-// }
-
 export async function get_selected_str(sel_el)
 {
   return sel_el.find('option:selected').text();
@@ -60,13 +34,10 @@ export function get_datetime_columns()
 function _get_columns_by_type(type_str)
 {
   return Object.fromEntries(
-    Object.entries(g.derived_dtypes_list).filter(([k, v]) => v
+    Object.entries(g.column_list).filter(([k, v]) => v
       ['type_str'] === type_str
     )
   );
-  // return g.derived_dtypes_list.filter(
-  //     dtype_dict => dtype_dict['type_str'] === type_str
-  // );
 }
 
 // Return a new dict in which an attribute of the value is the key. Keys in the

@@ -52,13 +52,12 @@
     <div class='instructions'>
       <ul>
         <li>
-          Display debug information
-        </li>
-        {% if g.debug_panel %}
-          <li>
+          {% if g.debug_panel %}
             Debug panel is enabled and will display after selecting a CSV
-          </li>
-        {% endif %}
+          {% else %}
+            Debug panel is disabled
+          {% endif %}
+        </li>
       </ul>
     </div>
 

@@ -4,32 +4,33 @@
     <a href='?debug=false'>  [disable]</a>
     </h1>
 
-    <h2>Derived from EML, dtypes and context</h2>
+    <h2>Derived from EML: Pandas dtypes and CSV parsing context</h2>
     <div>{{ dbg.derived_dtype_html | safe }}</div>
-    <h2>Derived from EML, Summary</h2>
-    <div>{{ dbg.derived_dtype_summary_html | safe }}</div>
+
+    <h2>Derived from EML: Count of dtypes</h2>
+    <div>{{ dbg.type_count_html | safe }}</div>
+
+    <h2>Derived from EML: Count of number types</h2>
+    <div>{{ dbg.number_type_count_html | safe }}</div>
+
+    <h2>Derived from EML: Row counts</h2>
+    <div>{{ dbg.csv_row_count | safe }}</div>
 
     <h2>Flask CTX</h2>
     <div>{{ dbg.flask_g_html | safe }}</div>
 
     <h2>Source CSV</h2>
     <div>{{ dbg.source_html | safe }}</div>
+
     <h2>Dialect</h2>
     <div>{{ dbg.dialect | safe }}</div>
-    {#<h2>Columns</h2>#}
-    {#<div>{{ dbg.col_info_html | safe }}</div>#}
+
     <h2>Pandas Info</h2>
     <pre>{{ dbg.col_info_txt }}</pre>
 
     <h2>Parsers</h2>
-    The parsers that have been selected for each column. Applied to the full CSV
-    before storing cached version.
+    The parsers that have been selected for each column
     <div>{{ dbg.parsers_html | safe }}</div>
-
-    <h2>Formatters</h2>
-    The formatters that have been selected for each column. Applied to rows that
-    have been selected for display.
-    <div>{{ dbg.formatters_html | safe }}</div>
 
     <h2>CSV Head, {{ dbg.head_row_count }} rows</h2>
     <div>

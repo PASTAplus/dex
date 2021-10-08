@@ -9,12 +9,13 @@ import tempfile
 
 import pandas as pd
 import pytest
-
+import flask.testing
 
 import dex.db
 import dex.main
-import dex.main
 import dex.pasta
+import dex.csv_parser
+import dex.eml_types
 
 DATA_URL_1 = 'https://pasta-d.lternet.edu/package/data/eml/knb-lter-cce/72/2/f12ac76be131821d245316854f7ddf44'
 
@@ -114,7 +115,7 @@ def csv_path(entity_tup):
 
 @pytest.fixture
 def dialect(csv_path):
-    return dex.csv_parser.get_dialect(csv_path)
+    return dex.eml_types.get_dialect(csv_path)
 
 
 @pytest.fixture
