@@ -8,6 +8,7 @@ import dex.csv_cache
 import dex.csv_parser
 import dex.debug
 import dex.eml_cache
+import dex.eml_types
 import dex.util
 import dex.pasta
 import pandas.api.types
@@ -29,7 +30,7 @@ def plot(rid):
     sel_list_x = []
     sel_list_y = []
 
-    col_agg_dict = get_col_agg_dict(csv_df, eml_ctx)
+    col_agg_dict = dex.csv_cache.get_col_agg_dict(csv_df, eml_ctx)
 
     for col_idx, col_dict in enumerate(eml_ctx['column_list']):
 
@@ -40,13 +41,16 @@ def plot(rid):
 
         d = N(**col_dict)
 
-        friendly_type = dex.csv_parser.DTYPE_TO_FRIENDLY_DICT[d.type_str]
+        friendly_type = dex.eml_types.PANDAS_TO_FRIENDLY_DICT[d.pandas_type]
         sel_str = '{} ({}, {} - {})'.format(
-            d.col_name, friendly_type, agg_dict['v_min'], agg_dict['v_max'],
+            d.col_name,
+            friendly_type,
+            agg_dict['v_min'],
+            agg_dict['v_max'],
         )
-        if d.type_str == 'TYPE_DATE':
+        if d.pandas_type == dex.eml_types.PandasType.DATETIME:
             sel_list_x.append((sel_str, col_idx))
-        elif d.type_str == 'TYPE_NUM':
+        elif dex.eml_types.is_numeric(d.pandas_type):
             sel_list_x.append((sel_str, col_idx))
             sel_list_y.append((sel_str, col_idx))
 
@@ -71,21 +75,3 @@ def plot(rid):
         dbg=dex.debug.debug(rid),
         portal_base=dex.pasta.get_portal_base_by_entity(dex.db.get_entity(rid)),
     )
-
-
-def get_col_agg_dict(df, eml_ctx):
-    """Calculate per column aggregates for plottable columns"""
-
-    d = {}
-
-    for i, col_name in enumerate(df.columns):
-        if not (pandas.api.types.is_numeric_dtype(df[col_name]) or pandas.api.types.is_datetime64_any_dtype(df[col_name])):
-            continue
-
-        with contextlib.suppress(Exception):
-            d[i] = dict(
-                col_name=col_name,
-                v_max=df.iloc[:, i].max(skipna=True),
-                v_min=df.iloc[:, i].min(skipna=True),
-            )
-    return d

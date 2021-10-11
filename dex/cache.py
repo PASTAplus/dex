@@ -173,8 +173,8 @@ def save_gen(rid, key, obj_type, obj):
             return f.write(obj.encode("utf-8"))
         elif obj_type in ("lxml", "etree"):
             with contextlib.suppress(LookupError, TypeError):
-               if len(obj) == 1:
-                   obj = obj[0]
+                if len(obj) == 1:
+                    obj = obj[0]
             try:
                 xml_str = lxml.etree.tostring(obj, with_tail=False)
                 return f.write(xml_str)
@@ -190,11 +190,7 @@ def save_gen(rid, key, obj_type, obj):
 
 def get_tag_str(rid, key, obj_type):
     t = dex.db.get_entity(rid)
-    return (
-        f'{t.scope_str}.{t.identifier_int}.{t.version_int} '
-        f'key="{key}" type="{obj_type}"'
-    )
-
+    return f'{t.scope_str}.{t.identifier_int}.{t.version_int} ' f'key="{key}" type="{obj_type}"'
 
 
 @contextlib.contextmanager

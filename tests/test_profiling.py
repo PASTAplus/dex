@@ -97,6 +97,7 @@ def test_1030():
 
     _generate_and_open_report(df)
 
+
 def test_1040():
     random.seed(123)
     a = ['xyz' for _ in range(10)]
@@ -113,6 +114,7 @@ def test_1040():
     print(df)
 
     _generate_and_open_report(df)
+
 
 def test_a():
     print('AAAAAAAAAAAAAAAAAA')

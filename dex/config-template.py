@@ -146,8 +146,7 @@ LOG_CONFIG = {
             'formatter': 'default',
         }
     },
-    'root': {
-    },
+    'root': {},
     'loggers': {
         '': {
             'handlers': ['stdout'],

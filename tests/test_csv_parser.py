@@ -33,9 +33,9 @@ class Dialect1(csv.excel):
 def test_0100(rid, csv_path):
     """get_dialect()"""
     dialect = dex.csv_parser.get_dialect(csv_path)
-    assert dex.csv_parser.get_dialect_as_dict(
-        dialect
-    ) == dex.csv_parser.get_dialect_as_dict(Dialect1)
+    assert dex.csv_parser.get_dialect_as_dict(dialect) == dex.csv_parser.get_dialect_as_dict(
+        Dialect1
+    )
 
 
 def test_1000(rid, tmp_cache):
@@ -79,9 +79,7 @@ def test_1000(rid, tmp_cache):
     p(derived_dict, 'derived_dict')
     parser_dict = dex.csv_parser.get_parser_dict(derived_dict)
     p(parser_dict, 'parser_dict')
-    parser_func_dict = {
-        derived_dict[k]['col_name']: d['fn'] for k, d in parser_dict.items()
-    }
+    parser_func_dict = {derived_dict[k]['col_name']: d['fn'] for k, d in parser_dict.items()}
     p(parser_func_dict, 'parser_func_dict')
     df = dex.csv_parser.get_parsed_csv(rid, header_line_count, parser_func_dict, Dialect1)
     df.info()

@@ -29,18 +29,21 @@ DEFAULT_DISPLAY_ROW_COUNT = 10
 @subset_blueprint.route("/<rid>", methods=["GET"])
 def subset(rid):
     csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
-    g_dict = dict(
-        rid=rid,
-        entity_tup=dex.db.get_entity_as_dict(rid),
-        row_count=len(csv_df),
-        column_list=eml_ctx['column_list'],
-        cat_col_map={d['col_name']: d for d in dex.eml_cache.get_categorical_columns(rid)},
-        filter_not_applied_str='Filter not applied',
-    )
+    datetime_col_dict = dex.csv_cache.get_datetime_col_dict(csv_df)
+    cat_col_map = {d['col_name']: d for d in dex.eml_cache.get_categorical_columns(rid)}
+
     return flask.render_template(
         "subset.html",
         data_url=dex.db.get_entity(rid).data_url,
-        g_dict=g_dict,
+        g_dict=dict(
+            rid=rid,
+            entity_tup=dex.db.get_entity_as_dict(rid),
+            row_count=len(csv_df),
+            column_list=eml_ctx['column_list'],
+            cat_col_map=cat_col_map,
+            filter_not_applied_str='Filter not applied',
+            datetime_col_dict=datetime_col_dict,
+        ),
         csv_html=csv_df.iloc[:DEFAULT_DISPLAY_ROW_COUNT].to_html(
             table_id="csv-table",
             classes="datatable row-border",
@@ -53,8 +56,10 @@ def subset(rid):
         csv_name=dex.eml_cache.get_csv_name(rid),
         column_list=eml_ctx['column_list'],
         filter_not_applied_str='Filter not applied',
+        datetime_col_dict=datetime_col_dict,
         dbg=dex.debug.debug(rid),
         portal_base=dex.pasta.get_portal_base_by_entity(dex.db.get_entity(rid)),
+        cat_col_map=cat_col_map,
     )
 
 
@@ -194,12 +199,12 @@ def download(rid):
 
     # Filter by date range
     date_filter = filter_dict["date_filter"]
-    col_idx, begin_str, end_str = (
-        date_filter['col_idx'],
+    col_name, begin_str, end_str = (
+        date_filter['col_name'],
         date_filter['start'],
         date_filter['end'],
     )
-    if col_idx == -1:
+    if col_name == '':
         log.debug(f'Date range filter not specified')
     else:
         begin_date, end_date = [
@@ -210,29 +215,34 @@ def download(rid):
             f'{begin_date.isoformat() if begin_date else "<unset>"} - '
             f'{end_date.isoformat() if end_date else "<unset>"}'
         )
-        if begin_date or end_date:
-            csv_df.iloc[:, col_idx] = pd.to_datetime(
-                csv_df.iloc[:, col_idx].apply(str),
-                # infer_datetime_format=True,
-                errors='ignore',
-                format=eml_ctx['column_list'][col_idx].c_date_fmt_str,
-            )
-
         if begin_date and end_date:
             csv_df = csv_df[
-                [(begin_date <= x.tz_localize(None) <= end_date) for x in csv_df.iloc[:, col_idx]]
+                [(begin_date <= x.tz_localize(None) <= end_date) for x in csv_df[col_name]]
             ]
         elif begin_date:
-            csv_df = csv_df[[(begin_date <= x.tz_localize(None)) for x in csv_df.iloc[:, col_idx]]]
+            csv_df = csv_df[[(begin_date <= x.tz_localize(None)) for x in csv_df.iloc[col_name]]]
         elif end_date:
-            csv_df = csv_df[[(x.tz_localize(None) <= end_date) for x in csv_df.iloc[:, col_idx]]]
+            csv_df = csv_df[[(x.tz_localize(None) <= end_date) for x in csv_df.iloc[col_name]]]
+
+    # Return the raw CSV rows that correspond to the rows we have filtered using the parsed CSV.
+    csv_df = query_result.raw_df.iloc[csv_df.index, :]
 
     # Filter columns
-    # col_list = filter_dict["col_filter"][1:]
-    # if col_list:
-    #     log.debug(f'Filtering by columns: {", ".join(map(str, col_list))}')
-    #     # col_name_list = [csv_df.columns[c] for c in col_list]
-    #     csv_df = csv_df.iloc[:, col_list]
+    col_list = filter_dict["col_filter"][1:]
+    if col_list:
+        log.error(f'Filtering by columns: {", ".join(map(str, col_list))}')
+        # col_name_list = [csv_df.columns[c] for c in col_list]
+        csv_df = csv_df.iloc[:, col_list]
+
+    csv_bytes = csv_df.to_csv(index=filter_dict["col_filter"][0])
+
+    # Prepare JSON doc containing the subset params
+    json_bytes = flask.json.dumps(
+        filter_dict,
+        indent=2,
+        # sort_keys=True,
+        cls=dex.util.DatetimeEncoder,
+    )
 
     log.debug(
         f'Subset created successfully. '
@@ -243,18 +253,6 @@ def download(rid):
     # Simulate large obj/slow server
     # import time
     # time.sleep(5)
-
-    # Return the raw CSV rows that correspond to the rows we have filtered using the parsed CSV.
-    csv_df = query_result.raw_df.iloc[csv_df.index, :]
-
-    csv_bytes = csv_df.to_csv(index=filter_dict["col_filter"][0])
-    # json_bytes = flask.json.htmlsafe_dumps(filter_dict)
-    json_bytes = flask.json.dumps(
-        filter_dict,
-        indent=2,
-        # sort_keys=True,
-        cls=dex.util.DatetimeEncoder,
-    )
 
     return send_zip(rid, csv=csv_bytes, json=json_bytes)
 

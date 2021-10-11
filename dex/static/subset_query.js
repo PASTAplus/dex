@@ -28,8 +28,7 @@ export async function get_column_filter()
   let sel_arr = el_list.map(function () { return this.checked; }).get();
   // Somehow, the DataTable creates a duplicate row of the column select checkboxes. We slice
   // those off here.
-  // return sel_arr.slice(0, sel_arr.length / 2);
-  return sel_arr;
+  return sel_arr.slice(0, sel_arr.length / 2);
 }
 
 // Local

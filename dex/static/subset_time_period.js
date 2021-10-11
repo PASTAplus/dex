@@ -16,11 +16,11 @@ export async function create()
 
 export async function get_time_period_filter()
 {
-  let col_idx = parseInt(time_period_filter_el.val());
-  // let col_idx = parseInt($('#time-period-filter').val());
-  if (col_idx === -1) {
-    return {col_idx: col_idx, start: null, end: null};
+  if (!time_period_filter_el[0].selectedIndex) {
+    return {col_name: '', start: null, end: null};
   }
+
+  let col_name = time_period_filter_el.val();
   let time_period_start = $('#time-period-start');
   let time_period_end = $('#time-period-end');
   try {
@@ -34,7 +34,7 @@ export async function get_time_period_filter()
     );
   }
   return {
-    col_idx: col_idx,
+    col_name: col_name,
     start: time_period_start.val(),
     end: time_period_end.val()
   };
@@ -77,7 +77,8 @@ async function update_datepicker_state(col_el, dt_el, is_start)
   }
   else {
     dt_el.datepicker('option', {'disabled': false});
-    let dt_dict = g.column_list[await get_selected_idx()]
+    let col_name = time_period_filter_el.val();
+    let dt_dict = g.datetime_col_dict[col_name];
     let date_str = is_start ? dt_dict.begin_dt : dt_dict.end_dt;
     dt_el.val(date_str);
     dt_el.attr('disabled', false);
@@ -103,14 +104,4 @@ async function update_time_period_filter_msg(col_el)
       `Subset may include only rows where "${col_name}" is within ` +
       `the selected range`);
   }
-}
-
-async function get_selected_name()
-{
-  return g.column_list[await get_selected_idx()].col_name;
-}
-
-async function get_selected_idx()
-{
-  return time_period_filter_el[0].options.selectedIndex;
 }

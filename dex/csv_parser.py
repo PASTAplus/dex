@@ -20,14 +20,6 @@ import dex.util
 
 log = logging.getLogger(__name__)
 
-DTYPE_TO_FRIENDLY_DICT = {
-    'S_TYPE_UNSUPPORTED': 'Generic',
-    'TYPE_CAT': 'Categorical',
-    'TYPE_DATE': "Time series",
-    'TYPE_INT': "Numeric",
-    'TYPE_NUM': "Numeric",
-}
-
 # We cache the returned objects individually here.
 def get_parsed_csv_with_context(rid):
     """Get CSV with values parsed according to their EML types."""
@@ -41,11 +33,10 @@ def get_parsed_csv_with_context(rid):
 def get_eml_ctx(rid):
     """Get the EML information that is required for parsing the CSV."""
     dt_el = dex.eml_cache.get_data_table(rid)
-    column_list = dex.eml_types.get_derived_dtypes_from_eml(dt_el)
-    parser_dict = get_parser_dict(column_list)
+    column_list = dex.eml_types.get_col_attr_list(dt_el)
+    parser_func_dict = get_parser_dict(column_list)
     col_name_list = [d['col_name'] for d in column_list]
-    parser_func_dict = {col_name_list[k]: d['fn'] for k, d in parser_dict.items()}
-    pandas_type_dict = {col_name_list[k]: d['pandas_type'] for k, d in parser_dict.items()}
+    pandas_type_dict = {d['col_name']: d['pandas_type'] for d in column_list}
 
     missing_code_set = set()
 
@@ -61,7 +52,7 @@ def get_eml_ctx(rid):
         dialect=dex.eml_types.get_dialect(dt_el),
         header_line_count=dex.eml_types.get_header_line_count(dt_el),
         footer_line_count=dex.eml_types.get_footer_line_count(dt_el),
-        parser_dict=parser_dict,
+        parser_dict=parser_func_dict,
         col_name_list=col_name_list,
         parser_func_dict=parser_func_dict,
         pandas_type_dict=pandas_type_dict,
@@ -79,7 +70,7 @@ def _get_column_list(rid):
     pkg_id = dex.pasta.get_pkg_id_as_url(entity_tup)
     eml_el = dex.eml_cache.get_eml_etree(rid)
     dt_el = dex.eml_types.get_data_table_by_package_id(eml_el, pkg_id)
-    column_list = dex.eml_types.get_derived_dtypes_from_eml(dt_el)
+    column_list = dex.eml_types.get_col_attr_list(dt_el)
     return column_list
 
 
@@ -87,12 +78,14 @@ def get_dialect_as_dict(dialect):
     """Can be used as kwargs for creating a new dialect object"""
     return dialect.__dict__
 
+
 def get_parser_dict(column_list):
     return {eml_dict['col_idx']: get_parser(eml_dict) for eml_dict in column_list}
 
 
 def get_parser_list(column_list):
     return list([get_parser(t) for t in column_list])
+
 
 def get_parser(dtype_dict):
     # TODO: Move parsers to this pattern
@@ -128,83 +121,25 @@ def get_parser(dtype_dict):
         except ValueError:
             return pd.NA
 
-    d = dict(**dtype_dict)
+    d = N(**dtype_dict)
 
-    if d['type_str'] == 'S_TYPE_UNSUPPORTED':
-        return dict(
-            name='string passthrough',
-            fmt=None,
-            dtype=d['type_str'],
-            fn=string_parser,
-            pandas_type='object',
-        )
-
-    elif d['type_str'] == 'TYPE_DATE':
-        return dict(
-            name=f'parse datetime',
-            fmt=d["c_date_fmt_str"],
-            dtype=d['type_str'],
-            fn=functools.partial(date_parser, fmt_str=d['c_date_fmt_str']),
-            pandas_type='datetime64',
-        )
-
-    elif d['type_str'] in ('TYPE_INT', 'TYPE_NUM'):
-
-        if d['storage_type'] in ('float', 'floating-point'):
-            return dict(
-                name='parse floating point',
-                fmt=d['number_type'],
-                dtype=d['type_str'],
-                fn=float_parser,
-                pandas_type='float64',
-            )
-
-        if d['number_type'] in ('real', 'integer', 'whole', 'natural', 'integer'):
-            return dict(
-                name='parse integer',
-                fmt=d['number_type'],
-                dtype=d['type_str'],
-                fn=int_parser,
-                pandas_type='int64',
-            )
-        elif d['number_type'] in ('float', 'floating-point'):
-            return dict(
-                name='parse floating point',
-                fmt=d['number_type'],
-                dtype=d['type_str'],
-                fn=float_parser,
-                pandas_type='float64',
-            )
-        else:
-            return dict(
-                name='unknown passthrough',
-                fmt=None,
-                dtype=d['type_str'],
-                fn=string_parser,
-                pandas_type='object',
-            )
-
-    elif d['type_str'] == 'TYPE_CAT':
-        return dict(
-            name='categorical passthrough',
-            fmt=None,
-            dtype=d['type_str'],
-            fn=string_parser,
-            pandas_type='category',
-        )
+    if d.pandas_type == dex.eml_types.PandasType.FLOAT:
+        return float_parser
+    elif d.pandas_type == dex.eml_types.PandasType.INT:
+        return int_parser
+    elif d.pandas_type == dex.eml_types.PandasType.CATEGORY:
+        return string_parser
+    elif d.pandas_type == dex.eml_types.PandasType.DATETIME:
+        return functools.partial(date_parser, fmt_str=d.c_date_fmt_str)
+    elif d.pandas_type == dex.eml_types.PandasType.STRING:
+        return string_parser
     else:
-        return dict(
-            name='unknown passthrough',
-            fmt=None,
-            dtype=d['type_str'],
-            fn=string_parser,
-            pandas_type='object',
-        )
+        raise AssertionError(f'Invalid PandasType: {d.pandas_type}')
 
 
 def get_derived_dtypes_from_eml(rid):
     dt_el = dex.eml_cache.get_data_table(rid)
-    return dex.eml_types.get_derived_dtypes_from_eml(dt_el)
+    return dex.eml_types.get_col_attr_list(dt_el)
 
 
 # @dex.cache.disk("raw-csv", "df")
@@ -229,6 +164,7 @@ def get_raw_csv(rid, eml_ctx):
         )
     except ValueError as e:
         raise dex.exc.CSVError(str(e))
+
 
 # @dex.cache.disk("parsed-csv", "df")
 def get_parsed_csv(rid, eml_ctx):
@@ -318,9 +254,10 @@ def get_parsed_csv(rid, eml_ctx):
         raise dex.exc.CSVError(str(e))
 
     # print(csv_df.describe())
-    log.debug('#'*100)
+    log.debug('#' * 100)
     csv_df.info()
-    log.debug('#'*100)
+    # log.debug(len(csv_df))
+    log.debug('#' * 100)
     return csv_df
     # csv_df['PET'].replace(to_replace=[''], value=np.nan, inplace=True)
     # csv_df.replace(value=np.nan, regex='^\s*\$', inplace=True)

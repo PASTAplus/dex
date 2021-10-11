@@ -45,9 +45,7 @@ def proc3():
     for i in range(3):
         p("proc3 - process")
         p(f'Creating thread {i}')
-        threading.Thread(
-            target=thread4, args=(i, f'from-proc3-{i}'), name=f'thread-{i}'
-        ).run()
+        threading.Thread(target=thread4, args=(i, f'from-proc3-{i}'), name=f'thread-{i}').run()
 
 
 # @fasteners.interprocess_locked('/tmp/twet')

@@ -69,9 +69,8 @@
   </h3>
   <div class='instructions'>
     <ul>
-      {% set ns.date_col_list = column_list | selectattr('type_str', '==', 'TYPE_DATE') | list %}
       <li>
-        {% if ns.date_col_list %}
+        {% if datetime_col_dict %}
           Select a column containing dates to apply this filter.
         {% else %}
           Filter unavailable: No supported date columns have been declared in the EML
@@ -90,11 +89,11 @@
             <select class='dex-date-picker form-control' id='time-period-filter'
                     name='date-dropdown'>
               <option value='-1'>{{ filter_not_applied_str }}</option>
-              {% for d in ns.date_col_list %}
+              {% for col_name, d in datetime_col_dict.items() %}
                 {# value = index of the column in the CSV file #}
                 {# text = name of the column from the CSV file #}
                 <option
-                    value='{{ d.col_name }}'>{{ d.col_name }}
+                    value='{{ col_name }}'>{{ col_name }}
                 </option>
               {% endfor %}
             </select>
@@ -169,7 +168,8 @@
   </h3>
 
   <div class='instructions'>
-    {% set ns.cat_col_list = column_list | selectattr('type_str', '==', 'TYPE_CAT') | list %}
+{#    {% set ns.cat_col_list = cat_col_map | selectattr('pandas_type', '==', 'CATEGORY') | list %}#}
+    {% set ns.cat_col_list = cat_col_map | list %}
     <ul>
       {% if ns.cat_col_list %}
         <li>Select a column containing categories and select one or more of the

@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 def init_db():
     with flask.current_app.app_context():
-        db  = get_db()
+        db = get_db()
         with flask.current_app.open_resource("schema.sql", mode="r") as f:
             db.cursor().executescript(f.read())
         db.commit()
@@ -32,6 +32,7 @@ def clear_entities():
         # cur.close()
     finally:
         cnx.commit()
+
 
 def namedtuple_factory(cursor, row):
     """

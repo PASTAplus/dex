@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import math
 
@@ -85,6 +86,38 @@ def get_stats(rid):
 
 
 # Columns
+
+
+def get_col_agg_dict(df, eml_ctx):
+    """Calculate per column aggregates for plottable columns"""
+    d = {}
+
+    for i, col_name in enumerate(df.columns):
+        if not (
+            pd.api.types.is_numeric_dtype(df[col_name])
+            or pd.api.types.is_datetime64_any_dtype(df[col_name])
+        ):
+            continue
+
+        with contextlib.suppress(Exception):
+            d[i] = dict(
+                col_name=col_name,
+                v_max=df.iloc[:, i].max(skipna=True),
+                v_min=df.iloc[:, i].min(skipna=True),
+            )
+
+    return d
+
+
+def get_datetime_col_dict(df):
+    return {
+        col_name: dict(
+            begin_dt=df[col_name].min(skipna=True).strftime('%Y-%m-%d'),
+            end_dt=df[col_name].max(skipna=True).strftime('%Y-%m-%d'),
+        )
+        for col_name in df.columns
+        if pd.api.types.is_datetime64_any_dtype(df[col_name])
+    }
 
 
 # @dex.cache.disk("ref-col", "list")

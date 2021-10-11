@@ -114,9 +114,7 @@ def create_cache(csv_path, csv_writer):
         df, unittest.mock.Mock()
     )
     # log.debug(description_dict)
-    variables = {
-        column: description["type"] for column, description in description_dict.items()
-    }
+    variables = {column: description["type"] for column, description in description_dict.items()}
     continuous_variable_list = [
         column
         for column, t in variables.items()
@@ -141,9 +139,7 @@ def csv_wrapper(csv_class):
             log.info(f'CSV file: {self.csv_path.as_posix()}')
 
             self.es = contextlib.ExitStack()
-            self.f = self.es.enter_context(
-                self.csv_path.open('w' if is_write else 'r', newline='')
-            )
+            self.f = self.es.enter_context(self.csv_path.open('w' if is_write else 'r', newline=''))
 
             if is_write:
                 kw['fieldnames'] = field_list

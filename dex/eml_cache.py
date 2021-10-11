@@ -55,7 +55,7 @@ def get_datetime_columns(rid):
     type_list = dex.csv_parser.get_derived_dtypes_from_eml(rid)
     dt_col_list = []
     for col_idx, dtype_dict in enumerate(type_list):
-        if dtype_dict['type_str'] == 'TYPE_DATE':
+        if dtype_dict['pandas_type'] == dex.eml_types.PandasType.DATETIME:
             dt_col_list.append(dtype_dict)
     return dt_col_list
 
@@ -64,7 +64,7 @@ def get_categorical_columns(rid):
     type_list = dex.csv_parser.get_derived_dtypes_from_eml(rid)
     dt_col_list = []
     for col_idx, dtype_dict in enumerate(type_list):
-        if dtype_dict['type_str'] == 'TYPE_CAT':
+        if dtype_dict['pandas_type'] == dex.eml_types.PandasType.CATEGORY:
             dt_col_list.append(dtype_dict)
     return dt_col_list
 

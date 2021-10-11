@@ -16,26 +16,26 @@ export async function get_selected_arr(sel_el)
 
 export function get_categorical_columns()
 {
-  return _get_columns_by_type('TYPE_CAT')
+  return _get_columns_by_type('CATEGORY')
 }
 
 export function get_numeric_columns()
 {
-  return _get_columns_by_type('TYPE_NUM')
+  return _get_columns_by_type('NUMERIC')
 }
 
 export function get_datetime_columns()
 {
-  return _get_columns_by_type('TYPE_DATE')
+  return _get_columns_by_type('DATETIME')
 }
 
 // Also converts a list of dict to a dict of dicts. Keys in the outer dict are column index integers.
 
-function _get_columns_by_type(type_str)
+function _get_columns_by_type(pandas_type)
 {
   return Object.fromEntries(
     Object.entries(g.column_list).filter(([k, v]) => v
-      ['type_str'] === type_str
+      ['pandas_type'] === pandas_type
     )
   );
 }

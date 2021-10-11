@@ -250,6 +250,7 @@ def get_entity_by_local_path(data_path):
         entity_str=n.entity_str,
     )
 
+
 def get_portal_base_by_entity(entity_tup):
     try:
         return PASTA_PORTAL_DICT[entity_tup.base_url]

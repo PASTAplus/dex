@@ -52,16 +52,13 @@ def main():
     test_filters(df, sel_list)
 
     bench_loop_s = (
-        timeit.timeit(lambda: filter_with_loop(df, sel_list), number=REPEAT_COUNT)
-        / REPEAT_COUNT
+        timeit.timeit(lambda: filter_with_loop(df, sel_list), number=REPEAT_COUNT) / REPEAT_COUNT
     )
     bench_isin_s = (
-        timeit.timeit(lambda: filter_with_isin(df, sel_list), number=REPEAT_COUNT)
-        / REPEAT_COUNT
+        timeit.timeit(lambda: filter_with_isin(df, sel_list), number=REPEAT_COUNT) / REPEAT_COUNT
     )
     bench_query_s = (
-        timeit.timeit(lambda: filter_with_query(df, sel_list), number=REPEAT_COUNT)
-        / REPEAT_COUNT
+        timeit.timeit(lambda: filter_with_query(df, sel_list), number=REPEAT_COUNT) / REPEAT_COUNT
     )
     print('#' * 100)
     print(f'columns={COL_COUNT:,} rows={ROW_COUNT:,} categories={CAT_COUNT:,}')
@@ -81,11 +78,7 @@ def create_categories():
     """Create a group of random strings for each column in the table."""
     return [
         [
-            ''.join(
-                random.choices(
-                    string.ascii_lowercase, k=random.randint(STR_MIN, STR_MAX)
-                )
-            )
+            ''.join(random.choices(string.ascii_lowercase, k=random.randint(STR_MIN, STR_MAX)))
             for _i in range(CAT_COUNT)
         ]
         for _j in range(COL_COUNT)

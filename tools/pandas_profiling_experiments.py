@@ -33,9 +33,7 @@ section_list[0].content['items'][1].content['items'][1] = 'Notes'
 
 section_list[0].content['items'][2].content['name'] = 'Reproducibility'
 
-section_list[0].content['items'][2].content['items'][0].content[
-    'name'
-] = 'Reproducibility'
+section_list[0].content['items'][2].content['items'][0].content['name'] = 'Reproducibility'
 
 section_list.insert(1, section_list.pop(-1))
 
