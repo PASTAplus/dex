@@ -185,13 +185,19 @@ def get_dialect(dt_el):
 
 
 def get_header_line_count(dt_el):
-    text_format_el = first(dt_el, './/physical/dataFormat/textFormat')
-    return first_int(text_format_el, 'numHeaderLines', DEFAULT_HEADER_LINE_COUNT)
+    return first_int(
+        dt_el,
+        './/physical/dataFormat/textFormat/numHeaderLines/text()',
+        DEFAULT_HEADER_LINE_COUNT,
+    )
 
 
 def get_footer_line_count(dt_el):
-    text_format_el = first(dt_el, './/physical/dataFormat/textFormat')
-    return first_int(text_format_el, 'numFooterLines', DEFAULT_FOOTER_LINE_COUNT)
+    return first_int(
+        dt_el,
+        './/physical/dataFormat/textFormat/numFooterLines/text()',
+        DEFAULT_FOOTER_LINE_COUNT,
+    )
 
 
 def get_col_attr_list(dt_el):

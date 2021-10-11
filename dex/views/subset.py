@@ -7,7 +7,6 @@ import zipfile
 
 import flask
 import flask.json
-import pandas as pd
 
 import dex.csv_cache
 import dex.csv_parser
@@ -74,10 +73,10 @@ def get_raw_filtered_by_query(csv_df, raw_df, eml_ctx, query_str=None):
         )
     try:
         query_df = csv_df.query(query_str)
-        log.debug('QUERY_DF')
-        log.debug(query_str)
-        log.debug(len(csv_df))
-        log.debug(len(query_df))
+        # log.debug('QUERY_DF')
+        # log.debug(query_str)
+        # log.debug(len(csv_df))
+        # log.debug(len(query_df))
     except Exception as e:
         return N(
             raw_df=raw_df,
@@ -123,16 +122,16 @@ def csv_fetch(rid):
     sort_col_idx = args.get("order[0][column]", type=int)
     is_ascending = args.get("order[0][dir]") == "asc"
 
-    csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
-    query_result = get_raw_filtered_by_query(csv_df, raw_df, eml_ctx, query_str)
+    csv_df, _raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
+    query_result = get_raw_filtered_by_query(csv_df, _raw_df, eml_ctx, query_str)
 
     # Create page of filtered result for display (selected with the [1], [2]... buttons).
     # Sort the rows according to selection
     if not sort_col_idx:
-        raw_df = raw_df.sort_index(ascending=is_ascending)
+        query_result.raw_df = query_result.raw_df.sort_index(ascending=is_ascending)
     else:
-        raw_df = raw_df.rename_axis("__Index").sort_values(
-            by=[raw_df.columns[sort_col_idx - 1], "__Index"],
+        query_result.raw_df = query_result.raw_df.rename_axis("__Index").sort_values(
+            by=[query_result.raw_df.columns[sort_col_idx - 1], "__Index"],
             ascending=is_ascending,
         )
     page_df = query_result.raw_df[start_int : start_int + row_count]
@@ -141,7 +140,7 @@ def csv_fetch(rid):
     row_list = [(a, *b) for a, b in zip(j["index"], j["data"])]
 
     for i in range(len(row_list), 10):
-        row_list.append(('', *[''] * len(raw_df.columns)))
+        row_list.append(('', *[''] * len(query_result.raw_df.columns)))
 
     result_dict = {
         # DataTable
