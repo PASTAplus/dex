@@ -178,8 +178,8 @@ def download(rid):
     sort_col_idx = args.get("order[0][column]", type=int)
     is_ascending = args.get("order[0][dir]") == "asc"
 
-    csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
-    query_result = get_raw_filtered_by_query(csv_df, raw_df, eml_ctx, query_str)
+    csv_df, _raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
+    query_result = get_raw_filtered_by_query(csv_df, _raw_df, eml_ctx, query_str)
 
     unfiltered_row_count = len(csv_df)
 
@@ -230,7 +230,6 @@ def download(rid):
     col_list = filter_dict["col_filter"][1:]
     if col_list:
         log.error(f'Filtering by columns: {", ".join(map(str, col_list))}')
-        # col_name_list = [csv_df.columns[c] for c in col_list]
         csv_df = csv_df.iloc[:, col_list]
 
     csv_bytes = csv_df.to_csv(index=filter_dict["col_filter"][0])
