@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import io
 import json
 import logging
@@ -13,6 +14,7 @@ import dex.csv_parser
 import dex.db
 import dex.debug
 import dex.eml_cache
+import dex.eml_subset
 import dex.eml_types
 import dex.pasta
 import dex.util
@@ -232,7 +234,7 @@ def download(rid):
         log.error(f'Filtering by columns: {", ".join(map(str, col_list))}')
         csv_df = csv_df.iloc[:, col_list]
 
-    csv_bytes = csv_df.to_csv(index=filter_dict["col_filter"][0])
+    csv_bytes = csv_df.to_csv(index=filter_dict["col_filter"][0]).encode('utf-8')
 
     # Prepare JSON doc containing the subset params
     json_bytes = flask.json.dumps(
@@ -242,17 +244,25 @@ def download(rid):
         cls=dex.util.DatetimeEncoder,
     )
 
+    # Simulate large obj/slow server
+    # import time
+    # time.sleep(5)
+
+    eml_str = dex.eml_subset.create_subset_eml(
+        rid,
+        row_count=len(csv_df),
+        byte_count=len(csv_bytes),
+        md5_checksum=hashlib.md5(csv_bytes).hexdigest(),
+        col_list=col_list,
+    )
+
     log.debug(
         f'Subset created successfully. '
         f'unfiltered_row_count={unfiltered_row_count} '
         f'subset_row_count={len(csv_df)}'
     )
 
-    # Simulate large obj/slow server
-    # import time
-    # time.sleep(5)
-
-    return send_zip(rid, csv=csv_bytes, json=json_bytes)
+    return send_zip(rid, csv=csv_bytes, json=json_bytes, eml=eml_str)
 
 
 def send_zip(zip_name, **zip_dict):
