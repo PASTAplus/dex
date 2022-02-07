@@ -378,10 +378,10 @@ table.datatable td:first-child {
   margin: 2rem;
 }
 
-iframe {
-    width: 100vw;
-    min-width: 100vw;
-    height: 1000em;
+#profile-doc {
+    width: 95vw;
+    min-width: 95vw;
+    /*height: 1000em;*/
     border: 0;
 }
 
