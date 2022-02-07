@@ -1,19 +1,16 @@
-import contextlib
 import logging
 import math
 
 import pandas as pd
+from flask import current_app as app
 
 import dex.cache
 import dex.csv_parser
-import dex.obj_bytes
 import dex.eml_cache
 import dex.eml_types
 import dex.exc
+import dex.obj_bytes
 import dex.pasta
-
-from flask import current_app as app
-
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +36,9 @@ def get_csv_sample(rid):
     the CSV file.
     """
     df = get_full_csv(rid)
-    return df.sample(min(len(df), app.config["CSV_SAMPLE_THRESHOLD"]))
+    if len(df) > app.config["CSV_SAMPLE_THRESHOLD"]:
+        return df.sample(min(len(df), app.config["CSV_SAMPLE_THRESHOLD"])).sort_index()
+    return df
 
 
 @dex.cache.disk("describe", "df")
