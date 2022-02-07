@@ -168,7 +168,6 @@
   </h3>
 
   <div class='instructions'>
-{#    {% set ns.cat_col_list = cat_col_map | selectattr('pandas_type', '==', 'CATEGORY') | list %}#}
     {% set ns.cat_col_list = cat_col_map | list %}
     <ul>
       {% if ns.cat_col_list %}
@@ -206,9 +205,9 @@
 
   <template id='category-filter-template'>
     {#
-    This is the only div that has the 'category-filter' class, which we use as a reference
-    in each column/category group. Since these elements get cloned, we use classes
-    instead of IDs.
+    This is the only div that has the 'category-filter' class, which we use as a
+    reference in each column/category group. Since these elements get cloned, we use
+    classes instead of IDs.
     #}
     <div class='cat-filter-block'>
       <label class='stack-item '>

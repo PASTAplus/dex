@@ -48,11 +48,13 @@ def view(rid):
         "eml.html",
         t1=dex.eml_cache.get_datetime_columns(rid),
         g_dict={eml_html: eml_html, eml_css: eml_css},
+        eml_html=eml_html,
+        eml_css=eml_css,
+        # For the base template, should be included in all render_template() calls.
         rid=rid,
         entity_tup=dex.db.get_entity_as_dict(rid),
         csv_name=dex.eml_cache.get_csv_name(rid),
-        eml_html=eml_html,
-        eml_css=eml_css,
         dbg=dex.debug.debug(rid),
         portal_base=None,
+        note_list=[],
     )

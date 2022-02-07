@@ -20,7 +20,7 @@ body {
 }
 
 .dex-container {
-     margin: 0 2rem 0 2rem;
+    margin: 0 2rem 0 2rem;
 }
 
 
@@ -162,7 +162,6 @@ label.stack-item {
     min-width: 3rem;
     /*max-width: 3rem;*/
 }
-
 
 .data-url {
     /* width: 100rem; */
@@ -404,7 +403,7 @@ table.datatable td:first-child {
 /* Profiling page */
 
 #counter-msg, #spinner, #spinner-msg {
-  margin: 2rem;
+    margin: 2rem;
 }
 
 #profile-doc {
@@ -668,33 +667,32 @@ div.root-page ul {
 /*    position: sticky;*/
 /*}*/
 
-
 #dbg {
 }
 
 #dbg thead th {
-   position: sticky;
-   top: 0;
-/*    background: linear-gradient(
-           to bottom,*!
-           rgba(20, 20, 20, 1),
-           rgba(20, 20, 20, 1),
-           rgba(20, 20, 20, 0)
-   ); */
-   background-color: white;
+    position: sticky;
+    top: 0;
+    /*    background: linear-gradient(
+               to bottom,*!
+               rgba(20, 20, 20, 1),
+               rgba(20, 20, 20, 1),
+               rgba(20, 20, 20, 0)
+       ); */
+    background-color: white;
 }
 
 #dbg tbody th {
-   position: sticky;
-   left: 0;
-/*    background: linear-gradient(
-           to right,*!
-           rgba(20, 20, 20, 1),
-           rgba(20, 20, 20, 1),
-           rgba(20, 20, 20, 0)
-   ); */
-   background-color: white;
-   text-align: right;
+    position: sticky;
+    left: 0;
+    /*    background: linear-gradient(
+               to right,*!
+               rgba(20, 20, 20, 1),
+               rgba(20, 20, 20, 1),
+               rgba(20, 20, 20, 0)
+       ); */
+    background-color: white;
+    text-align: right;
 }
 
 
@@ -706,7 +704,7 @@ div.root-page ul {
     /* Don't want to set the color here, only the opacity. How? */
     background-color: white;
     z-index: 100;
-/*     opacity: 1; */
+    /*     opacity: 1; */
 }
 
 #csv-table .unselected {

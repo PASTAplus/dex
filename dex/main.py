@@ -135,12 +135,14 @@ def create_app():
         return flask.render_template(
             'index.html',
             g_dict={},
+            csv_list=get_sample_data_entity_list(None),
+            # For the base template, should be included in all render_template() calls.
             rid=None,
             entity_tup=None,
             csv_name=None,
-            csv_list=get_sample_data_entity_list(None),
-            portal_base=None,
             dbg=None,
+            portal_base=None,
+            note_list=[],
         )
 
     @_app.route("/<path:data_url>", methods=["GET"])

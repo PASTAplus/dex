@@ -9,6 +9,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+from flask import current_app as app
 
 import dex.db
 import dex.eml_cache
@@ -19,6 +20,7 @@ import dex.pasta
 import dex.util
 
 log = logging.getLogger(__name__)
+
 
 # We cache the returned objects individually here.
 def get_parsed_csv_with_context(rid):
