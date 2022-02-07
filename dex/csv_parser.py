@@ -196,21 +196,15 @@ def get_parsed_csv(rid, eml_ctx):
         # squeeze=False,
         # prefix=NoDefault.no_default,
         # mangle_dupe_cols=True,
+        # TODO, check if we can use the C version
         engine='python',
-        converters=eml_ctx['parser_func_dict'],
-        # true_values=None,
-        # false_values=None,
         skiprows=eml_ctx['header_line_count'],
-        skipfooter=eml_ctx['footer_line_count'],  # Not required when setting nrows
-        # nrows=max_rows,  # Not required when setting skiprows and skipfooter. Read the number of rows declared in the EML
-        na_filter=True,
-        na_values=list(set(eml_ctx['missing_code_list'])),
-        # na_values=['', None],
-        # Add common NaNs:
-        # ‘’, ‘#N/A’, ‘#N/A N/A’, ‘#NA’, ‘-1.#IND’, ‘-1.#QNAN’, ‘-NaN’, ‘-nan’, ‘1.#IND’, ‘1.#QNAN’,
-        # ‘<NA>’, ‘N/A’, ‘NA’, ‘NULL’, ‘NaN’, ‘n/a’, ‘nan’, ‘null’
-        keep_default_na=True,
+        skipfooter=eml_ctx['footer_line_count'],
+        nrows=app.config['CSV_MAX_ROWS'],
         dialect=eml_ctx['dialect'],  # Use dialect from EML, not inferred
+        # We cannot skip blank lines here, as we need the number of rows of the parsed
+        # CSV to always match that of the raw CSV.
+        skip_blank_lines=False,
         # delimiter=None, # Alias for 'sep'. Overridden by setting dialect
         # doublequote=True, # Overridden by setting dialect
         # escapechar=None, # Overridden by setting dialect
