@@ -144,32 +144,17 @@ def get_derived_dtypes_from_eml(rid):
     return dex.eml_types.get_col_attr_list(dt_el)
 
 
-# @dex.cache.disk("raw-csv", "df")
-def get_raw_csv(rid, eml_ctx):
-    """Read CSV to DF with minimal processing to provide a view of the source CSV data."""
-    dt_el = dex.eml_cache.get_data_table(rid)
-    try:
-        return pd.read_csv(
-            filepath_or_buffer=dex.obj_bytes.open_csv(rid),
-            index_col=False,
-            header=0,
-            skiprows=eml_ctx['header_line_count'],
-            skipfooter=eml_ctx['footer_line_count'],
-            skip_blank_lines=False,
-            dialect=dex.eml_types.get_dialect(dt_el),
-            # Setting dtype to str and providing no valid matches for NaNs, disables the
-            # automatic parsing in Pandas and gives us the unprocessed text values of the
-            # fields.
-            dtype=str,
-            na_filter=False,
-            na_values=[],
-        )
-    except ValueError as e:
-        raise dex.exc.CSVError(str(e))
-
-
 # @dex.cache.disk("parsed-csv", "df")
 def get_parsed_csv(rid, eml_ctx):
+    return _get_csv(rid, eml_ctx, do_parse=True)
+
+
+# @dex.cache.disk("raw-csv", "df")
+def get_raw_csv(rid, eml_ctx):
+    return _get_csv(rid, eml_ctx, do_parse=False)
+
+
+def _get_csv(rid, eml_ctx, do_parse):
     """Read a CSV and parse each value (cell) to the type declared for its column in the
     EML.
 
@@ -214,9 +199,6 @@ def get_parsed_csv(rid, eml_ctx):
         # quoting=0, # Overridden by setting dialect
         # sep=NoDefault.no_default, # Alias for 'delimiter'. Overridden by setting dialect
         # skipinitialspace=False, # Overridden by setting dialect
-        # We cannot skip blank lines here, as we need the number of rows of the parsed
-        # CSV to always match that of the raw CSV.
-        skip_blank_lines=False,
         # verbose=False,
         # parse_dates=False,
         # infer_datetime_format=False,

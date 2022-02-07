@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Dex entry point
+"""DeX entry point
 """
 import logging
 import logging.config

@@ -210,23 +210,12 @@ def csv_fetch(rid):
 @subset_blueprint.route("/<rid>", methods=["POST"])
 def download(rid):
     filter_dict = json.loads(flask.request.data)
-    args = flask.request.args
 
     log.debug("=" * 100)
     log.debug(pprint.pformat({"rid": rid, "filter_dict": filter_dict}))
     log.debug("=" * 100)
 
-    draw_int = args.get("draw", type=int)
-    start_int = args.get("start", type=int)
-    row_count = args.get("length", type=int)
-    query_str = args.get("search[value]")
-
-    sort_col_idx = args.get("order[0][column]", type=int)
-    is_ascending = args.get("order[0][dir]") == "asc"
-
-    csv_df, _raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
-    query_result = get_raw_filtered_by_query(csv_df, _raw_df, eml_ctx, query_str)
-
+    csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
     unfiltered_row_count = len(csv_df)
 
     # Filter rows
@@ -269,8 +258,9 @@ def download(rid):
         elif end_date:
             csv_df = csv_df[[(x.tz_localize(None) <= end_date) for x in csv_df.iloc[col_name]]]
 
-    # Return the raw CSV rows that correspond to the rows we have filtered using the parsed CSV.
-    csv_df = query_result.raw_df.iloc[csv_df.index, :]
+
+    query_result = get_raw_filtered_by_query(csv_df, eml_ctx, filter_dict['query_filter'])
+    csv_df = query_result.csv_df
 
     # Filter columns
     col_list = filter_dict["col_filter"][1:]
@@ -278,7 +268,13 @@ def download(rid):
         log.error(f'Filtering by columns: {", ".join(map(str, col_list))}')
         csv_df = csv_df.iloc[:, col_list]
 
-    csv_bytes = csv_df.to_csv(index=filter_dict["col_filter"][0]).encode('utf-8')
+    # Return the raw CSV rows that correspond to the rows we have filtered using the parsed CSV.
+    csv_df = raw_df.iloc[csv_df.index, :]
+
+    csv_df.index.name = 'index'
+
+    # csv_bytes = csv_df.to_csv(index=filter_dict["col_filter"][0]).encode('utf-8')
+    csv_bytes = csv_df.to_csv().encode('utf-8')
 
     # Prepare JSON doc containing the subset params
     json_bytes = flask.json.dumps(
