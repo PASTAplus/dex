@@ -570,9 +570,34 @@ div.root-page ul {
     margin: 0.5rem;
 }
 
+/* Navbar */
+
 #nav {
     margin-bottom: 0;
 }
+
+.nav-notes-outer {
+    margin: 0 3rem 1rem 0;
+}
+
+.nav-notes-inner {
+}
+
+.nav-notes-item::before {
+    /*content: "💩 ";*/
+    content: "\27a4 ";
+    text-decoration: none;
+}
+
+.nav-notes-item a {
+    color: inherit;
+}
+
+
+/* #nav > div.nav-notes-outer.navbar-nav.nav.navbar-right > div > ul > li:nth-child(1) { */
+/*     color: red !important; */
+/*     background-color: red; */
+/* } */
 
 /*#dbg tbody td:first-child {*/
 /*#dbg th {*/

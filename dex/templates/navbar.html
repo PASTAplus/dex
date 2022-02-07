@@ -1,4 +1,4 @@
-{% macro dexnavbar(entity_tup, rid, csv_name, portal_base) %}
+{% macro dexnavbar(entity_tup, rid, csv_name, portal_base, note_list ) %}
   <script>
   let $ = jQuery.noConflict();
   </script>
@@ -69,6 +69,17 @@
         {% endif %}
       </div>
     </div>
+
+    {% if note_list %}
+      <div class='nav-notes-outer navbar-nav nav navbar-right'>
+        {% for note in note_list %}
+          <div class='nav-notes-item'>
+            <a class='' href='#'>{{ note }}</a>
+          </div>
+        {% endfor %}
+        {#</ul>#}
+      </div>
+    {% endif %}
   </nav>
 
   {#<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>#}
