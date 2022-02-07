@@ -46,11 +46,11 @@ h1, h2, h3, h4, h5 {
 }
 
 h2 {
-    margin: .2rem 0 var(--ind-1) 0;
+    /*     margin: .2rem 0 var(--ind-1) 0; */
 }
 
 h3 {
-    margin: 5rem 0 1.5rem var(--ind-0);
+    /*     margin: 5rem 0 1.5rem var(--ind-0); */
 }
 
 h1 a, h2 a, h3 a {
@@ -120,8 +120,7 @@ p {
     display: flex;
     align-items: stretch;
     flex-direction: column;
-
-    grid-row-gap: .5rem;
+    /* grid-row-gap: .5rem; */
 }
 
 /* Labels above boxes instead of to the left. */
@@ -145,8 +144,23 @@ label.stack-item {
     grid-gap: 1rem 1rem;
 }
 
-.grid-item {
+.grid-3-col {
+    display: grid;
+    /*grid-template-columns: repeat(3, max-content);*/
+    grid-template-columns: 4rem max-content max-content;
+    grid-gap: 1rem 1rem;
+    align-items: center;
+}
 
+
+.grid-item {
+    margin: .5rem;
+    vertical-align: middle;
+}
+
+.axis-label {
+    min-width: 3rem;
+    /*max-width: 3rem;*/
 }
 
 
@@ -267,15 +281,30 @@ pre, table, input[type="text"],
 .ui-widget, .hasDatepicker, .select2-selection, select {
 }
 
-.form-control {
-    margin: 0 10rem 0 0;
-}
-
 /* List of CSV test files */
 .index-csv-list {
     /* display: grid; */
     /* grid-template-columns: repeat(4, max-content); */
     /* grid-column-gap: 2em; */
+}
+
+.hidden-msg {
+    visibility: hidden;
+}
+
+.warning-triangle::before {
+    font-size: x-large;
+    content: '';
+    vertical-align: middle;
+    /* If we want to render the monochrome version in color, we must specify the color
+     * */
+    /* color: orange; */
+}
+
+.warning-triangle {
+    padding-top: 1rem;
+    text-align: center;
+    vertical-align: middle;
 }
 
 /* Data  header */
@@ -297,7 +326,7 @@ h2.data-entity {
 
 /* Buttons */
 
-#download, #plot, #submit-query {
+#download, #plot-button, #submit-query {
     font-size: 2.0rem;
     margin: 1.5rem 0 1.5rem 0;
 }
@@ -681,4 +710,8 @@ div.root-page ul {
 }
 
 #csv-table .unselected {
+}
+
+.y-block #y-select-id {
+    /*     background-color: #300000; */
 }
