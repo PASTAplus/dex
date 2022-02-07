@@ -1,38 +1,13 @@
 {% extends 'base.html' %}
 
-{#{% block head %}#}
-
-  {#<script>#}
-  {#  const g = JSON.parse('{{ g_dict | tojson }}');#}
-  {#</script>#}
-
-  {#<style>#}
-{#    {{ g.eml_css }}#}
-{#  </style>#}
-
-{#{% endblock %}#}
-
 {% block body %}
-
-{#  {% if g.dbg %}#}
-{#  <hr/>#}
-{#    <pre>#}
-{#    {{ g.dbg }}#}
-{#    </pre>#}
-{#  <hr/>#}
-{#  {% endif %}#}
-
-  {#t1: {{ t1 }}#}
   <style>
   {{ eml_css | safe }}
   </style>
-
   <div class='eml-xml'>
     {{ eml_html | safe }}
   </div>
-
 {% endblock %}
 
 {% block scripts %}
-  {#  <script src='/static/subset.js'></script>#}
 {% endblock %}
