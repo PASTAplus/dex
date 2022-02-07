@@ -102,39 +102,82 @@ def add_plot_to_cache(rid, col, plot_json, fg_color):
 def get_plot_cache_path(rid, col, fg_color):
     return dex.cache.get_cache_path(rid, f"{col}-{fg_color}", "plot")
 
+@bokeh_server.route("/xy-plot/<rid>/<parm_uri>")
+def xy_plot(rid, parm_uri):
+    # parm_dict = N(**json.loads(parm_uri))
+    parm_dict = json.loads(parm_uri)
+    log.debug(f'parm_dict="{parm_dict}"')
 
-@bokeh_server.route("/xy-plot/<rid>/<x_col_idx>/<y_col_idx>")
-def xy_plot(rid, x_col_idx, y_col_idx):
     theme_key = flask.request.args.get("theme", "default")
     fg_color = THEME_DICT[theme_key]["fg_color"]
 
     df = dex.csv_cache.get_csv_sample(rid)
 
-    x_col_idx = int(x_col_idx)
-    y_col_idx = int(y_col_idx)
-    x = df.iloc[:, int(x_col_idx)]
-    y = df.iloc[:, int(y_col_idx)]
+    # df.sort_values('TIMESTAMP', inplace=True)
+
+    x_col_idx = parm_dict['x']
+    x = df.iloc[:, x_col_idx]
 
     datetime_col_list = dex.eml_cache.get_datetime_columns(rid)
     is_dt = x_col_idx in [d["col_idx"] for d in datetime_col_list]
 
+    # The figure is the container for the whole plot.
     fig = bokeh.plotting.figure(
         plot_width=500,
         plot_height=500,
         x_axis_label=df.columns[x_col_idx],
-        y_axis_label=df.columns[y_col_idx],
+        # y_axis_label=df.columns[y_col_idx],
         x_axis_type="datetime" if is_dt else "auto",
+        # legend_label='Y1',
+        title=dex.eml_cache.get_csv_name(rid),
+        tooltips=[
+            ("index", "$index"),
+            ("(x,y)", "($x, $y)"),
+            ("desc", "@desc"),
+        ]
     )
-    # if is_dt:
-    #     x_list = dex.csv_cache.get_dt_col(rid, x_col_idx)
-    # else:
-    x_list = x.fillna("interpolate").to_list()
-    y_list = y.fillna("interpolate").to_list()
 
-    # print(x_list)
-    # print(y_list)
-    fig.dot(x_list, y_list, size=20, color="#000000")
-    # fig.line(x.to_list(), y.to_list(),  color='#000000')
+    # color_list = bokeh.palettes.inferno(len(parm_dict['y']))
+    color_list = bokeh.palettes.turbo(len(parm_dict['y']))
+    source = bokeh.models.ColumnDataSource(df)
+
+    # Glyphs are individual plot elements.
+    glyph_list = []
+
+    for y_idx, (y_col_idx, draw_lines_bool) in enumerate(parm_dict['y']):
+        color_str = color_list[y_idx]
+
+        m = list(bokeh.models.markers.marker_types.keys())
+
+        # All the markers in a scatter plot is a single glyph
+        glyph = bokeh.models.Scatter(x=df.columns[x_col_idx], y=df.columns[y_col_idx],
+                                     size=7, fill_color=color_str, marker=m[y_idx])
+        glyph_renderer = fig.add_glyph(source, glyph)
+        legend_list = [glyph_renderer]
+
+        if draw_lines_bool:
+            # All the line segments in a plot is a single glyph
+            glyph = bokeh.models.Line(x=df.columns[x_col_idx], y=df.columns[y_col_idx],
+                                      line_color=color_str)
+            glyph_renderer = fig.add_glyph(source, glyph)
+            legend_list.append(glyph_renderer)
+
+        glyph_list.append((df.columns[y_col_idx], legend_list))
+
+        # fig.line(x_sorted_list, y_sorted_list, color=color_str)
+        # bokeh.models.LegendItem()
+
+    legend = bokeh.models.Legend(items=glyph_list)
+    legend.click_policy = "hide"
+
+    # Place legend inside the grid
+    legend.location = "top_right"
+
+    # Place legend outside the grid
+    # fig.add_layout(legend, 'right')
+
+    fig.add_layout(legend)
+
     plot_json = json.dumps(bokeh.embed.json_item(fig), cls=dex.util.DatetimeEncoder)
 
     # Simulate large obj/slow server
