@@ -337,6 +337,41 @@ table.datatable td:first-child {
     font-weight: bolder;
 }
 
+/* Parsing error */
+.parse-error::after {
+    color: #da8520;
+    /* 💩⚠ */
+    /* This is the warning triangle '⚠', followed by the "variation selector", which
+    * triggers rendering in color instead of monochrome. For the warning triangle, this
+    * causes it to be rendered as a filled triangle */
+    content: '⚠️';
+    opacity: 1;
+    /*     font-size: 500%; */
+}
+
+.parse-error:hover::after {
+    position: absolute;
+    /*     top: 10%; */
+    margin-left: 5px;
+    /*     margin-top: -10px; */
+    border-width: 2px;
+    border-style: solid;
+    /*     color: white; */
+    color: #303030;
+    background-color: #d89647;
+    border-color: #da8520;
+    z-index: 1;
+    content: "⚠️ Unable to parse this cell:\A EML and CSV mismatch";
+    white-space: pre;
+    /*     background-color: white; */
+    padding: 5px;
+    border-radius: 5px;
+    /* Fade in */
+    opacity: 1;
+    transition: opacity 0.3s;
+    font-weight: normal;
+}
+
 /* Profiling page */
 
 #counter-msg, #spinner, #spinner-msg {

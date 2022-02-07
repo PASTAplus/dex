@@ -70,7 +70,28 @@ async function create_table()
       scrollX: '90vw',
       processing: true,
       serverSide: true,
-      ajax: {url: `fetch-browse/${g.rid}`, dataSrc: 'data',},
+      // ajax: {url: `fetch-browse/${g.rid}`, dataSrc: 'data',},
+
+      ajax: {
+        url: `fetch-browse/${g.rid}`,
+
+
+        dataSrc: function (json) {
+
+          for (let i = 0; i < json.data.length; i++) {
+            for (let j = 1; j < json.data[i].length; ++j) {
+              if (json.bad[i][j-1]) {
+                json.data[i][j] = '<div class="parse-error">' + json.data[i][j] + '</div>';
+              }
+            }
+          }
+
+          return json.data;
+        },
+
+        // dataSrc: 'data',
+      },
+
       order: [[0, 'asc']],
       defaultContent: '',
       // .prop('checked',true); instead of .attr('checked',true);
@@ -96,6 +117,15 @@ async function create_table()
       // searching: true,
       // Time in ms after the last key press and automatically triggering search (if enabled).
       searchDelay: 2000,
+
+
+      // rowCallback: function(row, data, index) {
+      //   // if (data.status === "Active") {
+      //   //   $("td:eq(4)", row).addClass("active");
+      //     $("td:eq(4)", row).addClass("parse-error");
+      //   // }
+      // }
+
     });
 
   hidden_search_el = $('.pq input[type=search]');
