@@ -44,7 +44,6 @@ PANDAS_TO_FRIENDLY_DICT = {
     PandasType.STRING: "Generic",
 }
 
-
 ISO8601_TO_CTIME_DICT = {
     # This dict was created based on an analysis of the full LTER and EDI corpus of
     # CSV files.
@@ -231,7 +230,8 @@ def get_dialect(dt_el):
         delimiter = first_str(text_format_el, 'fieldDelimiter', DEFAULT_FIELD_DELIMITER)
         doublequote = True
         escapechar = None
-        lineterminator = first_str(text_format_el, 'recordDelimiter', DEFAULT_RECORD_DELIMITER)
+        lineterminator = first_str(text_format_el, 'recordDelimiter',
+                                   DEFAULT_RECORD_DELIMITER)
         quotechar = first_str(text_format_el, 'quoteCharacter', DEFAULT_QUOTE_CHARACTER)
         quoting = csv.QUOTE_MINIMAL
         skipinitialspace = True
@@ -282,7 +282,8 @@ def get_col_attr_list(dt_el):
                 pandas_type=pandas_type,
                 date_fmt_str=date_fmt_str,
                 c_date_fmt_str=c_date_fmt_str,
-                missing_code_list=multiple_str(attr_el, './/missingValueCode/code/text()'),
+                missing_code_list=multiple_str(attr_el,
+                                               './/missingValueCode/code/text()'),
             )
         )
 
@@ -324,7 +325,8 @@ def derive_pandas_type(attr_el):
 
 
 def get_date_fmt_str(attr_el, col_name):
-    date_fmt_str = first_str(attr_el, './/measurementScale/dateTime/formatString/text()')
+    date_fmt_str = first_str(attr_el,
+                             './/measurementScale/dateTime/formatString/text()')
     if date_fmt_str:
         return date_fmt_str
     if col_name.upper() == 'YEAR':
@@ -403,7 +405,7 @@ def get_data_table_list(root_el):
 def get_data_table_by_data_url(el, data_url):
     for dt_el in el.xpath('.//dataset/dataTable'):
         url = first_str(dt_el, './/physical/distribution/online/url/text()')
-        url = url[url.find('/PACKAGE/') :]
+        url = url[url.find('/PACKAGE/'):]
         if url == data_url.as_posix():
             return dt_el
     raise dex.exc.EMLError(f'Missing DataTable in EML. data_url="{data_url}"')

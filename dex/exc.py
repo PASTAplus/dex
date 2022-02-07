@@ -11,7 +11,7 @@ class DexError(werkzeug.exceptions.HTTPException):
 
 
 class EMLError(DexError):
-    pass
+pass
 
 
 class CSVError(DexError):
