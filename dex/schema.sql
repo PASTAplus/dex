@@ -12,5 +12,3 @@ create table entity
 create unique index entity_data_url_uindex
     on entity (data_url);
 
-create unique index entity_entity_uindex
-    on entity (entity);
