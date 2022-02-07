@@ -1,7 +1,11 @@
 import json
+import logging
 
 import bokeh.colors.rgb
 import bokeh.embed
+import bokeh.models
+import bokeh.models.markers
+import bokeh.palettes
 import bokeh.plotting
 import flask
 
@@ -10,6 +14,8 @@ import dex.csv_cache
 import dex.eml_cache
 import dex.util
 
+log = logging.getLogger(__name__)
+
 bokeh_server = flask.Blueprint("bokeh", "bokeh", url_prefix="/bokeh")
 
 THEME_DICT = {
@@ -17,6 +23,7 @@ THEME_DICT = {
     "dark": {"fg_color": "#a59a89"},
     "default": {"fg_color": "white"},
 }
+
 
 # TODO: Check if these functions can use the regular disk caching now.
 
