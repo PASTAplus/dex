@@ -242,20 +242,56 @@ def get_parsed_csv(rid, eml_ctx):
         # float_precision=None,
         # storage_options=None,
     )
+
+    # Parse the CSV
+    if do_parse:
+        arg_dict.update(dict(
+            converters=eml_ctx['parser_func_dict'],
+            # true_values=None,
+            # false_values=None,
+            # Not required when setting skiprows and skipfooter. Read the number of rows declared in the EML
+            # nrows=max_rows,
+            na_filter=True,
+            na_values=list(set(eml_ctx['missing_code_list'])),
+            # na_values=['', None],
+            # Add common NaNs:
+            # ‘’, ‘#N/A’, ‘#N/A N/A’, ‘#NA’, ‘-1.#IND’, ‘-1.#QNAN’, ‘-NaN’, ‘-nan’, ‘1.#IND’, ‘1.#QNAN’,
+            # ‘<NA>’, ‘N/A’, ‘NA’, ‘NULL’, ‘NaN’, ‘n/a’, ‘nan’, ‘null’
+            keep_default_na=True,
+        ))
+
+    # Raw CSV
+    else:
+        arg_dict.update(
+            dict(
+                # Setting dtype to str and providing no valid matches for NaNs, disables the
+                # automatic parsing in Pandas and gives us the unprocessed text values of the
+                # fields.
+                dtype=str,
+                na_filter=False,
+                na_values=[],
+
+            )
+        )
+
     try:
         csv_df = pd.read_csv(**arg_dict)
     except ValueError as e:
         raise dex.exc.CSVError(str(e))
 
-    # print(csv_df.describe())
-    log.debug('#' * 100)
-    csv_df.info()
-    # log.debug(len(csv_df))
-    log.debug('#' * 100)
-    return csv_df
+    if do_parse:
+        # print(csv_df.describe())
+        log.debug('#' * 100)
+        csv_df.info()
+        # log.debug(len(csv_df))
+        log.debug('#' * 100)
+
     # csv_df['PET'].replace(to_replace=[''], value=np.nan, inplace=True)
     # csv_df.replace(value=np.nan, regex='^\s*\$', inplace=True)
     # return csv_df.astype(pandas_type_dict, errors='ignore')
+
+    return csv_df
+
 
 
 def apply_nan(df, nan_set: set):
