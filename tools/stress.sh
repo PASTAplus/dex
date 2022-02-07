@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Stress test a view in Dex
+# Stress test a view in DeX
 
 url='http://127.0.0.1:5000/dex/subset/1'
 

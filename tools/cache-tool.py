@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Perform operations on the Dex caches
+"""Perform operations on the DeX caches
 """
 
 import argparse

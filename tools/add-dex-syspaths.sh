@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Add a development version of Dex to the syspath of the currently
+# Add a development version of DeX to the syspath of the currently
 # active Python environment.
 
 # Returns the absolute path to the directory of the caller.

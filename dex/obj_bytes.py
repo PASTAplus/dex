@@ -28,7 +28,7 @@ cache, where it is found in the first step of any subsequent requests.
 
 - If the object cannot be found, raises dex.exc.CacheError().
 
-The access pattern for Dex is that objects are accessed multiple times during the
+The access pattern for DeX is that objects are accessed multiple times during the
 initial processing, after which higher level caches are generated, and the source
 objects are not needed again.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Compare and benchmark alternate implementations that we may consider for Dex.
+"""Compare and benchmark alternate implementations that we may consider for DeX.
 """
 import argparse
 import io

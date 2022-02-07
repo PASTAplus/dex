@@ -228,7 +228,7 @@ def get_parsed_csv(rid, eml_ctx):
         # date_parser=None,
         # dayfirst=False,
         # Speeds up datetime parsing for cases having many repeated dates. This goes
-        # into effect only if the column is not parsed by Dex.
+        # into effect only if the column is not parsed by DeX.
         # cache_dates=True,
         # iterator=False,
         # chunksize=None,

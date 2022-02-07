@@ -29,7 +29,7 @@ def first_existing(*path_tup, is_file=False):
     Args:
         *path_tup (pathlib.Path or str):
             List of paths. The paths must be absolute, or relative to the root directory
-            of the Dex project.
+            of the DeX project.
         is_file (bool):
             False: Path must be to an existing dir
             True: Path must be to an existing file
