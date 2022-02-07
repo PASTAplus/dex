@@ -99,12 +99,18 @@ def get_col_agg_dict(df, eml_ctx):
         ):
             continue
 
-        with contextlib.suppress(Exception):
-            d[i] = dict(
-                col_name=col_name,
-                v_max=df.iloc[:, i].max(skipna=True),
-                v_min=df.iloc[:, i].min(skipna=True),
-            )
+        try:
+            v_max = df.iloc[:, i].max(skipna=True)
+            v_min = df.iloc[:, i].min(skipna=True)
+
+            if pd.api.types.is_datetime64_any_dtype(df[col_name]):
+                col_dict = eml_ctx['column_list'][i]
+                v_max = v_max.strftime(col_dict['c_date_fmt_str'])
+                v_min = v_min.strftime(col_dict['c_date_fmt_str'])
+
+            d[i] = dict(col_name=col_name, v_max=v_max, v_min=v_min)
+        except Exception:
+            log.exception('EXC')
 
     return d
 
