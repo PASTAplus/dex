@@ -59,10 +59,10 @@ vars:
 
 # which diagrams to show
 missing_diagrams:
-  bar: True
-  matrix: True
-  heatmap: True
-  dendrogram: True
+  bar: False
+  matrix: False
+  heatmap: False
+  dendrogram: False
 
 correlations:
   pearson:
@@ -135,17 +135,17 @@ n_freq_table_max: 10
 # Use `deep` flag for memory_usage
 memory_deep: False
 
-# Configuration related to the duplicates
 duplicates:
+  # Number of rows
   head: 10
 
-# Configuration related to the samples area
 samples:
+  # Number of rows to show from the head and tail of the table
   head: 10
   tail: 10
 
-# Configuration related to the rejection of variables
-reject_variables: True
+# Show rejected variables as dimmed out and overlined
+reject_variables: false
 
 # When in a Jupyter notebook
 notebook:
