@@ -16,45 +16,71 @@
   </div>
 
   <div class='widgets'>
-    <div class='cat-filter-block grid-2-col'>
-      <div class='grid-item'>
-        <label class='stack-item ' for='x-col'>X:</label>
-      </div>
-      <div class='grid-item'>
-        <select id="x-col" name='x-col' class='form-control'>
-          {% for col_str in cols_x %}
-            <option value='{{ col_str.1 }}'>{{ col_str.0 }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class='grid-item'>
-        <label class='stack-item ' for='y-col'>Y:</label>
-      </div>
-      <div class='grid-item'>
-        <select id="y-col" name='y-col' class='form-control'>
-          {% for col_str in cols_y %}
-            <option value='{{ col_str.1 }}'>{{ col_str.0 }}</option>
-          {% endfor %}
-        </select>
-      </div>
 
+    <div class='grid-3-col'>
+      <label class='grid-item axis-label'>
+        X:
+      </label>
+      <label class='grid-item'>
+        <select id="col-x" name='col-x' class='form-control'>
+          <option value='-1'>Select independent value</option>
+          {% for col_str in col_list %}
+            <option value='{{ col_str.0 }}'>{{ col_str.1 }}</option>
+          {% endfor %}
+        </select>
+      </label>
     </div>
-    <div class='cat-filter-list stack'></div>
-    <p></p>
+
+    <div id='y-block-list' class='stack'>
+    </div>
+
+    <div class='grid-item'>
+      <button id='plot-button' class='btn btn-primary' disabled>Plot</button>
+    </div>
+
   </div>
 
   <div class='space-top'>
-    <button id='plot' class='btn btn-primary'>Plot</button>
   </div>
 
   <div class='widgets'>
+    <div class='col-y-list stack'></div>
     <div id='plot-container'></div>
+
+{#    {% if rows_total > rows_used %}#}
+{#      <p id='column-description-msg' class='result-msg hidden-msg'>#}
+{#        Note: The data for this plot as been subsampled.#}
+{#      </p>#}
+{#    {% endif %}#}
+
   </div>
+
+  <template id='y-template'>
+    {#
+    This is the only div that has the 'column-y' class, which we use as a
+    reference in each column/column group. Since these elements get cloned, we use
+    classes instead of IDs.
+    #}
+    <div class='y-block grid-3-col'>
+      <label class='y-label grid-item axis-label' for='y-select-id'>
+        Y:
+      </label>
+      <select id='y-select-id' class='y-select form-control grid-item'>
+        {#<option disabled selected value></option>#}
+      </select>
+      <label class='grid-item '>
+        <input id='y-line-checkbox-id' class='y-line-checkbox' type='checkbox'
+               name='draw-lines'>
+        Lines&nbsp;
+      </label>
+
+    </div>
+  </template>
 
 {% endblock %}
 
 {% block scripts %}
-  <script src='/static/plot.js'></script>
+  <script src='/static/plot.js' type='module'></script>
   <script>
   $('#nav_plot').addClass('active')
   </script>
