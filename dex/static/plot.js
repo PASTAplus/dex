@@ -111,16 +111,16 @@ $("#plot-button").click(async function () {
 
   let plot_el = $('#plot-container');
 
-    while (plot_el[0].firstChild) {
-      plot_el[0].removeChild(plot_el[0].firstChild);
-    }
+  while (plot_el[0].firstChild) {
+    plot_el[0].removeChild(plot_el[0].firstChild);
+  }
 
-    // let $ = jQuery.noConflict();
+  // let $ = jQuery.noConflict();
 
-    // $(this).css("display", "none");
-    // $('#spinner-msg').css("display", "block");
+  // $(this).css("display", "none");
+  // $('#spinner-msg').css("display", "block");
 
-    plot_el.Loading('Generating plot');
+  plot_el.Loading('Generating plot');
 
   let sel_dict = {
     x: parseInt($('#col-x').val()),
@@ -131,21 +131,20 @@ $("#plot-button").click(async function () {
   let response = await fetch(`/bokeh/xy-plot/${g.rid}/${parm_uri}`);
   let data = await response.json();
 
-    plot_el.Destroy();
+  plot_el.Destroy();
 
-    Bokeh.embed.embed_item(data, 'plot-container');
+  Bokeh.embed.embed_item(data, 'plot-container');
 
   // Show warning if plot is subsampled for performance
   $('#column-description-msg').removeClass('hidden-msg');
 
   // clearInterval(h);
 
-    // window.open(`/dex/profile/doc/${g.rid}`, "_self")
+  // window.open(`/dex/profile/doc/${g.rid}`, "_self")
 
-    // let response = await fetch(`/dex/profile-fetch/${g.rid}`);
-    // document.open('text/html');
-    // document.write(await response.text());
-    // $('#profile').src = `/dex/profile/profile-fetch/${g.rid}`
-    // $('#profile').load(function(){$(this).height($(this).contents().outerHeight());});
-  });
+  // let response = await fetch(`/dex/profile-fetch/${g.rid}`);
+  // document.open('text/html');
+  // document.write(await response.text());
+  // $('#profile').src = `/dex/profile/profile-fetch/${g.rid}`
+  // $('#profile').load(function(){$(this).height($(this).contents().outerHeight());});
 });
