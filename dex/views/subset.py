@@ -3,11 +3,14 @@ import hashlib
 import io
 import json
 import logging
+import math
 import pprint
 import zipfile
 
 import flask
 import flask.json
+import pandas as pd
+from flask import current_app as app
 
 import dex.csv_cache
 import dex.csv_parser
@@ -23,7 +26,6 @@ log = logging.getLogger(__name__)
 
 subset_blueprint = flask.Blueprint("subset", __name__, url_prefix="/dex/subset")
 
-
 DEFAULT_DISPLAY_ROW_COUNT = 10
 
 
@@ -32,6 +34,10 @@ def subset(rid):
     csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
     datetime_col_dict = dex.csv_cache.get_datetime_col_dict(csv_df)
     cat_col_map = {d['col_name']: d for d in dex.eml_cache.get_categorical_columns(rid)}
+
+    note_list = []
+    if len(csv_df) == app.config['CSV_MAX_ROWS']:
+       note_list.append('Due to size, only the first part of this table is available in DeX')
 
     return flask.render_template(
         "subset.html",
@@ -45,50 +51,49 @@ def subset(rid):
             filter_not_applied_str='Filter not applied',
             datetime_col_dict=datetime_col_dict,
         ),
-        csv_html=csv_df.iloc[:DEFAULT_DISPLAY_ROW_COUNT].to_html(
+        # Generate a table with just populated headers. The rows are filled in
+        # dynamically.
+        csv_html=pd.DataFrame(columns=csv_df.columns).to_html(
             table_id="csv-table",
             classes="datatable row-border",
             index=True,
             index_names=False,
             border=0,
         ),
-        rid=rid,
-        entity_tup=dex.db.get_entity_as_dict(rid),
-        csv_name=dex.eml_cache.get_csv_name(rid),
         column_list=eml_ctx['column_list'],
         filter_not_applied_str='Filter not applied',
         datetime_col_dict=datetime_col_dict,
+        cat_col_map=cat_col_map,
+        # For the base template, should be included in all render_template() calls.
+        rid=rid,
+        entity_tup=dex.db.get_entity_as_dict(rid),
+        csv_name=dex.eml_cache.get_csv_name(rid),
         dbg=dex.debug.debug(rid),
         portal_base=dex.pasta.get_portal_base_by_entity(dex.db.get_entity(rid)),
-        cat_col_map=cat_col_map,
+        note_list=note_list,
     )
 
 
-def get_raw_filtered_by_query(csv_df, raw_df, eml_ctx, query_str=None):
+def get_raw_filtered_by_query(csv_df, eml_ctx, query_str=None):
     # Filter the full CSV by the search string. A row is included if one or more of the
     # cells in the row have text matching the search string.
     if not query_str:
         return N(
-            raw_df=raw_df,
+            csv_df=csv_df,
             status_str='Query not applied',
             query_is_ok=True,
         )
     try:
         query_df = csv_df.query(query_str)
-        # log.debug('QUERY_DF')
-        # log.debug(query_str)
-        # log.debug(len(csv_df))
-        # log.debug(len(query_df))
     except Exception as e:
         return N(
-            raw_df=raw_df,
+            csv_df=csv_df,
             status_str=f'Query error: {e.__class__.__name__}: {str(e)}',
             query_is_ok=False,
         )
-    raw_df = raw_df.iloc[query_df.index, :]
     return N(
-        raw_df=raw_df,
-        status_str=f'Query OK: Selected {len(raw_df)} of {len(csv_df)} rows',
+        csv_df=query_df,
+        status_str=f'Query OK: Selected {len(query_df)} of {len(csv_df)} rows',
         query_is_ok=True,
     )
 
@@ -124,33 +129,72 @@ def csv_fetch(rid):
     sort_col_idx = args.get("order[0][column]", type=int)
     is_ascending = args.get("order[0][dir]") == "asc"
 
-    csv_df, _raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
-    query_result = get_raw_filtered_by_query(csv_df, _raw_df, eml_ctx, query_str)
+    csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
+    query_result = get_raw_filtered_by_query(csv_df, eml_ctx, query_str)
+    csv_df = query_result.csv_df
+
+    # For the remainder of this function, we deal only with raw_df, which contains
+    # unparsed strings.
+
+    raw_df = raw_df.iloc[csv_df.index, :]
 
     # Create page of filtered result for display (selected with the [1], [2]... buttons).
     # Sort the rows according to selection
     if not sort_col_idx:
-        query_result.raw_df = query_result.raw_df.sort_index(ascending=is_ascending)
+        raw_df = raw_df.sort_index(ascending=is_ascending)
     else:
-        query_result.raw_df = query_result.raw_df.rename_axis("__Index").sort_values(
-            by=[query_result.raw_df.columns[sort_col_idx - 1], "__Index"],
+        raw_df = raw_df.rename_axis("__Index").sort_values(
+            by=[raw_df.columns[sort_col_idx - 1], "__Index"],
             ascending=is_ascending,
         )
-    page_df = query_result.raw_df[start_int : start_int + row_count]
+
+    page_df = raw_df[start_int : start_int + row_count]
+
+    # Create table of cells for which to show the parse error notice.
+
+    bad_list = []
+
+    # Rows
+    for i in range(page_df.shape[0]):
+        c = []
+        # Columns
+        for j in range(page_df.shape[1]):
+            raw_v = page_df.iat[i, j]
+            parsed_v = csv_df.iat[start_int + i, j]
+            # c.append(x and not v)
+
+            # A cell has failed parsing if the parsed value is NaN while the raw value
+            # is set and is not in the EML Missing Code List.
+
+            if raw_v and raw_v in eml_ctx['missing_code_set']:
+                is_invalid = False
+            else:
+                is_invalid = (
+                    parsed_v is None
+                    or parsed_v == ''
+                    or (isinstance(parsed_v, float) and math.isnan(parsed_v))
+                )
+
+            c.append(is_invalid)
+        bad_list.append(c)
 
     j = json.loads(page_df.to_json(orient="split", index=True))
     row_list = [(a, *b) for a, b in zip(j["index"], j["data"])]
 
     for i in range(len(row_list), 10):
-        row_list.append(('', *[''] * len(query_result.raw_df.columns)))
+        row_list.append(('', *[''] * len(raw_df.columns)))
+
+    row_dict_list = [{'val': v} for v in row_list]
 
     result_dict = {
         # DataTable
         "draw": draw_int,
         "recordsTotal": len(csv_df),
-        "recordsFiltered": len(query_result.raw_df),
+        "recordsFiltered": len(raw_df),
         "data": row_list,
-        # Dex
+        "bad": bad_list,
+        # "newdata": row_dict_list,
+        # DeX
         "queryResult": query_result.status_str,
         "queryIsOk": query_result.query_is_ok,
     }
