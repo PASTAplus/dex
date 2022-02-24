@@ -131,9 +131,8 @@ def xy_plot(rid, parm_uri):
         # legend_label='Y1',
         title=dex.eml_cache.get_csv_name(rid),
         tooltips=[
-            ("index", "$index"),
+            ("Row", "$index"),
             ("(x,y)", "($x, $y)"),
-            ("desc", "@desc"),
         ]
     )
 

@@ -29,7 +29,7 @@ def profile(rid):
     if len(csv_df) == app.config['CSV_MAX_ROWS']:
        note_list.append('Due to size, only the first part of this table is available in DeX')
 
-    note_list.append('This analysis is not based on information from the EML metadata')
+    note_list.append('This analysis may not match the EML metadata for all columns')
 
     return flask.render_template(
         "profile.html",
