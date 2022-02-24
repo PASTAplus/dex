@@ -26,7 +26,7 @@ def profile(rid):
     csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
 
     note_list = []
-    if len(csv_df) == app.config['CSV_MAX_ROWS']:
+    if len(csv_df) == app.config['CSV_MAX_CELLS'] // len(eml_ctx['column_list']):
        note_list.append('Due to size, only the first part of this table is available in DeX')
 
     note_list.append('This analysis may not match the EML metadata for all columns')

@@ -36,7 +36,7 @@ def subset(rid):
     cat_col_map = {d['col_name']: d for d in dex.eml_cache.get_categorical_columns(rid)}
 
     note_list = []
-    if len(csv_df) == app.config['CSV_MAX_ROWS']:
+    if len(csv_df) == app.config['CSV_MAX_CELLS'] // len(eml_ctx['column_list']):
        note_list.append('Due to size, only the first part of this table is available in DeX')
 
     return flask.render_template(

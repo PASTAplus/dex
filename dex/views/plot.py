@@ -65,7 +65,7 @@ def plot(rid):
     rows_used = app.config["CSV_SAMPLE_THRESHOLD"]
 
     note_list = []
-    if rows_total == app.config['CSV_MAX_ROWS']:
+    if rows_total == app.config['CSV_MAX_CELLS'] // len(eml_ctx['column_list']):
        note_list.append('Due to size, only the first part of this table is available in DeX')
     # if rows_used < rows_total:
     if True:

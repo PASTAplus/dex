@@ -187,7 +187,7 @@ def _get_csv(rid, eml_ctx, do_parse):
         engine='python',
         skiprows=eml_ctx['header_line_count'],
         skipfooter=eml_ctx['footer_line_count'],
-        nrows=app.config['CSV_MAX_ROWS'],
+        nrows=app.config['CSV_MAX_CELLS'] // len(eml_ctx['column_list']),
         dialect=eml_ctx['dialect'],  # Use dialect from EML, not inferred
         # We cannot skip blank lines here, as we need the number of rows of the parsed
         # CSV to always match that of the raw CSV.
