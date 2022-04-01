@@ -262,14 +262,14 @@ def download(rid):
     query_result = get_raw_filtered_by_query(csv_df, eml_ctx, filter_dict['query_filter'])
     csv_df = query_result.csv_df
 
-    # Filter columns
-    col_list = filter_dict["col_filter"][1:]
-    if col_list:
-        log.error(f'Filtering by columns: {", ".join(map(str, col_list))}')
-        csv_df = csv_df.iloc[:, col_list]
-
     # Return the raw CSV rows that correspond to the rows we have filtered using the parsed CSV.
     csv_df = raw_df.iloc[csv_df.index, :]
+
+    # Filter columns
+    col_list = filter_dict["col_filter"][1:]
+    if not all(col_list):
+        log.error(f'Filtering by columns: {", ".join(map(str, col_list))}')
+        csv_df = csv_df.iloc[:, col_list]
 
     csv_df.index.name = 'index'
 
