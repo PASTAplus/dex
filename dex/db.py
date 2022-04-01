@@ -155,6 +155,11 @@ def get_entity_as_dict(row_id):
     return get_entity(row_id)._asdict()
 
 
+def get_entity_as_package_id(row_id):
+    e = N(**get_entity(row_id)._asdict())
+    return '.'.join([str(s) for s in (e.scope_str, e.identifier_int, e.version_int)])
+
+
 def get_data_url(row_id):
     return get_entity(row_id).data_url
 

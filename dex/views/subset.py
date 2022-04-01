@@ -4,7 +4,9 @@ import io
 import json
 import logging
 import math
+import pathlib
 import pprint
+import re
 import zipfile
 
 import flask
@@ -37,7 +39,7 @@ def subset(rid):
 
     note_list = []
     if len(csv_df) == app.config['CSV_MAX_CELLS'] // len(eml_ctx['column_list']):
-       note_list.append('Due to size, only the first part of this table is available in DeX')
+        note_list.append('Due to size, only the first part of this table is available in DeX')
 
     return flask.render_template(
         "subset.html",
@@ -258,7 +260,6 @@ def download(rid):
         elif end_date:
             csv_df = csv_df[[(x.tz_localize(None) <= end_date) for x in csv_df.iloc[col_name]]]
 
-
     query_result = get_raw_filtered_by_query(csv_df, eml_ctx, filter_dict['query_filter'])
     csv_df = query_result.csv_df
 
@@ -302,10 +303,21 @@ def download(rid):
         f'subset_row_count={len(csv_df)}'
     )
 
-    return send_zip(rid, csv=csv_bytes, json=json_bytes, eml=eml_str)
+    unsafe_name_str = dex.eml_cache.get_csv_name(rid)
+    safe_name_str = re.sub('[^a-zA-Z0-9._-]+', '-', unsafe_name_str)
+    safe_base_path = pathlib.Path(safe_name_str)
+
+    return send_zip(
+        zip_name=dex.db.get_entity_as_package_id(rid),
+        zip_dict={
+            safe_base_path.with_suffix('.csv').name: csv_bytes,
+            safe_base_path.with_suffix('.json').name: json_bytes,
+            safe_base_path.with_suffix('.eml').name: eml_str.encode('utf-8', errors='replace'),
+        },
+    )
 
 
-def send_zip(zip_name, **zip_dict):
+def send_zip(zip_name, zip_dict):
     zip_bytes = io.BytesIO()
     with zipfile.ZipFile(zip_bytes, mode='w') as z:
         for f_name, f_bytes in zip_dict.items():
@@ -315,7 +327,8 @@ def send_zip(zip_name, **zip_dict):
         zip_bytes,
         mimetype='application/zip',
         as_attachment=True,
-        attachment_filename=f'{zip_name}.zip',
+        # attachment_filename=f'{zip_name}.zip',
+        download_name=f'{zip_name}.zip',
     )
 
 
