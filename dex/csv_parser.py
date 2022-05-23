@@ -173,8 +173,7 @@ def _get_csv(rid, eml_ctx, do_parse):
     # Commented lines show the defaults
     arg_dict = dict(
         filepath_or_buffer=csv_stream,
-        header=0,
-        # header=None,  # Do not use column names from the CSV (we get them from the EML)
+        header=None,  # Do not use column names from the CSV (we get them from the EML)
         names=eml_ctx['pandas_type_dict'].keys(),  # Use column names from EML
         index_col=False,  # Do not use the first column as the index
         # Only get the number of columns that are declared in the EML.
