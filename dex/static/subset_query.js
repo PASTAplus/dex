@@ -80,7 +80,7 @@ async function create_table()
 
           for (let i = 0; i < json.data.length; i++) {
             for (let j = 1; j < json.data[i].length; ++j) {
-              if (json.bad[i][j]) {
+              if (json.bad[i][j - 1]) {
                 json.data[i][j] = '<div class="parse-error">' + json.data[i][j] + '</div>';
               }
             }

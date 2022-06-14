@@ -153,9 +153,7 @@ def csv_fetch(rid):
     page_df = raw_df[start_int : start_int + row_count]
 
     # Create table of cells for which to show the parse error notice.
-
     bad_list = []
-
     # Rows
     for i in range(page_df.shape[0]):
         c = []
@@ -163,11 +161,8 @@ def csv_fetch(rid):
         for j in range(page_df.shape[1]):
             raw_v = page_df.iat[i, j]
             parsed_v = csv_df.iat[start_int + i, j]
-            # c.append(x and not v)
-
             # A cell has failed parsing if the parsed value is NaN while the raw value
             # is set and is not in the EML Missing Code List.
-
             if raw_v and raw_v in eml_ctx['missing_code_set']:
                 is_invalid = False
             else:
@@ -185,6 +180,7 @@ def csv_fetch(rid):
 
     for i in range(len(row_list), 10):
         row_list.append(('', *[''] * len(raw_df.columns)))
+        bad_list.append([False] * len(raw_df.columns))
 
     row_dict_list = [{'val': v} for v in row_list]
 
