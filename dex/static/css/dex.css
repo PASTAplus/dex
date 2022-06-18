@@ -357,7 +357,7 @@ table.dataTable tbody th, table.dataTable tbody td {
     top: 0;
     left: 0;
     font-size: 50%;
-    content: "(no value)";
+    content: "(empty)";
 }
 
 /* first column */
