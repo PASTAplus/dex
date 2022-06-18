@@ -57,7 +57,7 @@ def subset(rid):
         # dynamically.
         csv_html=pd.DataFrame(columns=csv_df.columns).to_html(
             table_id="csv-table",
-            classes="datatable row-border",
+            classes="datatable cell-border",
             index=True,
             index_names=False,
             border=0,
