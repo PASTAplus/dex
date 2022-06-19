@@ -262,6 +262,8 @@ def get_col_attr_list(dt_el):
     # Iterate over 'attribute' elements, one for each column
     attr_list = list(dt_el.xpath('.//attributeList/attribute'))
 
+    used_col_name_set = set()
+
     for col_idx, attr_el in enumerate(attr_list):
         col_name = first_str_orig(attr_el, './/attributeName/text()')
         pandas_type = derive_pandas_type(attr_el)
@@ -275,10 +277,19 @@ def get_col_attr_list(dt_el):
             else:
                 pandas_type = PandasType.STRING
 
+        # Some CSV files have duplicate column names. Because we use column names
+        # to reference the columns, we need to resolve those to unique names.
+        unique_col_name = col_name
+        unique_col_idx = 2
+        while unique_col_name in used_col_name_set:
+            unique_col_name = f'{col_name} ({unique_col_idx})'
+            unique_col_idx += 1
+        used_col_name_set.add(unique_col_name)
+
         col_attr_list.append(
             dict(
                 col_idx=col_idx,
-                col_name=col_name,
+                col_name=unique_col_name,
                 pandas_type=pandas_type,
                 date_fmt_str=date_fmt_str,
                 c_date_fmt_str=c_date_fmt_str,

@@ -47,8 +47,6 @@ def get_eml_ctx(rid):
             for code_str in type_dict['missing_code_list']:
                 missing_code_set.add(code_str)
 
-    missing_code_set.add('')
-
     ctx = dict(
         column_list=column_list,
         dialect=dex.eml_types.get_dialect(dt_el),
