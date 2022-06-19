@@ -125,6 +125,30 @@ CSV_SAMPLE_THRESHOLD = 10000
 # Max number of rows to examine when analyzing CSV files to determine format and content.
 CSV_SNIFFER_THRESHOLD = 1000
 
+# Set of cell values implicitly interpreted as NaN in CSV files.
+# There are in addition to those declared in EML documents.
+CSV_NAN_SET = {
+    '',
+    '#N/A',
+    '#N/A',
+    'N/A',
+    '#NA',
+    '-1.#IND',
+    '-1.#QNAN',
+    '-NaN',
+    '-nan',
+    '1.#IND',
+    '1.#QNAN',
+    '<NA>',
+    'N/A',
+    'NA',
+    'NULL',
+    'NaN',
+    'n/a',
+    'nan',
+    'null',
+}
+
 # Number of bytes in each chunk data in streamed responses.
 CHUNK_SIZE_BYTES = 8192
 
