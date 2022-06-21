@@ -44,6 +44,271 @@ PANDAS_TO_FRIENDLY_DICT = {
     PandasType.STRING: "Generic",
 }
 
+# Dict of special cases for date format strings that appear in LTER and EDI EML
+# documents but cannot be translated with the generic procedure implemented in
+# iso8601_to_c_format(). The numbers in comments are number of occurrences found in a
+# set of LTER EML documents.
+EML_DATE_FORMAT_TO_CTIME_DICT = {
+    # 1296
+    '#####EMPTY#####': '',
+    # 662
+    'integer': None,
+    # 657
+    'YYYY-MM-DD hh:mm:ss (MST)': None,
+    # 422
+    'numeric': None,
+    # 254
+    'kkmm': None,
+    # 131
+    'alphabetic': None,
+    # 39
+    'DD/MM/YYYY hh:mm:ss.sss': None,
+    # 30
+    'hh:mm[:ss AA]': None,
+    # 22
+    'julian': None,
+    # 20
+    'YYYY-%j': '%Y-%j',
+    # 19
+    'm/d/yyyy': '%m/%d/%Y',
+    # 15
+    'number': None,
+    # 14
+    'YYYY-MM-DDT-8hh:mm': None,
+    # 14
+    'hh:mm:ss.s': None,
+    # 12
+    'JD': None,
+    # 12
+    'HH:MM:SS A/P': None,
+    # 12
+    'HH:MM:SS AM/PM': None,
+    # 12
+    '00:00:00': None,
+    # 11
+    '%j': '%j',
+    # 11
+    'd': None,
+    # 10
+    'HH:MM:SS AP': None,
+    # 10
+    'hh:mm:ss – 07': None,
+    # 9
+    'YYYY-MM-DDThh:mm:ss+hhmm': None,
+    # 9
+    'nominalMinute': None,
+    # 9
+    'hh:mm:ss AM/PM': None,
+    # 9
+    '1': None,
+    # 8
+    'nominalDay': None,
+    # 8
+    'ddd.dd': None,
+    # 7
+    'ww': None,
+    # 6
+    'YYYY-MM-DD hh:mm:ss – 07': None,
+    # 6
+    'NULL': None,
+    # 6
+    'minute': None,
+    # 6
+    'julian day': None,
+    # 6
+    'hh:mm:ss A/P': None,
+    # 6
+    'HH:MM:SS: AM/PM': None,
+    # 6
+    'hh:mm A/P': None,
+    # 6
+    'HH24:Mi': None,
+    # 5
+    'YYYYM': '%Y%m',
+    # 5
+    'none': None,
+    # 5
+    'MM/DD/YY HH:MM (AM|PM)': None,
+    # 5
+    'HH24:Mi:SS': None,
+    # 5
+    'DDMonYYYY': None,
+    # 4
+    'MST': None,
+    # 4
+    'Mon': None,
+    # 4
+    'MM/DD/YYYY HH24:Mi:ss': None,
+    # 4
+    'MM/DD/YYYY HH24:Mi:s': None,
+    # 4
+    '[m]m/[d]d/yy': None,
+    # 4
+    'M.D.YY': None,
+    # 4
+    'M/DD/YYYY': None,
+    # 4
+    'HH:MM AA': None,
+    # 4
+    '##:##': None,
+    # 3
+    'µsec': None,
+    # 3
+    'YYYY-MN-DD': None,
+    # 3
+    'YYYY-MM-DD hh:mm:ss.ss': None,
+    # 3
+    'YYYY-MM-DD hh:mm:ss+hh:mm': None,
+    # 3
+    'YYYY.MM.DD': None,
+    # 3
+    'Y-M-D': None,
+    # 3
+    'Year': None,
+    # 3
+    'MonthDayYear': None,
+    # 3
+    'MM-DD-YYYYY hh:mm': None,
+    # 3
+    'mm/dd/YYYY h:M:S': None,
+    # 3
+    'MM/DD/YY 00:00': None,
+    # 3
+    'Julian': None,
+    # 3
+    'HH:MM am/pm': None,
+    # 3
+    'Degree': None,
+    # 2
+    'YYYY-MM-DD-TT:TT': None,
+    # 2
+    'yyyy-mm-dd hh:mm:ss-z': None,
+    # 2
+    'YYYY-MM-DD HH:mm:SS.SSS+Z': None,
+    # 2
+    'YYYY-MM-DD hh:mm:ss-oo': None,
+    # 2
+    'YYYY-MM-DD  hh:mm:ss': None,
+    # 2
+    'YYYY--MM-DD': None,
+    # 2
+    'yyyy.mm.dd': None,
+    # 2
+    'Y-M-D h:M:s': None,
+    # 2
+    'YMD': None,
+    # 2
+    'years': None,
+    # 2
+    'Y': None,
+    # 2
+    'Q greater 500 cfs': None,
+    # 2
+    'Q greater 100 cfs': None,
+    # 2
+    'Q greater 1000 cfs': None,
+    # 2
+    'Month, YYYY': None,
+    # 2
+    'month': None,
+    # 2
+    'MM\DD\YYYY': None,
+    # 2
+    'mm/dd/yy%H:%M:%S': None,
+    # 2
+    'mm/dd/yy H:M:S': None,
+    # 2
+    'MM/DD//YY': None,
+    # 2
+    '(M/D/YYYY)': None,
+    # 2
+    'M/DD/YY': None,
+    # 2
+    'Hm': None,
+    # 2
+    'hh:mm:ss a/p': None,
+    # 2
+    'd/m/yyyy': None,
+    # 2
+    'dmm/dd/yy hr:mm.': None,
+    # 2
+    'DD-Mounth-YY': None,
+    # 2
+    '0:00:00': None,
+    # 1
+    'YYYY-NMM-DD': None,
+    # 1
+    'YYYY-MM-DD hh:mm:ss.sss': None,
+    # 1
+    'YYYY-MM-DD  hh:mm:ss.ss': None,
+    # 1
+    'YYYY-MM-DD hh:mm:ss -hhmm': None,
+    # 1
+    'YYYY- MM-DD': None,
+    # 1
+    'YYYY-M-D h:M:s': None,
+    # 1
+    'YYYY0MM0DD': None,
+    # 1
+    'YYY:DDD:hh:mm:ss.sssss': None,
+    # 1
+    'year': None,
+    # 1
+    'mmm.yyyy': None,
+    # 1
+    'MM/DD/YYYY H:S': None,
+    # 1
+    'MM/DD/YYYY H:m': None,
+    # 1
+    'MM/DD/YYYY HH:MM UTC+13': None,
+    # 1
+    'MM/DD/YYYY HH:MI24': None,
+    # 1
+    'mm/dd/yy hh:nn': None,
+    # 1
+    'mm/dd/y': None,
+    # 1
+    'M/D/YY': None,
+    # 1
+    'M/d/yy': None,
+    # 1
+    '"hh:mm:ss: A/P"': None,
+    # 1
+    'hh:mm:ss AA': None,
+    # 1
+    'hhmm(MST)': None,
+    # 1
+    'HH:MM A/P': None,
+    # 1
+    'hh:mm A': None,
+    # 1
+    'HH:MI24': None,
+    # 1
+    'graMPerMetersquareDPerYear': None,
+    # 1
+    'D-M-Y': None,
+    # 1
+    'DegreeFareinheit': None,
+    # 1
+    'dd-M-yy': None,
+    # 1
+    'dd-mon-yyyy hr:mm.': None,
+    # 1
+    'dd-mon-yyyy hh24:mi.': None,
+    # 1
+    'DD-Mon-YYYY': None,
+    # 1
+    'dd--mon-yyyy': None,
+    # 1
+    'DD-Mon-YY': None,
+    # 1
+    'dd-mom-yyyy': None,
+    # 1
+    'DDD.HHHH': None,
+    # 1
+    'DDD.dddd': None,
+}
+
 ISO8601_TO_CTIME_DICT = {
     # This dict was created based on an analysis of the full LTER and EDI corpus of
     # CSV files.
@@ -101,11 +366,12 @@ ISO8601_TO_CTIME_DICT = {
     # -- %H
     # Hour (24-hour clock) as a zero-padded decimal number.
     # 00, 01, …, 23
+    'H': '%H',
     'HH': '%H',
     'HH24': '%H',
-    'hh24': '%H',
-    'hh': '%H',
     'h': '%H',
+    'hh': '%H',
+    'hh24': '%H',
     # -- %I
     # Hour (12-hour clock) as a zero-padded decimal number.
     # 01, 02, …, 12
@@ -116,10 +382,11 @@ ISO8601_TO_CTIME_DICT = {
     # -- %M
     # Minute as a zero-padded decimal number.
     # 00, 01, …, 59
+    'M': '%M',
     'MI': '%M',
+    'm': '%M',
     'mi': '%M',
     'mm': '%M',
-    'm': '%M',
     # -- %S
     # Second as a zero-padded decimal number.
     'SS': '%S',
@@ -140,7 +407,7 @@ ISO8601_TO_CTIME_DICT = {
     # -- %j
     # Day of the year as a zero-padded decimal number.
     # 001, 002, …, 366
-    # 'DDD': '%j',
+    'ddd': '%j',
     'DDDD': '%j',
     # -- %U
     # Week number of the year (Sunday as the first day of the week) as a zero-padded
@@ -201,6 +468,9 @@ def iso8601_to_c_format(iso_str):
         None: Returned if 'iso_str' contains one or more sequences that we are unable to
         translate.
     """
+    c_str = EML_DATE_FORMAT_TO_CTIME_DICT.get(iso_str)
+    if c_str:
+        return c_str
     c_list = []
     # We look for keys in longest to shortest order, with key string itself as tie breaker.
     key_list = list(sorted(ISO8601_TO_CTIME_DICT.keys(), key=lambda s: (-len(s), s)))
@@ -230,8 +500,7 @@ def get_dialect(dt_el):
         delimiter = first_str(text_format_el, 'fieldDelimiter', DEFAULT_FIELD_DELIMITER)
         doublequote = True
         escapechar = None
-        lineterminator = first_str(text_format_el, 'recordDelimiter',
-                                   DEFAULT_RECORD_DELIMITER)
+        lineterminator = first_str(text_format_el, 'recordDelimiter', DEFAULT_RECORD_DELIMITER)
         quotechar = first_str(text_format_el, 'quoteCharacter', DEFAULT_QUOTE_CHARACTER)
         quoting = csv.QUOTE_MINIMAL
         skipinitialspace = True
@@ -293,8 +562,7 @@ def get_col_attr_list(dt_el):
                 pandas_type=pandas_type,
                 date_fmt_str=date_fmt_str,
                 c_date_fmt_str=c_date_fmt_str,
-                missing_code_list=multiple_str(attr_el,
-                                               './/missingValueCode/code/text()'),
+                missing_code_list=multiple_str(attr_el, './/missingValueCode/code/text()'),
             )
         )
 
@@ -336,8 +604,7 @@ def derive_pandas_type(attr_el):
 
 
 def get_date_fmt_str(attr_el, col_name):
-    date_fmt_str = first_str(attr_el,
-                             './/measurementScale/dateTime/formatString/text()')
+    date_fmt_str = first_str(attr_el, './/measurementScale/dateTime/formatString/text()')
     if date_fmt_str:
         return date_fmt_str
     if col_name.upper() == 'YEAR':
@@ -416,7 +683,7 @@ def get_data_table_list(root_el):
 def get_data_table_by_data_url(el, data_url):
     for dt_el in el.xpath('.//dataset/dataTable'):
         url = first_str(dt_el, './/physical/distribution/online/url/text()')
-        url = url[url.find('/PACKAGE/'):]
+        url = url[url.find('/PACKAGE/') :]
         if url == data_url.as_posix():
             return dt_el
     raise dex.exc.EMLError(f'Missing DataTable in EML. data_url="{data_url}"')
