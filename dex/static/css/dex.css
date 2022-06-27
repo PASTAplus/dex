@@ -353,12 +353,13 @@ table.dataTable tbody th, table.dataTable tbody td {
 .datatable td:empty {
 }
 
-.datatable td:empty::before {
-    top: 0;
-    left: 0;
-    font-size: 50%;
-    content: "(empty)";
-}
+/* Styling for empty cells */
+/*.datatable td:empty::before {*/
+/*    top: 0;*/
+/*    left: 0;*/
+/*    font-size: 50%;*/
+/*    content: "(empty)";*/
+/*}*/
 
 /* first column */
 table.datatable td:first-child {
