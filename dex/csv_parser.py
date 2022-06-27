@@ -33,19 +33,13 @@ def get_parsed_csv_with_context(rid):
 
 # @dex.cache.disk("eml-ctx", "pickle")
 def get_eml_ctx(rid):
-    """Get the EML information that is required for parsing the CSV."""
+    """Get the EML information that is required for parsing and processing the CSV."""
     dt_el = dex.eml_cache.get_data_table(rid)
     column_list = dex.eml_types.get_col_attr_list(dt_el)
     parser_func_dict = get_parser_dict(column_list)
     col_name_list = [d['col_name'] for d in column_list]
     pandas_type_dict = {d['col_name']: d['pandas_type'] for d in column_list}
-
-    missing_code_set = set()
-
-    for type_dict in column_list:
-        if isinstance(type_dict['missing_code_list'], list):
-            for code_str in type_dict['missing_code_list']:
-                missing_code_set.add(code_str)
+    missing_code_dict = {d['col_idx']: d['missing_code_list'] for d in column_list}
 
     ctx = dict(
         column_list=column_list,
@@ -56,22 +50,12 @@ def get_eml_ctx(rid):
         col_name_list=col_name_list,
         parser_func_dict=parser_func_dict,
         pandas_type_dict=pandas_type_dict,
-        missing_code_set=missing_code_set,
-        missing_code_list=list(missing_code_set),
+        missing_code_dict=missing_code_dict,
     )
 
     dex.util.logpp(ctx, msg='EML CTX', logger=log.debug)
 
     return ctx
-
-
-def _get_column_list(rid):
-    entity_tup = dex.db.get_entity(rid)
-    pkg_id = dex.pasta.get_pkg_id_as_url(entity_tup)
-    eml_el = dex.eml_cache.get_eml_etree(rid)
-    dt_el = dex.eml_types.get_data_table_by_package_id(eml_el, pkg_id)
-    column_list = dex.eml_types.get_col_attr_list(dt_el)
-    return column_list
 
 
 def get_dialect_as_dict(dialect):
@@ -233,8 +217,7 @@ def _get_csv(rid, eml_ctx, do_parse):
             # Not required when setting skiprows and skipfooter. Read the number of rows declared in the EML
             # nrows=max_rows,
             na_filter=True,
-            na_values=list(set(eml_ctx['missing_code_list'])),
-            # na_values=['', None],
+            na_values=eml_ctx['missing_code_dict'],
             # Add common NaNs:
             # ‘’, ‘#N/A’, ‘#N/A N/A’, ‘#NA’, ‘-1.#IND’, ‘-1.#QNAN’, ‘-NaN’, ‘-nan’, ‘1.#IND’, ‘1.#QNAN’,
             # ‘<NA>’, ‘N/A’, ‘NA’, ‘NULL’, ‘NaN’, ‘n/a’, ‘nan’, ‘null’
