@@ -555,6 +555,10 @@ def get_col_attr_list(dt_el):
             unique_col_idx += 1
         used_col_name_set.add(unique_col_name)
 
+        missing_code_list = list(
+            sorted(set(multiple_str(attr_el, './/missingValueCode/code/text()')))
+        )
+
         col_attr_list.append(
             dict(
                 col_idx=col_idx,
@@ -562,7 +566,7 @@ def get_col_attr_list(dt_el):
                 pandas_type=pandas_type,
                 date_fmt_str=date_fmt_str,
                 c_date_fmt_str=c_date_fmt_str,
-                missing_code_list=multiple_str(attr_el, './/missingValueCode/code/text()'),
+                missing_code_list=missing_code_list,
             )
         )
 
@@ -680,20 +684,11 @@ def get_data_table_list(root_el):
     return root_el.xpath('.//dataset/dataTable')
 
 
-def get_data_table_by_data_url(el, data_url):
-    for dt_el in el.xpath('.//dataset/dataTable'):
-        url = first_str(dt_el, './/physical/distribution/online/url/text()')
-        url = url[url.find('/PACKAGE/') :]
-        if url == data_url.as_posix():
-            return dt_el
-    raise dex.exc.EMLError(f'Missing DataTable in EML. data_url="{data_url}"')
-
-
 def get_data_table_by_package_id(el, pkg_path):
     for dt_el in el.xpath('.//dataset/dataTable'):
         url = first_str(dt_el, './/physical/distribution/online/url/text()')
         # log.debug(f'{url}')
         # log.debug(f'{pkg_path}')
-        if url and url.lower().endswith(pkg_path):
+        if url and url.lower().endswith(pkg_path.lower()):
             return dt_el
     raise dex.exc.EMLError(f'Missing DataTable in EML. pkg_path="{pkg_path}"')
