@@ -350,16 +350,19 @@ table.dataTable tbody th, table.dataTable tbody td {
     white-space: nowrap;
 }
 
+/* Prevent empty rows from collapsing */
 .datatable td:empty {
+    height: 2rem;
 }
 
 /* Styling for empty cells */
-/*.datatable td:empty::before {*/
-/*    top: 0;*/
-/*    left: 0;*/
-/*    font-size: 50%;*/
-/*    content: "(empty)";*/
-/*}*/
+/* .datatable td:empty::before { */
+/*    top: 0; */
+/*    left: 0; */
+/*    font-size: 50%; */
+/*    content: "X"; */
+/*    height: 10px; */
+/* } */
 
 /* first column */
 table.datatable td:first-child {
