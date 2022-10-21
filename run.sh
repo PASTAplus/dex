@@ -32,5 +32,4 @@ export FLASK_ENV='development'
 export FLASK_DEBUG='1'
 export WERKZEUG_DEBUG_PIN='off'
 
-#flask run # | tee -a flask.run.out
-/home/dahl/miniconda3/envs/dex/bin/flask run # | tee -a flask.run.out
+flask run # | tee -a flask.run.out
