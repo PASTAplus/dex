@@ -173,6 +173,8 @@ def _get_csv(rid, eml_ctx, do_parse):
         # We cannot skip blank lines here, as we need the number of rows of the parsed
         # CSV to always match that of the raw CSV.
         skip_blank_lines=False,
+        encoding='utf-8',
+        encoding_errors='replace',
         # delimiter=None, # Alias for 'sep'. Overridden by setting dialect
         # doublequote=True, # Overridden by setting dialect
         # escapechar=None, # Overridden by setting dialect
@@ -196,8 +198,6 @@ def _get_csv(rid, eml_ctx, do_parse):
         # decimal='.',
         # lineterminator=None,
         # comment=None,
-        # encoding=None,
-        # encoding_errors='strict',
         # error_bad_lines=None,
         # warn_bad_lines=None,
         # on_bad_lines=None,
