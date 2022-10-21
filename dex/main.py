@@ -49,13 +49,13 @@ mimetypes.add_type('application/javascript', '.js')
 
 
 def create_app():
-    # print('Setting up logging...', file=sys.stderr)
+    print('Setting up logging...', file=sys.stderr)
 
-    # logging.basicConfig(
-    #     format='%(name)s %(levelname)-8s %(message)s',
-    #     level=logging.DEBUG,  # if is_debug else logging.INFO,
-    #     stream=sys.stderr,
-    # )
+    logging.basicConfig(
+        format='%(name)s %(levelname)-8s %(message)s',
+        level=logging.DEBUG,  # if is_debug else logging.INFO,
+        stream=sys.stderr,
+    )
 
     log.debug('Creating the Flask app object...')
 
