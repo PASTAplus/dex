@@ -72,7 +72,6 @@ def _subset_eml(
     assert isinstance(physical_el, lxml.etree._Element)
     _prune_distribution(physical_el)
     _prune_columns(eml_el, col_list)
-    _set_row_count(physical_el, row_count)
     _set_byte_count(physical_el, byte_count)
     _set_md5_checksum(physical_el, md5_checksum)
 
@@ -103,38 +102,28 @@ def _prune_columns(eml_el, col_list):
             attr_list_el.remove(attr_el)
 
 
-def _set_row_count(physical_el, row_count):
-    """Add or replace size with unit 'rows' in physical element
-
-    <physical>
-      <size unit="rows">1234</size>
-    """
-    for size_el in physical_el.xpath(".//size[@unit='rows']"):
-        physical_el.remove(size_el)
-
-    # xml.etree.ElementTree.SubElement(parent, tag, attrib={}, **extra)
-
-    size_el = lxml.etree.Element("size")
-    size_el.set('unit', 'rows')
-    size_el.text = str(row_count)
-
-    physical_el.append(size_el)
-
-
 def _set_byte_count(physical_el, byte_count):
-    """Add or replace size with unit 'bytes' in physical element
+    """Replace size element with a size element containing size in bytes of the
+    file.
+
+    Cardinality for the size element is 1, so we replace the existing element. This
+    also ensures that the element remains in the correct location, as the order of
+    physical element child elements is fixed.
 
     <physical>
-      <size unit="bytes">1234</size>
+      <objectName>...</objectName>
+      <size unit="byte">1234</size>
+      ...
     """
-    for size_el in physical_el.xpath(".//size[@unit='bytes']"):
-        physical_el.remove(size_el)
-
-    size_el = lxml.etree.Element("size")
-    size_el.set('unit', 'bytes')
-    size_el.text = str(byte_count)
-
-    physical_el.append(size_el)
+    size_el = physical_el.xpath(".//size")
+    # Should we encounter an invalid EML document that is missing the size element,
+    # exit out, and we don't know the correct location to insert it among any other
+    # existing elements.
+    if not size_el:
+        return
+    size_el[0].attrib.clear()
+    size_el[0].set('unit', 'byte')
+    size_el[0].text = str(byte_count)
 
 
 def _set_md5_checksum(physical_el, md5_str):
