@@ -77,8 +77,7 @@ def subset(rid):
 
 
 def get_raw_filtered_by_query(csv_df, eml_ctx, query_str=None):
-    # Filter the full CSV by the search string. A row is included if one or more of the
-    # cells in the row have text matching the search string.
+    # Filter the full CSV by the query string.
     if not query_str:
         return N(
             csv_df=csv_df,
