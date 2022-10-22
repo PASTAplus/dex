@@ -306,8 +306,8 @@ def download(rid):
         zip_name=dex.db.get_entity_as_package_id(rid),
         zip_dict={
             safe_base_path.with_suffix('.csv').name: csv_bytes,
-            safe_base_path.with_suffix('.json').name: json_bytes,
-            safe_base_path.with_suffix('.eml').name: eml_str.encode('utf-8', errors='replace'),
+            safe_base_path.with_suffix('.subset.json').name: json_bytes,
+            safe_base_path.with_suffix('.eml.xml').name: eml_str.encode('utf-8', errors='replace'),
         },
     )
 
