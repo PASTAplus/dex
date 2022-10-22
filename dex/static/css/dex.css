@@ -651,13 +651,12 @@ div.root-page ul {
 }
 
 .nav-notes-item::before {
-    /*content: "💩 ";*/
     content: "\27a4 ";
-    text-decoration: none;
 }
 
-.nav-notes-item a {
+.nav-notes-item a:link {
     color: inherit;
+    text-decoration: underline;
 }
 
 

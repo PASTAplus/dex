@@ -27,9 +27,15 @@ def profile(rid):
 
     note_list = []
     if len(csv_df) == app.config['CSV_MAX_CELLS'] // len(eml_ctx['column_list']):
-       note_list.append('Due to size, only the first part of this table is available in DeX')
+        note_list.append('Due to size, only the first part of this table is available in DeX')
 
     note_list.append('This analysis may not match the EML metadata for all columns')
+    note_list.append(
+        'For more information about this report, see the '
+        '<a href="https://pandas-profiling.ydata.ai/docs/master/index.html">'
+        'Pandas Profiling Documentation'
+        '</a>'
+    )
 
     return flask.render_template(
         "profile.html",
