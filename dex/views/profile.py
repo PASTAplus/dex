@@ -32,7 +32,8 @@ def profile(rid):
     note_list.append('This analysis may not match the EML metadata for all columns')
     note_list.append(
         'For more information about this report, see the '
-        '<a href="https://pandas-profiling.ydata.ai/docs/master/index.html">'
+        '<a href="https://pandas-profiling.ydata.ai/docs/master/index.html" '
+        'target="_blank">'
         'Pandas Profiling Documentation'
         '</a>'
     )
