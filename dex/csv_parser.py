@@ -96,13 +96,13 @@ def get_parser(dtype_dict):
     def float_parser(x):
         try:
             return float(x)
-        except ValueError:
+        except (ValueError, TypeError):
             return None
 
     def int_parser(x):
         try:
             return int(x)
-        except ValueError:
+        except (ValueError, TypeError):
             return pd.NA
 
     d = N(**dtype_dict)
