@@ -350,15 +350,19 @@ table.dataTable tbody th, table.dataTable tbody td {
     white-space: nowrap;
 }
 
+/* Prevent empty rows from collapsing */
 .datatable td:empty {
+    height: 2rem;
 }
 
-.datatable td:empty::before {
-    top: 0;
-    left: 0;
-    font-size: 50%;
-    content: "(empty)";
-}
+/* Styling for empty cells */
+/* .datatable td:empty::before { */
+/*    top: 0; */
+/*    left: 0; */
+/*    font-size: 50%; */
+/*    content: "X"; */
+/*    height: 10px; */
+/* } */
 
 /* first column */
 table.datatable td:first-child {
@@ -647,13 +651,12 @@ div.root-page ul {
 }
 
 .nav-notes-item::before {
-    /*content: "💩 ";*/
     content: "\27a4 ";
-    text-decoration: none;
 }
 
-.nav-notes-item a {
+.nav-notes-item a:link {
     color: inherit;
+    text-decoration: underline;
 }
 
 

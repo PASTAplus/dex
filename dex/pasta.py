@@ -22,7 +22,7 @@ DATA_URL_RX = re.compile(
     (?P<scope_str>[^/]+)/
     (?P<id_str>\d+)/
     (?P<ver_str>\d+)/
-    (?P<entity_str>[0-9a-fA-F]{32,})
+    (?P<entity_str>.*)
     $
     """,
     re.VERBOSE,
@@ -34,7 +34,7 @@ DATA_PATH_RX = re.compile(
       (?P<scope_str>[^.]*)\.
       (?P<id_str>\d+)\.
       (?P<ver_str>\d+)/
-      (?P<entity_str>[0-9a-fA-F]{32,})
+      (?P<entity_str>.*)
       $
     """,
     re.VERBOSE,

@@ -77,8 +77,7 @@ def subset(rid):
 
 
 def get_raw_filtered_by_query(csv_df, eml_ctx, query_str=None):
-    # Filter the full CSV by the search string. A row is included if one or more of the
-    # cells in the row have text matching the search string.
+    # Filter the full CSV by the query string.
     if not query_str:
         return N(
             csv_df=csv_df,
@@ -152,8 +151,6 @@ def csv_fetch(rid):
 
     page_df = raw_df[start_int : start_int + row_count]
 
-    nan_set = eml_ctx['missing_code_set'] | app.config['CSV_NAN_SET']
-
     # Create table of cells for which to show the parse error notice.
     bad_list = []
     # Rows
@@ -165,13 +162,14 @@ def csv_fetch(rid):
             parsed_v = csv_df.iat[start_int + i, j]
             # A cell has failed parsing if the parsed value is NaN while the raw value
             # is not in the EML Missing Code set or the set of common known NaN codes.
-            # if raw_v and raw_v in nan_set:
-            if raw_v in nan_set:
+            if (
+                raw_v in eml_ctx['column_list'][j]['missing_code_list']
+                or raw_v in app.config['CSV_NAN_SET']
+            ):
                 is_invalid = False
             else:
-                is_invalid = (
-                    parsed_v is None
-                    or (isinstance(parsed_v, float) and math.isnan(parsed_v))
+                is_invalid = parsed_v is None or (
+                    isinstance(parsed_v, float) and math.isnan(parsed_v)
                 )
             c.append(is_invalid)
         bad_list.append(c)
@@ -308,8 +306,8 @@ def download(rid):
         zip_name=dex.db.get_entity_as_package_id(rid),
         zip_dict={
             safe_base_path.with_suffix('.csv').name: csv_bytes,
-            safe_base_path.with_suffix('.json').name: json_bytes,
-            safe_base_path.with_suffix('.eml').name: eml_str.encode('utf-8', errors='replace'),
+            safe_base_path.with_suffix('.subset.json').name: json_bytes,
+            safe_base_path.with_suffix('.eml.xml').name: eml_str.encode('utf-8', errors='replace'),
         },
     )
 

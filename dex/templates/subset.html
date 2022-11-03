@@ -15,11 +15,34 @@
         columns.
       </li>
       <li>
-        The query syntax is NumPy <a href='https://numexpr.readthedocs.io'>NumExpr</a>,
+        The query syntax is NumPy <a href='https://numexpr.readthedocs.io'
+                                     target='_blank'>NumExpr
+      </a>,
         which is similar to Python. For details, refer to the
-        <a href='https://numexpr.readthedocs.io/projects/NumExpr3/en/latest/user_guide.html'>
+        <a href='https://numexpr.readthedocs.io/projects/NumExpr3/en/latest/user_guide.html'
+           target='_blank'>
           NumExpr User Guide
-        </a>.
+        </a>
+        and the
+        <a href='https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html'
+           target='_blank'>
+          Pandas DataFrame Query
+        </a>
+        page.
+      </li>
+      <li>
+        Column names containing spaces, punctuation, parentheses, and other special
+        characters must be surrounded by backticks.
+        <ul>
+          <li>
+            E.g., a column named <code>Area (cm^2)</code>
+            would be referenced as <code>`Area (cm^2)`</code>.
+          </li>
+        </ul>
+      </li>
+      <li>
+        Column names which are Python keywords (like “list”, “for”, “import”, etc)
+        cannot be used.
       </li>
       <li>This filter can also be used for viewing the dataset:
         <ul>

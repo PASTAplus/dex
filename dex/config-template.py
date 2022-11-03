@@ -22,6 +22,9 @@ log = logging.getLogger(__name__)
 ROOT_PATH = pathlib.Path(__file__, "../..").resolve()
 
 
+PASTA_BASE_URL = 'https://pasta.lternet.edu/package'
+# PASTA_BASE_URL = "https://pasta-d.lternet.edu/package"
+
 def first_existing(*path_tup, is_file=False):
     """Given a list of paths, returns the first one that is an existing dir or file
     on the local system. The returned path is resolved to absolute.
@@ -38,18 +41,21 @@ def first_existing(*path_tup, is_file=False):
         pathlib.Path: The first path that is for an existing dir or file (depending
         on the setting of the `is_dir` parameter.
     """
+    path_tup = [ROOT_PATH / pathlib.Path(p).resolve() for p in path_tup]
     for p in path_tup:
-        p = (ROOT_PATH / pathlib.Path(p)).resolve()
         # This function runs at import time, so we skip logging here in
         # order to not trigger early log setup.
         if p.is_dir():
             assert not is_file, f'Found dir path, but expected file path: {p.as_posix()}'
+            log.error(f'Using valid file path: {p.as_posix()}')
             return p
         elif p.is_file():
             assert is_file, f'Found file path, but expected dir path: {p.as_posix()}'
+            log.error(f'Using valid dir path: {p.as_posix()}')
             return p
         elif p.exists():
             assert False, f'Path exists, but does not reference a dir or file: {p.as_posix()}'
+
     assert False, "None of the provided alternate paths exist: {}".format(
         ', '.join(p.as_posix() for p in path_tup)
     )
