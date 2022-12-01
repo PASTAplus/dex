@@ -70,6 +70,7 @@ def create_app():
     _app.debug = _app.config["FLASK_DEBUG"]
 
     logging.getLogger('').setLevel(logging.DEBUG if _app.debug else logging.INFO)
+    logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
     # Add tojson_pp, a pretty printed version of tojson, to jinja.
     _app.jinja_env.filters['tojson_pp'] = lambda x: json.dumps(

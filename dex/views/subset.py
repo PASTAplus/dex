@@ -36,9 +36,19 @@ def subset(rid):
     csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
     datetime_col_dict = dex.csv_cache.get_datetime_col_dict(csv_df)
     cat_col_map = {d['col_name']: d for d in dex.eml_cache.get_categorical_columns(rid)}
+    # Copy the fields that we need to transfer to the client, excluding fields that
+    # cannot be represented in JSON.
+    column_list = [
+        dict(
+            col_idx=d['col_idx'],
+            col_name=d['col_name'],
+            pandas_type=d['pandas_type'],
+        )
+        for d in eml_ctx['column_list']
+    ]
 
     note_list = []
-    if len(csv_df) == app.config['CSV_MAX_CELLS'] // len(eml_ctx['column_list']):
+    if len(csv_df) == app.config['CSV_MAX_CELLS'] // len(column_list):
         note_list.append('Due to size, only the first part of this table is available in DeX')
 
     return flask.render_template(
@@ -48,7 +58,7 @@ def subset(rid):
             rid=rid,
             entity_tup=dex.db.get_entity_as_dict(rid),
             row_count=len(csv_df),
-            column_list=eml_ctx['column_list'],
+            column_list=column_list,
             cat_col_map=cat_col_map,
             filter_not_applied_str='Filter not applied',
             datetime_col_dict=datetime_col_dict,
@@ -62,7 +72,7 @@ def subset(rid):
             index_names=False,
             border=0,
         ),
-        column_list=eml_ctx['column_list'],
+        column_list=column_list,
         filter_not_applied_str='Filter not applied',
         datetime_col_dict=datetime_col_dict,
         cat_col_map=cat_col_map,
