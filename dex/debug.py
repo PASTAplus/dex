@@ -62,6 +62,17 @@ def debug(rid):
         footer_line_count=ctx.footer_line_count,
     )
 
+    column_list = [
+        dict(
+            col_idx=d['col_idx'],
+            col_name=d['col_name'],
+            pandas_type=d['pandas_type'],
+            date_fmt_str=d['date_fmt_str'],
+            missing_code_list=d['missing_code_list'],
+        )
+        for d in ctx.column_list
+    ]
+
     dbg = {
         'flask_g_html': flask_g_html,
         # 'column_list': to_html(),
@@ -72,7 +83,7 @@ def debug(rid):
             'tail_html': tail_df.to_html(),
             'tail_row_count': len(tail_df),
             'total_row_count': len(raw_df),
-            'debug_panel': flask.g.get('debug_panel'),
+            # 'debug_panel': flask.g.get('debug_panel'),
             'source_html': to_html(
                 source_csv={
                     # 'csv_path': ctx.csv_path,
@@ -83,7 +94,7 @@ def debug(rid):
                 dialect=dex.csv_parser.get_dialect_as_dict(ctx.dialect),
             ),
             'derived_dtype_html': pd.DataFrame.from_dict(
-                {d['col_name']: d for d in ctx.column_list}
+                {d['col_name']: d for d in column_list}
             )
             .style.applymap(highlight_types)
             .render(),

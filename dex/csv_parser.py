@@ -84,9 +84,9 @@ def get_parser(dtype_dict):
         }
         return date_series_in.map(date_series)
 
-    def date_parser(x, fmt_str):
+    def date_parser(x, fmt_fn):
         try:
-            return datetime.datetime.strptime(x, fmt_str)
+            return fmt_fn(x)
         except Exception:
             return None
 
@@ -114,7 +114,7 @@ def get_parser(dtype_dict):
     elif d.pandas_type == dex.eml_types.PandasType.CATEGORY:
         return string_parser
     elif d.pandas_type == dex.eml_types.PandasType.DATETIME:
-        return functools.partial(date_parser, fmt_str=d.c_date_fmt_str)
+        return d.date_fmt_dict['parser']
     elif d.pandas_type == dex.eml_types.PandasType.STRING:
         return string_parser
     else:
@@ -254,7 +254,9 @@ def _get_csv(rid, eml_ctx, do_parse):
     # csv_df.replace(value=np.nan, regex='^\s*\$', inplace=True)
     # return csv_df.astype(pandas_type_dict, errors='ignore')
 
-    return csv_df
+    # The initially generated DF is fragmented and may cause performance warnings.
+    # Returning a copy creates a defragmented version of the DF.
+    return csv_df.copy()
 
 
 
