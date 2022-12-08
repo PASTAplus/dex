@@ -104,12 +104,15 @@ def get_col_agg_dict(df, eml_ctx):
 
             if pd.api.types.is_datetime64_any_dtype(df[col_name]):
                 col_dict = eml_ctx['column_list'][i]
-                v_max = v_max.strftime(col_dict['c_date_fmt_str'])
-                v_min = v_min.strftime(col_dict['c_date_fmt_str'])
-
+                v_max = v_max.strftime('%Y-%m-%d')
+                v_min = v_min.strftime('%Y-%m-%d')
             d[i] = dict(col_name=col_name, v_max=v_max, v_min=v_min)
         except Exception:
-            log.exception('EXC')
+            log.exception(
+                'Exception when calculating per column aggregate for column: {}'.format(
+                    df['col_name']
+                )
+            )
 
     return d
 
