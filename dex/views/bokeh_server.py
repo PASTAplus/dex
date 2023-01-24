@@ -8,11 +8,14 @@ import bokeh.models.markers
 import bokeh.palettes
 import bokeh.plotting
 import flask
+import pandas as pd
 
 import dex.cache
 import dex.csv_cache
 import dex.eml_cache
 import dex.util
+import dex.views.util
+import dex.csv_parser
 
 log = logging.getLogger(__name__)
 
@@ -111,12 +114,27 @@ def xy_plot(rid, parm_uri):
     theme_key = flask.request.args.get("theme", "default")
     fg_color = THEME_DICT[theme_key]["fg_color"]
 
-    df = dex.csv_cache.get_csv_sample(rid)
+    csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
 
-    # df.sort_values('TIMESTAMP', inplace=True)
+    # If a subset was included in the query args, only plot the subset
+    subset_json = flask.request.args.get('subset')
+    if subset_json:
+        subset_dict = json.loads(subset_json)
+        if subset_dict is not None:
+            csv_df = dex.views.util.create_subset(rid, csv_df, subset_dict)
+
+    # If there are still too many points to plot (after possible subset), subsample
+    # the plot.
+    csv_df = dex.csv_cache.get_sample(csv_df)
+
+    # When the lines function is used, it's important to plot the points in the correct
+    # order (to avoid criss-crossing lines).
+    csv_df = csv_df.sort_index()
+
+    # csv_df.sort_values('TIMESTAMP', inplace=True)
 
     x_col_idx = parm_dict['x']
-    x = df.iloc[:, x_col_idx]
+    x = csv_df.iloc[:, x_col_idx]
 
     datetime_col_list = dex.eml_cache.get_datetime_columns(rid)
     is_dt = x_col_idx in [d["col_idx"] for d in datetime_col_list]
@@ -125,8 +143,8 @@ def xy_plot(rid, parm_uri):
     fig = bokeh.plotting.figure(
         plot_width=500,
         plot_height=500,
-        x_axis_label=df.columns[x_col_idx],
-        # y_axis_label=df.columns[y_col_idx],
+        x_axis_label=csv_df.columns[x_col_idx],
+        # y_axis_label=csv_df.columns[y_col_idx],
         x_axis_type="datetime" if is_dt else "auto",
         # legend_label='Y1',
         title=dex.eml_cache.get_csv_name(rid),
@@ -138,7 +156,7 @@ def xy_plot(rid, parm_uri):
 
     # color_list = bokeh.palettes.inferno(len(parm_dict['y']))
     color_list = bokeh.palettes.turbo(len(parm_dict['y']))
-    source = bokeh.models.ColumnDataSource(df)
+    source = bokeh.models.ColumnDataSource(csv_df)
 
     # Glyphs are individual plot elements.
     glyph_list = []
@@ -149,19 +167,19 @@ def xy_plot(rid, parm_uri):
         m = list(bokeh.models.markers.marker_types.keys())
 
         # All the markers in a scatter plot is a single glyph
-        glyph = bokeh.models.Scatter(x=df.columns[x_col_idx], y=df.columns[y_col_idx],
+        glyph = bokeh.models.Scatter(x=csv_df.columns[x_col_idx], y=csv_df.columns[y_col_idx],
                                      size=7, fill_color=color_str, marker=m[y_idx])
         glyph_renderer = fig.add_glyph(source, glyph)
         legend_list = [glyph_renderer]
 
         if draw_lines_bool:
             # All the line segments in a plot is a single glyph
-            glyph = bokeh.models.Line(x=df.columns[x_col_idx], y=df.columns[y_col_idx],
+            glyph = bokeh.models.Line(x=csv_df.columns[x_col_idx], y=csv_df.columns[y_col_idx],
                                       line_color=color_str)
             glyph_renderer = fig.add_glyph(source, glyph)
             legend_list.append(glyph_renderer)
 
-        glyph_list.append((df.columns[y_col_idx], legend_list))
+        glyph_list.append((csv_df.columns[y_col_idx], legend_list))
 
         # fig.line(x_sorted_list, y_sorted_list, color=color_str)
         # bokeh.models.LegendItem()

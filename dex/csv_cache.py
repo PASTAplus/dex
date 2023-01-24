@@ -30,14 +30,23 @@ def get_csv_tail(rid):
     return get_full_csv(rid).tail()
 
 
-@dex.cache.disk("sample", "df")
-def get_csv_sample(rid):
+# @dex.cache.disk("sample", "df")
+# def get_csv_sample(rid):
+#     """Return a DataFrame containing at most `config['CSV_SAMPLE_THRESHOLD']` rows from
+#     the CSV file.
+#     """
+#     df = get_full_csv(rid)
+#     if len(df) > app.config["CSV_SAMPLE_THRESHOLD"]:
+#         return df.sample(min(len(df), app.config["CSV_SAMPLE_THRESHOLD"])).sort_index()
+#     return df
+
+
+def get_sample(df):
     """Return a DataFrame containing at most `config['CSV_SAMPLE_THRESHOLD']` rows from
     the CSV file.
     """
-    df = get_full_csv(rid)
     if len(df) > app.config["CSV_SAMPLE_THRESHOLD"]:
-        return df.sample(min(len(df), app.config["CSV_SAMPLE_THRESHOLD"])).sort_index()
+        return df.sample(min(len(df), app.config["CSV_SAMPLE_THRESHOLD"]))
     return df
 
 

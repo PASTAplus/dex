@@ -71,7 +71,7 @@ async function post_form(v)
   return false;
 }
 
-$('#download').click(async () => {
+$('#download-button').click(async () => {
   let subset_dict;
   try {
     subset_dict = await get_subset_dict();
@@ -82,6 +82,48 @@ $('#download').click(async () => {
   }
   await post_form(subset_dict);
 });
+
+$('#plot-button').click(async () => {
+  let subset_dict;
+  try {
+    subset_dict = await get_subset_dict();
+  }
+  catch (e) {
+    alert(e);
+    return;
+  }
+  const subset_json = JSON.stringify(subset_dict);
+
+  post(`/dex/plot/${g.rid}`, {subset: subset_json});
+
+  // const v = `/dex/plot/${g.rid}?subset=${subset_json}`;
+  // location.href = v;
+});
+
+/**
+ * sends a request to the specified url from a form. this will change the window location.
+ * @param {string} path the path to send the post request to
+ * @param {object} params the parameters to add to the url
+ * @param {string} [method=post] the method to use on the form
+ */
+
+function post(path, params, method='post') {
+  const form = document.createElement('form');
+  form.method = method;
+  form.action = path;
+
+  for (const key in params) {
+    if (params.hasOwnProperty(key)) {
+      const hiddenField = document.createElement('input');
+      hiddenField.type = 'hidden';
+      hiddenField.name = key;
+      hiddenField.value = params[key];
+      form.appendChild(hiddenField);
+    }
+  }
+  document.body.appendChild(form);
+  form.submit();
+}
 
 async function get_subset_dict()
 {

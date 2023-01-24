@@ -128,7 +128,9 @@ $("#plot-button").click(async function () {
   };
 
   let parm_uri = encodeURIComponent(JSON.stringify(sel_dict));
-  let response = await fetch(`/bokeh/xy-plot/${g.rid}/${parm_uri}`);
+  // let subset_json = encodeURIComponent(JSON.stringify(g.subset_dict));
+  let subset_json = encodeURIComponent(JSON.stringify(g.subset_dict));
+  let response = await fetch(`/bokeh/xy-plot/${g.rid}/${parm_uri}?subset=${subset_json}`);
   let data = await response.json();
 
   plot_el.Destroy();

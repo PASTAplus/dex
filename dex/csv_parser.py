@@ -3,8 +3,6 @@
 This parses the .csv files according to the type declarations for each column in the
 corresponding EML documents.
 """
-import datetime
-import functools
 import logging
 
 import numpy as np
@@ -149,6 +147,14 @@ def _get_csv(rid, eml_ctx, do_parse):
 
     - Empty field ("") is unconditionally added as a NaN value here, as it's not always
     declared in the EML.
+
+    Args:
+        rid (int): RowID
+        eml_ctx (dict):
+        do_parse:
+
+    Returns:
+        pandas.DataFrame
     """
     csv_stream = dex.obj_bytes.open_csv(rid)
 

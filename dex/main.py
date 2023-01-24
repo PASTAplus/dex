@@ -2,63 +2,44 @@
 
 """DeX entry point
 """
-import logging
+import json
 import logging.config
 import mimetypes
 import os
 import pathlib
-import pprint
 import random
-import sys
-
-import dex.config
-
-# pprint.pp(dex.config.LOG_CONFIG)
-import dex.util
-
-# logging.config.dictConfig(dex.config.LOG_CONFIG)
-log = logging.getLogger(__name__)
-
-
 import time
+
+import flask
+import flask.logging
 import matplotlib
+
+import dex.cache
+import dex.config
+import dex.csv_cache
+import dex.db
+import dex.eml_cache
+import dex.exc
+import dex.pasta
+import dex.util
+import dex.views.bokeh_server
+import dex.views.eml
+import dex.views.plot
+import dex.views.profile
+import dex.views.subset
 
 matplotlib.use('Agg')
 
 os.environ.setdefault("FLASK_ENV", "production")
 os.environ.setdefault("FLASK_DEBUG", "0")
 
-import flask
-import flask.logging
 
-import dex.cache
-import dex.csv_cache
-import dex.db
-import dex.eml_cache
-import dex.exc
-import dex.pasta
-import dex.views.bokeh_server
-import dex.views.eml
-import dex.views.plot
-import dex.views.profile
-import dex.views.subset
-import json
-
+log = logging.getLogger(__name__)
 
 mimetypes.add_type('application/javascript', '.js')
 
 
 def create_app():
-    print('Setting up logging...', file=sys.stderr)
-
-    logging.basicConfig(
-        format='%(name)s %(levelname)-8s %(message)s',
-        level=logging.DEBUG,  # if is_debug else logging.INFO,
-        stream=sys.stderr,
-    )
-
-    log.debug('Creating the Flask app object...')
-
     _app = flask.Flask(
         __name__,
         static_url_path="/static/",
@@ -68,9 +49,6 @@ def create_app():
 
     _app.config.from_object("dex.config")
     _app.debug = _app.config["FLASK_DEBUG"]
-
-    logging.getLogger('').setLevel(logging.DEBUG if _app.debug else logging.INFO)
-    logging.getLogger('matplotlib').setLevel(logging.ERROR)
 
     # Add tojson_pp, a pretty printed version of tojson, to jinja.
     _app.jinja_env.filters['tojson_pp'] = lambda x: json.dumps(

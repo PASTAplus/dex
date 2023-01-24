@@ -216,15 +216,40 @@
     <p id='category-description-msg' class='result-msg'>
   </div>
 
-  {#<div class='instructions'></div>#}
-  <div class='space-top'>
-    <p>
+  <h3>
+    Subset
+  </h3>
+
+  <div class='instructions'>
+    {% set ns.cat_col_list = cat_col_map | list %}
+    <ul>
+      <li>Download or plot this subset?
+      </li>
+    </ul>
+  </div>
+
+  <div class='widgets'>
     <div id='download-spinner'></div>
     <div id='download-container'>
-      <button id='download' class='btn btn-primary'>Download</button>
+      <div class='line'>
+        <div class='line-item'>
+          <div class='line-inner'>
+            <button id='download-button' class='btn btn-primary'>Download</button>
+          </div>
+        </div>
+        <div class='line-item'>
+          <div class='line-inner'>
+            &nbsp;&nbsp;
+            <button id='plot-button' class='btn btn-primary'>Plot</button>
+          </div>
+        </div>
+      </div>
     </div>
-    <p>
   </div>
+
+  {#<div class='instructions'></div>#}
+  {#<div class='space-top'>#}
+  {#</div>#}
 
   <template id='category-filter-template'>
     {#

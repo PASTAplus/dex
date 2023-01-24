@@ -1,29 +1,72 @@
-import logging
+import logging.config
 import pathlib
+
 import sys
 import tempfile
 
+# Logging
+
 DEBUG = FLASK_DEBUG = True
-DEBUG_PANEL = DEBUG
+
+print('Setting up logging (config)...', file=sys.stderr)
+
+logging.config.dictConfig(
+    {
+        'version': 1,
+        'formatters': {
+            'default': {
+                'format': '%(asctime)s %(process)d %(name)s %(levelname)-8s %(message)s',
+                'datefmt': '%Y-%m-%d %H:%M:%S',
+            },
+        },
+        'handlers': {
+            'console': {
+                'class': "logging.StreamHandler",
+                'stream': 'ext://sys.stderr',
+                'formatter': 'default',
+            }
+        },
+        'loggers': {
+            # The root logger is configured like regular loggers except that the `propagate`
+            # setting is not applicable.
+            '': {
+                'handlers': ['console'],
+                'level': logging.DEBUG if DEBUG else logging.INFO,
+            },
+            # Increase logging level on loggers that are noisy at debug level
+            'requests': {
+                'level': logging.INFO,
+            },
+            'urllib3': {
+                'level': logging.INFO,
+            },
+            'matplotlib': {
+                'level': logging.INFO,
+            },
+            # Flask prints the full list of URL query params when in development mode. The
+            # DataTable widget sends huge queries, so to reduce the noise, we increase the
+            # logging level for Flask's logger here, and write a brief log record with just
+            # the URL in a 'before_request' handler.
+            'werkzeug': {
+                'level': logging.INFO,
+            },
+        },
+    }
+)
 
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 
-try:
-    import uwsgi
-
-    RUNNING_UNDER_UWSGI = True
-except ImportError:
-    RUNNING_UNDER_UWSGI = False
-
 log = logging.getLogger(__name__)
 
 ROOT_PATH = pathlib.Path(__file__, "../..").resolve()
 
-
 PASTA_BASE_URL = 'https://pasta.lternet.edu/package'
+
+
 # PASTA_BASE_URL = "https://pasta-d.lternet.edu/package"
+
 
 def first_existing(*path_tup, is_file=False):
     """Given a list of paths, returns the first one that is an existing dir or file
@@ -46,12 +89,14 @@ def first_existing(*path_tup, is_file=False):
         # This function runs at import time, so we skip logging here in
         # order to not trigger early log setup.
         if p.is_dir():
-            assert not is_file, f'Found dir path, but expected file path: {p.as_posix()}'
-            log.error(f'Using valid file path: {p.as_posix()}')
+            if is_file:
+                raise AssertionError(f'Found dir path, but expected file path: {p.as_posix()}')
+            log.info(f'Using valid dir path: {p.as_posix()}')
             return p
         elif p.is_file():
-            assert is_file, f'Found file path, but expected dir path: {p.as_posix()}'
-            log.error(f'Using valid dir path: {p.as_posix()}')
+            if not is_file:
+                raise AssertionError(f'Found file path, but expected dir path: {p.as_posix()}')
+            log.info(f'Using valid file path: {p.as_posix()}')
             return p
         elif p.exists():
             assert False, f'Path exists, but does not reference a dir or file: {p.as_posix()}'
@@ -82,12 +127,14 @@ CACHE_ROOT_DIR = first_existing(
 
 # Paths to search for sample CSV files.
 CSV_ROOT_DIR = first_existing(
-    '/home/dahl/dev/dex-data/___data',
+    # Production
     '/pasta/data/backup/data1',
-    '/home/pasta/pkg',
-    '/home/pasta/___samples',
+    # Dev / Staging
     '/home/dahl/dev/dex-data/___samples',
-    'csv',
+    '/home/pasta/dex-samples',
+    # For environments in which no CSV files are available in the local filesystem,
+    # point to an empty dir.
+    '/var/empty',
 )
 
 # Number of attempts at reading / generating a value through the cache before
@@ -95,16 +142,6 @@ CSV_ROOT_DIR = first_existing(
 # that occur, and will raise the 3rd exception if it occurs.
 CSV_CACHE_TRIES = 3
 
-# When running under uWSGI, the path to the python interpreter binary in the venv is not
-# discoverable.
-if RUNNING_UNDER_UWSGI:
-    PYTHON_BIN = "/home/pasta/.pyenv/versions/dex_3_9_5/bin/python"
-else:
-    PYTHON_BIN = sys.executable
-
-PROFILING_SH_PATH = first_existing("dex/profiling_proc.sh", is_file=True)
-PROFILING_PY_PATH = first_existing("dex/profiling_proc.py", is_file=True)
-# PROFILING_LOGS_PATH = ROOT_PATH / '..' / "dex-logs/profiling.log"
 PROFILING_CONFIG_PATH = first_existing('dex/profiling_config.yml', is_file=True)
 
 SECRET_KEY = "SECRET_KEY"
@@ -123,13 +160,17 @@ STALE = 10
 # If these values are changed, the cached dataframes must be cleared for the new values
 # to take effect.
 
+# Max number of cells to read from CSV file. This prevents running out of memory on
+# really large CSV files.
+CSV_MAX_CELLS = 50_000_000
+
 # Threshold at which we switch from processing all rows in a CSV file and instead
 # process only a sample of the rows. Effectively, the number of rows that are processed
 # for most functionality is capped at this value.
-CSV_SAMPLE_THRESHOLD = 10000
+CSV_SAMPLE_THRESHOLD = 100
 
 # Max number of rows to examine when analyzing CSV files to determine format and content.
-CSV_SNIFFER_THRESHOLD = 1000
+CSV_SNIFFER_THRESHOLD = 100
 
 # Set of cell values implicitly interpreted as NaN in CSV files.
 # There are in addition to those declared in EML documents.
@@ -160,34 +201,3 @@ CHUNK_SIZE_BYTES = 8192
 
 # Pygments style for XML syntax highlighting
 EML_STYLE_NAME = 'perldoc'
-
-LOG_CONFIG = {
-    'version': 1,
-    'formatters': {
-        'default': {
-            'format': '%(asctime)s %(process)d %(levelname)8s %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-        },
-    },
-    'handlers': {
-        'stdout': {
-            'class': "logging.StreamHandler",
-            'stream': 'ext://sys.stdout',
-            'formatter': 'default',
-        }
-    },
-    'root': {},
-    'loggers': {
-        '': {
-            'handlers': ['stdout'],
-            # 'handlers': ['console'],
-            # 'level': logging.DEBUG,
-            'propagate': True,
-            'level': 'DEBUG',  # 'INFO'
-        },
-        # Increase logging level on loggers that are noisy at debug level.
-        'matplotlib': {
-            'level': 'ERROR',
-        },
-    },
-}

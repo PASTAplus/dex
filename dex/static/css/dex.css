@@ -325,9 +325,9 @@ h2.data-entity {
 
 /* Buttons */
 
-#download, #plot-button, #submit-query {
+#download-button, #plot-button, #submit-query {
     font-size: 2.0rem;
-    margin: 1.5rem 0 1.5rem 0;
+    margin: 0 0 1.5rem 0;
 }
 
 .btn:disabled {
@@ -424,7 +424,7 @@ table.datatable td:first-child {
     flex-direction: column;
 }
 
-#download #loading-outer {
+#download-button #loading-outer {
     width: 50rem;
 }
 
