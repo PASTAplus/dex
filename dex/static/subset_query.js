@@ -1,14 +1,11 @@
 // Filter by Pandas Query
 
-import * as util from './util.js'
-
 export async function create()
 {
   await create_table();
   await add_column_header_checkboxes();
   await add_toggle_checkbox();
   await register_event_listeners();
-
 }
 
 export async function get_query_filter()
@@ -24,33 +21,75 @@ export async function get_query_filter()
 
 export async function get_column_filter()
 {
+  let sel_arr = await get_column_checked_arr();
+  return {
+    'selected_columns': await get_selected_column_name_arr(sel_arr),
+    'index': sel_arr[0]
+  }
+}
+
+async function get_selected_column_name_arr(sel_arr)
+{
+  // If all columns are selected, we disable the column filter.
+  if (sel_arr.every(Boolean)) {
+    return [];
+  }
+  let selected_column_arr = [];
+  let idx = 0;
+  for (const is_selected of sel_arr.slice(1)) {
+    if (is_selected) {
+      selected_column_arr.push(g.column_list[idx].col_name)
+    }
+    ++idx;
+  }
+  return selected_column_arr;
+}
+
+// Return an array of booleans for the checked status of each column selection checkbox.
+async function get_column_checked_arr()
+{
   let el_list = $('.pq-column-select-checkbox');
   let sel_arr = el_list.map(function () { return this.checked; }).get();
-  // Somehow, the DataTable creates a duplicate row of the column select checkboxes. We slice
-  // those off here.
+  // Somehow, the DataTable creates a duplicate row of the column select checkboxes. We
+  // slice those off here.
   return sel_arr.slice(0, sel_arr.length / 2);
+}
+
+// Return true if table has at least two selected plottable columns.
+async function is_plottable()
+{
+  let sel_arr = await get_column_checked_arr();
+  const plottable_arr = ['DATETIME', 'FLOAT', 'INT'];
+  let plottable_count = 0;
+  for (const [i, is_selected] of sel_arr.entries()) {
+    if (is_selected) {
+      // The index is never plottable
+      if (!i) {
+        // ++plottable_count;
+      }
+      else {
+        if (plottable_arr.includes(g.column_list[i - 1]['pandas_type'])) {
+          ++plottable_count;
+        }
+      }
+    }
+  }
+  return plottable_count >= 2;
 }
 
 // Local
 
-let auto_el;
-let text_el;
-let apply_el;
-let html_table;
-let query_is_valid;
+let auto_el = $('#pq-auto');
+let text_el = $('#pq-text');
+let apply_el = $('#pq-apply');
 let hidden_search_el;
+let query_is_valid = true;
 let pq_table;
-let col_sel_checkbox;
 
 async function create_table()
 {
-  auto_el = $('#pq-auto');
-  text_el = $('#pq-text');
-  apply_el = $('#pq-apply');
-  html_table = $('#csv-table');
-  query_is_valid = true;
-  col_sel_checkbox = $('pq-column-select-checkbox');
-
+  let html_table = $('#csv-table');
+  let query_is_valid = true;
   pq_table = html_table
     .on('xhr.dt', async function (e, settings, json, _xhr) {
       apply_el.prop('disabled', false);
@@ -74,7 +113,6 @@ async function create_table()
 
       ajax: {
         url: `fetch-browse/${g.rid}`,
-
 
         dataSrc: function (json) {
 
@@ -117,7 +155,6 @@ async function create_table()
       // searching: true,
       // Time in ms after the last key press and automatically triggering search (if enabled).
       searchDelay: 2000,
-
 
       // rowCallback: function(row, data, index) {
       //   // if (data.status === "Active") {
@@ -163,7 +200,6 @@ async function add_column_header_checkboxes()
   pq_table.columns().iterator('column', function (context, index) {
     $(pq_table.column(index).header())
       .find('.DataTables_sort_wrapper')
-      // language=HTML
       .prepend(`
         <div class='pq-column-select-checkbox-container'>
           <div class='pq-column-select-checkbox-item'>
@@ -195,9 +231,11 @@ $(window).resize(function () {
 
 async function sync_column_selections()
 {
-  for (const [col_idx, v] of (await get_column_filter()).entries()) {
+  for (const [col_idx, v] of (await get_column_checked_arr()).entries()) {
     $(`td:nth-child(${col_idx + 1})`).toggleClass('unselected', !v);
   }
+
+  $('#plot-button').toggleClass('disabled', !await is_plottable());
 }
 
 async function sync_query()

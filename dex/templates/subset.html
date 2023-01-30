@@ -97,7 +97,7 @@
           Select a column containing dates to apply this filter.
         {% else %}
           Filter unavailable: No supported date columns have been declared in the EML
-          metadata associated with this CSV.
+          metadata for this CSV.
         {% endif %}
       </li>
 
@@ -205,7 +205,7 @@
         </li>
       {% else %}
         <li>Filter unavailable: No categorical data columns have been declared in the
-          EML metadata associated with this CSV.
+          EML metadata for this CSV.
         </li>
       {% endif %}
     </ul>
@@ -225,6 +225,15 @@
     <ul>
       <li>Download or plot this subset?
       </li>
+      <li>The Plot button is enabled only if there are at least two plottable columns
+        in the table, and those columns are selected in the Query filter above.
+      </li>
+      <ul>
+        <li>
+          Plottable columns are time series and real numbers (whole and fractional)
+          that have been correctly declared in the EML metadata for this CSV.
+        </li>
+      </ul>
     </ul>
   </div>
 

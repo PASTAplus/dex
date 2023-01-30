@@ -96,9 +96,13 @@ def _prune_distribution(physical_el):
 
 
 def _prune_columns(eml_el, col_list):
+    # Empty column list means keep all columns
+    if not col_list:
+        return
     attr_list_el = dex.eml_types.first(eml_el, './/attributeList')
-    for i, attr_el in enumerate(attr_list_el.xpath(".//attribute")):
-        if not col_list[i]:
+    col_set = set(col_list)
+    for attr_el in attr_list_el.xpath(".//attribute"):
+        if dex.eml_types.first(attr_el, 'attributeName/text()') not in col_set:
             attr_list_el.remove(attr_el)
 
 

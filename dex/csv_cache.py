@@ -96,7 +96,7 @@ def get_stats(rid):
 # Columns
 
 
-def get_col_agg_dict(df, eml_ctx):
+def get_plottable_col_aggregates(df):
     """Calculate per column aggregates for plottable columns"""
     d = {}
 
@@ -110,18 +110,12 @@ def get_col_agg_dict(df, eml_ctx):
         try:
             v_max = df.iloc[:, i].max(skipna=True)
             v_min = df.iloc[:, i].min(skipna=True)
-
             if pd.api.types.is_datetime64_any_dtype(df[col_name]):
-                col_dict = eml_ctx['column_list'][i]
                 v_max = v_max.strftime('%Y-%m-%d')
                 v_min = v_min.strftime('%Y-%m-%d')
             d[i] = dict(col_name=col_name, v_max=v_max, v_min=v_min)
         except Exception:
-            log.exception(
-                'Exception when calculating per column aggregate for column: {}'.format(
-                    df['col_name']
-                )
-            )
+            log.exception(f'Exception when calculating per column aggregate for column: {col_name}')
 
     return d
 

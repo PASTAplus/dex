@@ -129,10 +129,10 @@ async function get_subset_dict()
 {
   return {
     date_filter: await sub_time.get_time_period_filter(),
-    col_filter: await sub_query.get_column_filter(),
+    column_filter: await sub_query.get_column_filter(),
     query_filter: await sub_query.get_query_filter(),
     row_filter: await sub_row.get_row_filter(),
-    cat_map: [...(await sub_cat.get_cat_filter_str())],
+    category_filter: [...(await sub_cat.get_cat_filter_str())],
   };
 }
 

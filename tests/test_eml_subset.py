@@ -50,8 +50,8 @@ EML_DOC_2 = pathlib.Path(
     '/home/dahl/dev/dex-data/___samples/knb-lter-jrn.210437031.6/Level-1-EML.xml'
 )
 EML_FILTER_DICT_2 = {
-    "cat_map": [[6, ["300"]]],
-    "col_filter": [
+    "category_filter": [[6, ["300"]]],
+    "column_filter": [
         True, True, True, True, True, True, True, True, True, True, True, True, True,
         True, True, True, True, True, True, True, True, True, True, True, True, True,
         True, True, True, True, True, True, True, True, True, True, True, True, True,
@@ -66,7 +66,7 @@ EML_FILTER_DICT_2 = {
 # fmt:off
 EML_DOC_3 = pathlib.Path('tests/test_docs/knb-lter-luq.75.11034157/Level-1-EML.xml')
 EML_FILTER_DICT_3 = {
-    # "cat_map": [
+    # "category_filter": [
     #     [
     #         6,
     #         [
@@ -74,7 +74,7 @@ EML_FILTER_DICT_3 = {
     #         ]
     #     ]
     # ],
-    # "col_filter": [
+    # "column_filter": [
     #     True, True, True, True, True, True, True, True, True, True, True, True, True,
     #     True, True, True, True, True, True, True, True, True, True, True, True, True,
     #     True, True, True, True, True, True, True, True, True, True, True, True, True,

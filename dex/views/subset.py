@@ -49,6 +49,18 @@ def subset(rid):
     if len(csv_df) == flask.current_app.config['CSV_MAX_CELLS'] // len(column_list):
         note_list.append('Due to size, only the first part of this table is available in DeX')
 
+    # Create an empty HTML table to fill in dynamically.
+    empty_df = pd.DataFrame(
+        columns=csv_df.columns,
+    )
+    empty_df.columns.name = 'Index'
+    csv_html = empty_df.to_html(
+        table_id="csv-table",
+        classes="datatable cell-border",
+        index=True,
+        index_names=True,
+        border=0,
+    )
     return flask.render_template(
         "subset.html",
         data_url=dex.db.get_entity(rid).data_url,
@@ -63,13 +75,7 @@ def subset(rid):
         ),
         # Generate a table with just populated headers. The rows are filled in
         # dynamically.
-        csv_html=pd.DataFrame(columns=csv_df.columns).to_html(
-            table_id="csv-table",
-            classes="datatable cell-border",
-            index=True,
-            index_names=False,
-            border=0,
-        ),
+        csv_html=csv_html,
         column_list=column_list,
         filter_not_applied_str='Filter not applied',
         datetime_col_dict=datetime_col_dict,
@@ -215,18 +221,18 @@ def csv_fetch(rid):
 @subset_blueprint.route("/<rid>", methods=["POST"])
 def download(rid):
     filter_dict = json.loads(flask.request.data)
-
     csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
     unfiltered_row_count = len(csv_df)
-
     csv_df = dex.views.util.create_subset(rid, csv_df, filter_dict)
-
     # Return the raw CSV rows that correspond to the rows we have filtered using the parsed CSV.
     csv_df = raw_df.iloc[csv_df.index, :]
-
-    col_list = filter_dict["col_filter"][1:]
-    # csv_bytes = csv_df.to_csv(index=filter_dict["col_filter"][0]).encode('utf-8')
-    csv_bytes = csv_df.to_csv().encode('utf-8')
+    # Filter columns from the raw df
+    csv_df = dex.views.util.filter_columns(csv_df, filter_dict)
+    #
+    csv_bytes = csv_df.to_csv(
+        index=filter_dict["column_filter"]['index'],
+        index_label='Index',
+    ).encode('utf-8')
 
     # Prepare JSON doc containing the subset params
     json_bytes = flask.json.dumps(
@@ -245,7 +251,7 @@ def download(rid):
         row_count=len(csv_df),
         byte_count=len(csv_bytes),
         md5_checksum=hashlib.md5(csv_bytes).hexdigest(),
-        col_list=col_list,
+        col_list=filter_dict['column_filter']['selected_columns'],
     )
 
     log.debug(

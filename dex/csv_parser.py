@@ -260,6 +260,9 @@ def _get_csv(rid, eml_ctx, do_parse):
     # csv_df.replace(value=np.nan, regex='^\s*\$', inplace=True)
     # return csv_df.astype(pandas_type_dict, errors='ignore')
 
+    # csv_df.index.rename('Index', inplace=True)
+    csv_df.columns.name = 'Index'
+
     # The initially generated DF is fragmented and may cause performance warnings.
     # Returning a copy creates a defragmented version of the DF.
     return csv_df.copy()

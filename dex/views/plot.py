@@ -41,7 +41,7 @@ def plot(rid):
 
     #
     col_list = []
-    col_agg_dict = dex.csv_cache.get_col_agg_dict(csv_df, eml_ctx)
+    col_agg_dict = dex.csv_cache.get_plottable_col_aggregates(csv_df)
 
     for col_idx, col_dict in enumerate(eml_ctx['column_list']):
         if col_idx not in col_agg_dict:

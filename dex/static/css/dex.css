@@ -535,6 +535,8 @@ div.DataTables_sort_wrapper {
     display: flex;
     flex-direction: row;
     flex-grow: 1;
+    /* Don't wrap column names */
+    white-space: nowrap;
 }
 
 /*noinspection CssBrowserCompatibilityForProperties*/
