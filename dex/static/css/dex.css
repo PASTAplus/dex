@@ -673,32 +673,29 @@ div.root-page ul {
 }
 
 .nav-tooltip {
-    display: inline-block !important;
-    position: relative !important;
-    border-bottom: 1px dotted white !important;
+    display: inline-block;
+    position: relative;
+    border-bottom: 1px dotted white;
 }
 
 .nav-tooltip-text
 {
-    visibility: hidden !important;
+    visibility: hidden;
+    position: absolute;
     font-size: 1.5rem;
-
-    padding: 8px !important;
-
-    border-radius: 10px !important;
+    padding: .5rem 1rem .3rem 1rem;
+    border-radius: 10px;
     border-style: solid;
-    background-color: #242524 !important;
-    border-color: #737474 !important;
-    border-width: 3px !important;
-
-    position: absolute !important;
+    border-color: #c0c000;
+    border-width: 3px;
+    color: #444400;
+    background-color: #ffffa0;
     right: 1rem;
     top: 4rem;
-    z-index: 1 !important;
 }
 
 .nav-tooltip:hover .nav-tooltip-text {
-    visibility: visible !important;
+    visibility: visible;
 }
 
 #dbg {
