@@ -8,14 +8,13 @@ import bokeh.models.markers
 import bokeh.palettes
 import bokeh.plotting
 import flask
-import pandas as pd
 
 import dex.cache
 import dex.csv_cache
+import dex.csv_parser
 import dex.eml_cache
 import dex.util
 import dex.views.util
-import dex.csv_parser
 
 log = logging.getLogger(__name__)
 
