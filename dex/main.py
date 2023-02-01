@@ -86,7 +86,6 @@ def create_app():
     @_app.before_request
     def before_request():
         log.debug(f"{flask.request.method} {flask.request.path}")
-        # flask.request.cookies.get('debug-panel', 'false') == 'true'
         flask.g.debug_panel = flask.request.cookies.get('debug-panel', 'false') == 'true'
 
     @_app.after_request
@@ -96,7 +95,7 @@ def create_app():
 
         if 'debug' in flask.request.args:
             debug_is_enabled = flask.request.args['debug'] == 'true'
-            response = flask.make_response(flask.redirect(''))
+            response = flask.make_response(flask.redirect(flask.request.base_url))
             response.set_cookie('debug-panel', str(debug_is_enabled).lower())
 
         return response

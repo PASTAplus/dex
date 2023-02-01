@@ -696,6 +696,9 @@ div.root-page ul {
 
 .nav-tooltip:hover .nav-tooltip-text {
     visibility: visible;
+    /* To make the tooltip move with the mouse pointer, this is a start */
+    /* left: calc(var(--mouse-x, 0) * 100%); */
+    /* top: calc(var(--mouse-y, 0) * 100%); */
 }
 
 #dbg {

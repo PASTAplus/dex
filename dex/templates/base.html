@@ -150,6 +150,17 @@
 {# Fetch based downloads #}
 <script type='text/javascript' src='/static/lib/download.js'></script>
 
+<script>
+{# Make the mouse position available to CSS #}
+const root = document.documentElement;
+document.addEventListener('mousemove', evt => {
+  const x = evt.clientX / innerWidth;
+  const y = evt.clientY / innerHeight;
+  root.style.setProperty('--mouse-x', x.toString());
+  root.style.setProperty('--mouse-y', y.toString());
+});
+</script>
+
 {% block scripts %}
 {% endblock %}
 
