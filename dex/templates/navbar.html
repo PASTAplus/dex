@@ -50,20 +50,20 @@
         </ul>
         {% if entity_tup and rid %}
           <ul class="nav navbar-nav navbar-right">
-            <li>
-              <a href="{{ entity_tup.data_url }}" class="nav-item nav-link"
-                 style="font-size: 18px;">
+            <li class="nav-tooltip">
+              <a href="{{ entity_tup.data_url }}" class="nav-item nav-link nav-download">
                 Table:
                 {{ csv_name }}
               </a>
+              <span class="nav-tooltip-text">Download this table</span>
             </li>
-            <li>
+            <li class="nav-tooltip">
               <a href="{{ portal_base }}/mapbrowse?scope={{ entity_tup.scope_str }}&identifier={{ entity_tup.identifier_int }}&revision={{ entity_tup.version_int }}"
-                 class="nav-item nav-link"
-                 style="font-size: 18px;">
+                 class="nav-item nav-link nav-download">
                 Package ID:
                 {{ [entity_tup.scope_str, entity_tup.identifier_int, entity_tup.version_int] | join('.') }}
               </a>
+              <span class="nav-tooltip-text">View package in PASTA</span>
             </li>
           </ul>
         {% endif %}
