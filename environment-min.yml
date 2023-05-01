@@ -21,6 +21,7 @@ dependencies:
   - fasteners
   - pygments
   - jinja2=3.0
+  - setuptools>=65.5.1
   - pip
   - pip:
     - blosc2
