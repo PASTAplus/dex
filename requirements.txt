@@ -26,6 +26,7 @@ executing==1.2.0
 fasteners==0.17.3
 Flask==2.0.3
 fonttools==4.39.3
+gunicorn==20.1.0
 htmlmin==0.1.12
 idna==3.4
 ImageHash==4.3.1

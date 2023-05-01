@@ -22,6 +22,7 @@ dependencies:
   - pygments
   - jinja2=3.0
   - setuptools>=65.5.1
+  - gunicorn
   - pip
   - pip:
     - blosc2
