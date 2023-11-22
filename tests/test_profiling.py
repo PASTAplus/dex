@@ -7,7 +7,7 @@ import subprocess
 import _pytest.pathlib
 import numpy as np
 import pandas as pd
-import pandas_profiling
+import ydata_profiling
 
 import dex.main
 
@@ -18,7 +18,7 @@ yml_config_path = (dex_path / 'profiling_config.yml').as_posix()
 
 
 def _generate_and_open_report(df):
-    report_tree = pandas_profiling.ProfileReport(
+    report_tree = ydata_profiling.ProfileReport(
         df,
         # config_file=arg_dict['yml_config_path'],
         # dark_mode=True,

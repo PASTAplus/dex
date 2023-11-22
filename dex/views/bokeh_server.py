@@ -1,12 +1,13 @@
 import json
 import logging
 
-import bokeh.colors.rgb
+import bokeh.colors
 import bokeh.embed
 import bokeh.models
-import bokeh.models.markers
 import bokeh.palettes
 import bokeh.plotting
+import bokeh.core.enums
+
 import flask
 
 import dex.cache
@@ -26,6 +27,7 @@ THEME_DICT = {
     "default": {"fg_color": "white"},
 }
 
+MARKER_TYPE_TUP = tuple(bokeh.core.enums.MarkerType)
 
 # TODO: Check if these functions can use the regular disk caching now.
 
@@ -45,7 +47,7 @@ def col_plot(rid, col):
     # output_file('lines.html')
 
     # create a new plot with a title and axis labels
-    fig = bokeh.plotting.figure(plot_width=400, plot_height=35)
+    fig = bokeh.plotting.figure(width=400, height=35)
 
     fig.axis.visible = False
     fig.toolbar.logo = None
@@ -140,8 +142,8 @@ def xy_plot(rid, parm_uri):
 
     # The figure is the container for the whole plot.
     fig = bokeh.plotting.figure(
-        plot_width=500,
-        plot_height=500,
+        width=500,
+        height=500,
         x_axis_label=csv_df.columns[x_col_idx],
         # y_axis_label=csv_df.columns[y_col_idx],
         x_axis_type="datetime" if is_dt else "auto",
@@ -163,11 +165,9 @@ def xy_plot(rid, parm_uri):
     for y_idx, (y_col_idx, draw_lines_bool) in enumerate(parm_dict['y']):
         color_str = color_list[y_idx]
 
-        m = list(bokeh.models.markers.marker_types.keys())
-
         # All the markers in a scatter plot is a single glyph
         glyph = bokeh.models.Scatter(x=csv_df.columns[x_col_idx], y=csv_df.columns[y_col_idx],
-                                     size=7, fill_color=color_str, marker=m[y_idx])
+                                     size=7, fill_color=color_str, marker=MARKER_TYPE_TUP[y_idx])
         glyph_renderer = fig.add_glyph(source, glyph)
         legend_list = [glyph_renderer]
 

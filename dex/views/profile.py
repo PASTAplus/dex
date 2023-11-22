@@ -1,10 +1,10 @@
 import logging
 
 import flask
-import flask.json
+import json
 from flask import current_app as app
 
-import pandas_profiling
+import ydata_profiling
 
 import dex.db
 import dex.cache
@@ -79,10 +79,10 @@ def doc(rid):
 def render_profile(rid):
     csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
 
-    log.debug('Calling pandas_profiling.ProfileReport()...')
+    log.debug('Calling ydata_profiling.ProfileReport()...')
 
     # Create a tree representation of the report.
-    report_tree = pandas_profiling.ProfileReport(
+    report_tree = ydata_profiling.ProfileReport(
         csv_df,
         config_file=flask.current_app.config['PROFILING_CONFIG_PATH'],
         # dark_mode=arg_dict['dark_mode'],

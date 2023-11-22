@@ -9,7 +9,7 @@ import _pytest.pathlib
 import lxml
 import numpy as np
 import pandas as pd
-import pandas_profiling
+import ydata_profiling
 import lxml.etree
 
 import dex.eml_subset

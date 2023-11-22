@@ -61,12 +61,17 @@ def create_app():
     _app.register_blueprint(dex.views.plot.plot_blueprint)
     _app.register_blueprint(dex.views.eml.eml_blueprint)
 
-    @_app.before_first_request
-    def before_first_request():
-        def handle_redirect_to_index(_):
-            return flask.redirect("/", 302)
+    def handle_redirect_to_index(_):
+        return flask.redirect("/", 302)
 
-        _app.register_error_handler(dex.exc.RedirectToIndex, handle_redirect_to_index)
+    _app.register_error_handler(dex.exc.RedirectToIndex, handle_redirect_to_index)
+
+    # @_app.before_first_request
+    # def before_first_request():
+    #     def handle_redirect_to_index(_):
+    #         return flask.redirect("/", 302)
+    #
+    #     _app.register_error_handler(dex.exc.RedirectToIndex, handle_redirect_to_index)
 
     # def handle_custom_exceptions(e):
     #     log.exception('Exception')

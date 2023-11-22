@@ -1,8 +1,9 @@
-import datetime
 import builtins
 import collections
 import contextlib
+import datetime
 import io
+import json
 import logging
 import os
 import pathlib
@@ -11,11 +12,10 @@ import tempfile
 import threading
 import time
 import types
-import dateutil.parser
+
 import dateutil
+import dateutil.parser
 import fasteners
-import flask
-import flask.json
 import lxml.etree
 import pandas as pd
 import pygments
@@ -235,7 +235,7 @@ def get_etree_as_pretty_printed_xml(el):
 # JSON
 
 
-class DatetimeEncoder(flask.json.JSONEncoder):
+class DatetimeEncoder(json.JSONEncoder):
     def default(self, o):
         try:
             return super().default(o)
@@ -245,8 +245,8 @@ class DatetimeEncoder(flask.json.JSONEncoder):
             return str(o)
 
 
-class DatetimeDecoder(flask.json.JSONDecoder):
-    # def decode(self, s, w=flask.json.decoder.WHITESPACE.match):
+class DatetimeDecoder(json.JSONDecoder):
+    # def decode(self, s, w=json.decoder.WHITESPACE.match):
     import json
 
     def decode(self, s, w=json.decoder.WHITESPACE.match):
@@ -260,13 +260,13 @@ class DatetimeDecoder(flask.json.JSONDecoder):
 
 
 def date_to_iso(**g_dict):
-    return flask.json.loads(flask.json.dumps(g_dict))
-    # return flask.json.loads(flask.json.dumps(g_dict, cls=DatetimeEncoder))
+    return json.loads(json.dumps(g_dict))
+    # return json.loads(json.dumps(g_dict, cls=DatetimeEncoder))
 
 
 def json_enc(**g_dict):
     logpp(g_dict, 'g_dict', log.debug)
-    j = flask.json.htmlsafe_dumps(g_dict)
+    j = json.htmlsafe_dumps(g_dict)
     log.debug(j)
     return j
 

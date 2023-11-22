@@ -8,7 +8,7 @@ import re
 import zipfile
 
 import flask
-import flask.json
+import json
 import pandas as pd
 
 import dex.csv_cache
@@ -235,7 +235,7 @@ def download(rid):
     ).encode('utf-8')
 
     # Prepare JSON doc containing the subset params
-    json_bytes = flask.json.dumps(
+    json_bytes = json.dumps(
         filter_dict,
         indent=2,
         # sort_keys=True,
