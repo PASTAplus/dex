@@ -15,37 +15,39 @@
     </ul>
   </div>
 
-  <div class='widgets'>
+  <div class='line'>
+    <div class='widgets'>
 
-    <div class='grid-3-col'>
-      <label class='grid-item axis-label'>
-        X:
-      </label>
-      <label class='grid-item'>
-        <select id="col-x" name='col-x' class='form-control'>
-          <option value='-1'>Select independent value</option>
-          {% for col_str in col_list %}
-            <option value='{{ col_str.0 }}'>{{ col_str.1 }}</option>
-          {% endfor %}
-        </select>
-      </label>
+      <div class='grid-3-col'>
+        <label class='grid-item axis-label'>
+          X:
+        </label>
+        <label class='grid-item'>
+          <select id="col-x" name='col-x' class='form-control'>
+            <option value='-1'>Select independent value</option>
+            {% for col_str in col_list %}
+              <option value='{{ col_str.0 }}'>{{ col_str.1 }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+
+      <div id='y-block-list' class='stack'>
+      </div>
+
+      <div class='grid-item'>
+        <button id='plot-button' class='btn btn-primary' disabled>Plot</button>
+      </div>
+
     </div>
 
-    <div id='y-block-list' class='stack'>
+    <div class='space-top'>
     </div>
 
-    <div class='grid-item'>
-      <button id='plot-button' class='btn btn-primary' disabled>Plot</button>
+    <div class='widgets line-inner'>
+      <div class='stack'></div>
+      <div id='plot-container' class=''></div>
     </div>
-
-  </div>
-
-  <div class='space-top'>
-  </div>
-
-  <div class='widgets'>
-    <div class='col-y-list stack'></div>
-    <div id='plot-container'></div>
   </div>
 
   <template id='y-template'>

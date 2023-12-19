@@ -187,6 +187,10 @@ label select, label input {
 
 }
 
+.allow-wrap {
+    flex-wrap: wrap;
+}
+
 .line-item {
     align-self: baseline;
 }

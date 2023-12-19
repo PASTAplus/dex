@@ -109,7 +109,7 @@ function create_y_block(rem_list, sel_id, is_checked, is_last)
 $("#plot-button").click(async function () {
   // alert(1);
 
-  let plot_el = $('#plot-container');
+  const plot_el = $('#plot-container');
 
   while (plot_el[0].firstChild) {
     plot_el[0].removeChild(plot_el[0].firstChild);
@@ -127,15 +127,17 @@ $("#plot-button").click(async function () {
     y: get_y_list(),
   };
 
-  let parm_uri = encodeURIComponent(JSON.stringify(sel_dict));
+  const parm_uri = encodeURIComponent(JSON.stringify(sel_dict));
   // let subset_json = encodeURIComponent(JSON.stringify(g.subset_dict));
-  let subset_json = encodeURIComponent(JSON.stringify(g.subset_dict));
-  let response = await fetch(`/bokeh/xy-plot/${g.rid}/${parm_uri}?subset=${subset_json}`);
-  let data = await response.json();
+  const subset_json = encodeURIComponent(JSON.stringify(g.subset_dict));
+  const plot_width = Math.round(plot_el.width());
+  const response = await fetch(
+    `/bokeh/xy-plot/${g.rid}/${plot_width}/${parm_uri}?subset=${subset_json}`);
+  const data = await response.json();
 
   plot_el.Destroy();
 
-  Bokeh.embed.embed_item(data, 'plot-container');
+  await Bokeh.embed.embed_item(data, 'plot-container');
 
   // Show warning if plot is subsampled for performance
   $('#column-description-msg').removeClass('hidden-msg');

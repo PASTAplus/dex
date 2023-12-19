@@ -31,89 +31,14 @@ MARKER_TYPE_TUP = tuple(bokeh.core.enums.MarkerType)
 
 # TODO: Check if these functions can use the regular disk caching now.
 
-
-@bokeh_server.route("/col-plot/<rid>/<col>")
-def col_plot(rid, col):
-    """Create a plot of all the values in a single column."""
-    theme_key = flask.request.args.get("theme", "default")
-    fg_color = THEME_DICT[theme_key]["fg_color"]
-
-    plot_json = get_plot_from_cache(rid, col, theme_key)
-
-    if plot_json:
-        return plot_json
-
-    # output to static HTML file
-    # output_file('lines.html')
-
-    # create a new plot with a title and axis labels
-    fig = bokeh.plotting.figure(width=400, height=35)
-
-    fig.axis.visible = False
-    fig.toolbar.logo = None
-    fig.toolbar_location = None
-    fig.xgrid.visible = False
-    fig.ygrid.visible = False
-    fig.outline_line_color = None
-    fig.background_fill_color = None
-    fig.border_fill_color = None
-
-    fig.x_range.range_padding = 0
-
-    fig.margin = 0
-    fig.min_border = 0
-    # fig.min_border_top = 5
-    # fig.min_border_bottom = 5
-
-    # fig.min_border_left = 0
-    # fig.min_border_right = 0
-    # fig.min_border_top = 0
-    # fig.min_border_bottom = 0
-
-    # Disable user interaction
-    fig.toolbar.active_drag = None
-    fig.toolbar.active_scroll = None
-    fig.toolbar.active_tap = None
-
-    # add a line renderer with legend and line thickness
-    # fig.line(
-    #     range(len(d)), d, line_width=2, color=bokeh.colors.RGB(167, 158, 139)
-    # )
-    # fig.dot(range(len(d)), d, size=5, color=bokeh.colors.RGB(167, 158, 139))
-    d = dex.csv_cache.get_col_name_by_index(rid, int(col))
-    fig.dot(range(len(d)), d, size=5, color=fg_color)
-    plot_json = json.dumps(
-        bokeh.embed.json_item(fig),
-        cls=dex.util.DatetimeEncoder,
-    )
-
-    add_plot_to_cache(rid, col, plot_json, theme_key)
-    return plot_json
-
-
-def get_plot_from_cache(rid, col, fg_color):
-    p = get_plot_cache_path(rid, col, fg_color)
-    if p.exists():
-        return p.read_text()
-
-
-def add_plot_to_cache(rid, col, plot_json, fg_color):
-    p = get_plot_cache_path(rid, col, fg_color)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(plot_json)
-
-
-def get_plot_cache_path(rid, col, fg_color):
-    return dex.cache.get_cache_path(rid, f"{col}-{fg_color}", "plot")
-
-@bokeh_server.route("/xy-plot/<rid>/<parm_uri>")
-def xy_plot(rid, parm_uri):
+@bokeh_server.route("/xy-plot/<rid>/<width>/<parm_uri>")
+def xy_plot(rid, width, parm_uri):
     # parm_dict = N(**json.loads(parm_uri))
     parm_dict = json.loads(parm_uri)
     log.debug(f'parm_dict="{parm_dict}"')
 
-    theme_key = flask.request.args.get("theme", "default")
-    fg_color = THEME_DICT[theme_key]["fg_color"]
+    # theme_key = flask.request.args.get("theme", "default")
+    # fg_color = THEME_DICT[theme_key]["fg_color"]
 
     csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
 
@@ -142,8 +67,8 @@ def xy_plot(rid, parm_uri):
 
     # The figure is the container for the whole plot.
     fig = bokeh.plotting.figure(
-        width=500,
-        height=500,
+        width=int(width),
+        height=800,
         x_axis_label=csv_df.columns[x_col_idx],
         # y_axis_label=csv_df.columns[y_col_idx],
         x_axis_type="datetime" if is_dt else "auto",
