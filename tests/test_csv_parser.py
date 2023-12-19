@@ -79,7 +79,7 @@ def test_1000(rid, tmp_cache):
     p(derived_dict, 'derived_dict')
     parser_dict = dex.csv_parser.get_parser_dict(derived_dict)
     p(parser_dict, 'parser_dict')
-    parser_func_dict = {derived_dict[k]['col_name']: d['fn'] for k, d in parser_dict.items()}
-    p(parser_func_dict, 'parser_func_dict')
-    df = dex.csv_parser.get_parsed_csv(rid, header_line_count, parser_func_dict, Dialect1)
+    parser_dict = {derived_dict[k]['col_name']: d['fn'] for k, d in parser_dict.items()}
+    p(parser_dict, 'parser_dict')
+    df = dex.csv_parser.get_parsed_csv(rid, header_line_count, parser_dict, Dialect1)
     df.info()

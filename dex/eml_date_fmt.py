@@ -64,7 +64,7 @@ def mk_fn_dict2(fn_dict):
 
 def iso8601_to_c_format(iso_str):
     """Convert an ISO8601-style datetime format spec, as used in EML, to a C-style
-    format spec, as used by the Python datetime formatting functions.
+    format spec, as used by the Python datetime parsing and formatting functions.
 
     Args:
         iso_str (str):
@@ -94,6 +94,32 @@ def iso8601_to_c_format(iso_str):
     c_format_str = ''.join(c_list)
     log.debug(f'Translated datetime format string. ISO8601="{iso_str}" C="{c_format_str}"')
     return c_format_str
+
+
+def has_full_date(iso_str):
+    """Return True if ISO8601-style datetime format string has a full date component,
+    False otherwise.
+    """
+    c_format_str = iso8601_to_c_format(iso_str)
+    return '%Y' in c_format_str and '%m' in c_format_str and '%d' in c_format_str
+
+def has_full_time(iso_str):
+    """Return True if ISO8601-style datetime format string has a full time component,
+    False otherwise.
+    """
+    c_format_str = iso8601_to_c_format(iso_str)
+    return '%H' in c_format_str and '%M' in c_format_str and '%S' in c_format_str
+
+def has_full_datetime(iso_str):
+    """Return True if ISO8601-style datetime format string has a full date and time
+    component, False otherwise.
+    """
+    return has_full_date(iso_str) and has_full_time(iso_str)
+
+
+def datetime_has_tz(dt):
+    """Return True if datetime object has a timezone, False otherwise."""
+    return dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None
 
 
 # Dict of special cases for date format strings that appear in LTER and EDI EML

@@ -34,25 +34,17 @@ def get_eml_ctx(rid):
     """Get the EML information that is required for parsing and processing the CSV."""
     dt_el = dex.eml_cache.get_data_table(rid)
     column_list = dex.eml_types.get_col_attr_list(dt_el)
-    parser_func_dict = get_parser_dict(column_list)
-    col_name_list = [d['col_name'] for d in column_list]
-    pandas_type_dict = {d['col_name']: d['pandas_type'] for d in column_list}
-    missing_code_dict = {d['col_idx']: d['missing_code_list'] for d in column_list}
-
     ctx = dict(
         column_list=column_list,
         dialect=dex.eml_types.get_dialect(dt_el),
         header_line_count=dex.eml_types.get_header_line_count(dt_el),
         footer_line_count=dex.eml_types.get_footer_line_count(dt_el),
-        parser_dict=parser_func_dict,
-        col_name_list=col_name_list,
-        parser_func_dict=parser_func_dict,
-        pandas_type_dict=pandas_type_dict,
-        missing_code_dict=missing_code_dict,
+        parser_dict=(get_parser_dict(column_list)),
+        col_name_list=[d['col_name'] for d in column_list],
+        pandas_type_dict={d['col_name']: d['pandas_type'] for d in column_list},
+        missing_code_dict={d['col_idx']: d['missing_code_list'] for d in column_list},
     )
-
     dex.util.logpp(ctx, msg='EML CTX', logger=log.debug)
-
     return ctx
 
 
@@ -217,7 +209,7 @@ def _get_csv(rid, eml_ctx, do_parse):
     # Parse the CSV
     if do_parse:
         arg_dict.update(dict(
-            converters=eml_ctx['parser_func_dict'],
+            converters=eml_ctx['parser_dict'],
             # true_values=None,
             # false_values=None,
             # Not required when setting skiprows and skipfooter. Read the number of rows declared in the EML

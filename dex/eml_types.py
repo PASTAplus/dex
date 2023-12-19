@@ -93,10 +93,13 @@ def get_col_attr_list(dt_el):
         pandas_type = derive_pandas_type(attr_el)
 
         date_fmt_str = None
-        date_fmt_dict= None
+        date_fmt_dict = None
         if pandas_type == PandasType.DATETIME:
             date_fmt_str = get_date_fmt_str(attr_el, col_name)
-            date_fmt_dict = dex.eml_date_fmt.get_datetime_parser_and_formatter(col_name, date_fmt_str)
+            if dex.eml_date_fmt.has_full_date(date_fmt_str):
+                date_fmt_dict = dex.eml_date_fmt.get_datetime_parser_and_formatter(
+                    col_name, date_fmt_str
+                )
             if not date_fmt_dict:
                 pandas_type = PandasType.STRING
 

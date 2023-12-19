@@ -96,8 +96,7 @@ def debug(rid):
             'derived_dtype_html': pd.DataFrame.from_dict(
                 {d['col_name']: d for d in column_list}
             )
-            .style.applymap(highlight_types)
-            .render(),
+            .style.applymap(highlight_types).to_html(),
             'type_count_html': dict_to_html(type_count, 'Type', 'Count'),
             # 'number_type_count_html': dict_to_html(number_type_count, 'Type', 'Count'),
             'csv_row_count': dict_to_html(csv_row_count, 'Value', 'Count'),
