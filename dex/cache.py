@@ -3,6 +3,7 @@ import functools
 import logging
 import lzma
 import pathlib
+import shutil
 import sys
 import tempfile
 import threading
@@ -225,6 +226,10 @@ def delete_cache_file(rid, key, obj_type):
             log.debug(f"Deleting cache file: {cache_path.as_posix()}")
             cache_path.unlink()
 
+def flush_cache(rid):
+    """Delete all cache files for the given rid"""
+    cache_entity_root_path = _get_cache_entity_root_path(rid)
+    shutil.rmtree(cache_entity_root_path.as_posix(), ignore_errors=True)
 
 def get_cache_path(rid, key, obj_type):
     """
@@ -244,12 +249,15 @@ def get_cache_path(rid, key, obj_type):
 
 
 def _get_cache_path(rid, key, obj_type, is_compressed):
+    return _get_cache_entity_root_path(rid) / f"{key}.{obj_type}{'.xz' if is_compressed else ''}"
+
+
+def _get_cache_entity_root_path(rid):
     return pathlib.Path(
-        flask.current_app.config["CACHE_ROOT_DIR"],
+        flask.current_app.config['CACHE_ROOT_DIR'],
         dex.filesystem.get_safe_lossy_path_element(
-            dex.db.get_data_url(rid) if rid is not None else "global"
+            dex.db.get_data_url(rid) if rid is not None else 'global'
         ),
-        f"{key}.{obj_type}{'.xz' if is_compressed else ''}",
     ).resolve()
 
 

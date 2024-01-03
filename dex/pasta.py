@@ -256,3 +256,15 @@ def get_portal_base_by_entity(entity_tup):
         return PASTA_PORTAL_DICT[entity_tup.base_url]
     except LookupError:
         raise dex.exc.DexError(f'Not a valid PASTA BaseURL: "{entity_tup.base_url}"')
+
+def get_pkg_tup_by_id(pkg_id):
+    """Split a PackageID into a scope, identifier, version tuple, and perform basic
+    validation on the elements.
+    """
+    pkg_id_tup = pkg_id.split('.')
+    if len(pkg_id_tup) != 3:
+        raise dex.exc.DexError(f'Invalid package_id: {pkg_id}')
+    scope_str, identifier_str, version_str = pkg_id_tup
+    if len(scope_str) < 3 or not identifier_str.isdigit() or not version_str.isdigit():
+        raise dex.exc.DexError(f'Invalid package_id: {pkg_id}')
+    return scope_str, identifier_str, version_str

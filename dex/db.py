@@ -26,12 +26,24 @@ def clear_entities():
     log.debug('Clearing entities from DB')
     cnx = get_db()
     try:
-        row_list = query_db("""delete from entity;""", (), db=(cnx))
+        row_list = query_db("""delete from entity;""", (), db=cnx)
         log.debug(row_list)
         # cur.fetchall()
         # cur.close()
     finally:
         cnx.commit()
+
+
+def get_rid_list_by_package_id(package_id):
+    """Return a list of PASTA identifiers for a given PackageID (scope.identifier.version)."""
+    scope_str, identifier_str, version_str = dex.pasta.get_pkg_tup_by_id(package_id)
+    row_list = query_db(
+        """select id
+        from entity where scope = ? and identifier = ? and version = ?;""",
+        (scope_str, identifier_str, version_str),
+        one=False,
+    )
+    return [row.id for row in row_list]
 
 
 def namedtuple_factory(cursor, row):
@@ -153,6 +165,18 @@ def get_entity_as_dict(row_id):
     """
     # noinspection PyProtectedMember
     return get_entity(row_id)._asdict()
+
+
+def drop_entity(row_id):
+    cnx = get_db()
+    try:
+        query_db(
+            """delete from entity where id = ?""",
+            (row_id,),
+            db=cnx,
+        )
+    finally:
+        cnx.commit()
 
 
 def get_entity_as_package_id(row_id):
