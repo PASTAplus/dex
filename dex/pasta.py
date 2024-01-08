@@ -28,6 +28,19 @@ DATA_URL_RX = re.compile(
     re.VERBOSE,
 )
 
+# PackageURL is the same as the DataURL except that it doesn't include the entity.
+PACKAGE_URL_RX = re.compile(
+    r"""
+    (?P<base_url>.*/package)
+    /data/eml/
+    (?P<scope_str>[^/]+)/
+    (?P<id_str>\d+)/
+    (?P<ver_str>\d+)
+    $
+    """,
+    re.VERBOSE,
+)
+
 DATA_PATH_RX = re.compile(
     r"""
       (?P<base_url>.*)/
@@ -71,6 +84,17 @@ EntityTup = collections.namedtuple(
         "identifier_int",
         "version_int",
         "entity_str",
+    ],
+)
+
+PackageTup = collections.namedtuple(
+    "PackageTup",
+    [
+        "package_url",
+        "base_url",
+        "scope_str",
+        "identifier_int",
+        "version_int",
     ],
 )
 
@@ -257,6 +281,7 @@ def get_portal_base_by_entity(entity_tup):
     except LookupError:
         raise dex.exc.DexError(f'Not a valid PASTA BaseURL: "{entity_tup.base_url}"')
 
+
 def get_pkg_tup_by_id(pkg_id):
     """Split a PackageID into a scope, identifier, version tuple, and perform basic
     validation on the elements.
@@ -268,3 +293,16 @@ def get_pkg_tup_by_id(pkg_id):
     if len(scope_str) < 3 or not identifier_str.isdigit() or not version_str.isdigit():
         raise dex.exc.DexError(f'Invalid package_id: {pkg_id}')
     return scope_str, identifier_str, version_str
+
+
+def get_package_tup_by_package_url(package_url):
+    m = PACKAGE_URL_RX.match(package_url)
+    if not m:
+        raise dex.exc.DexError(f'Not a valid PASTA package URL: "{package_url}"')
+    d = dict(m.groupdict())
+    d["identifier_int"] = int(d.pop("id_str"))
+    d["version_int"] = int(d.pop("ver_str"))
+    package_tup = PackageTup(package_url=package_url, **d)
+    log.info(f'Resolved URL. package_url="{package_url}" -> package_tup="{package_tup}"')
+    return package_tup
+

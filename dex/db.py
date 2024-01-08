@@ -36,11 +36,17 @@ def clear_entities():
 
 def get_rid_list_by_package_id(package_id):
     """Return a list of PASTA identifiers for a given PackageID (scope.identifier.version)."""
-    scope_str, identifier_str, version_str = dex.pasta.get_pkg_tup_by_id(package_id)
+    (
+        package_url,
+        base_url,
+        scope_str,
+        identifier_int,
+        version_int,
+    ) = dex.pasta.get_package_tup_by_package_url(package_id)
     row_list = query_db(
         """select id
         from entity where scope = ? and identifier = ? and version = ?;""",
-        (scope_str, identifier_str, version_str),
+        (scope_str, identifier_int, version_int),
         one=False,
     )
     return [row.id for row in row_list]
