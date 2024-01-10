@@ -24,3 +24,22 @@ local cache first.
 During the initial request, the CSV and EML docs are processed into a number of other
 objects which are cashed on disk. Only these derived objects are required for serving
 later requests, so there is no longer a need for the original files.
+
+
+## API
+
+### Flush cached objects for a given PackageID 
+
+```shell
+DELETE /<packageId>
+```
+
+#### Example:
+
+Flush all cached objects for the package with the ID `https://pasta-d.lternet.edu/package/data/eml/edi/748/2`:
+
+```shell
+curl -X DELETE https://dex-d.edirepository.org/https%3A%2F%2Fpasta-d.lternet.edu%2Fpackage%2Fdata%2Feml%2Fedi%2F748%2F2
+```
+
+Note that the package ID is URL-encoded and that package scope, identifier and revision are all required, and separated by slashes.
