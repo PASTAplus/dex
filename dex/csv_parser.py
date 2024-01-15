@@ -4,6 +4,7 @@ This parses the .csv files according to the type declarations for each column in
 corresponding EML documents.
 """
 import logging
+import pprint
 
 import numpy as np
 import pandas as pd
@@ -157,7 +158,7 @@ def _get_csv(rid, eml_ctx, do_parse):
         names=eml_ctx['pandas_type_dict'].keys(),  # Use column names from EML
         index_col=False,  # Do not use the first column as the index
         # Only get the number of columns that are declared in the EML.
-        # Thi resolves issues where lines have trailing empty columns.
+        # This resolves issues where lines have trailing empty columns.
         usecols=range(len(eml_ctx['pandas_type_dict'])),
         # squeeze=False,
         # prefix=NoDefault.no_default,
@@ -235,6 +236,11 @@ def _get_csv(rid, eml_ctx, do_parse):
 
             )
         )
+
+    log.debug('#' * 100)
+    log.debug(f'pd.read_csv() kwargs:\n{pprint.pformat(arg_dict)}')
+    log.debug(f'pd.read_csv() dialect:\n{pprint.pformat(eml_ctx["dialect"].__dict__)}')
+    log.debug('#' * 100)
 
     try:
         csv_df = pd.read_csv(**arg_dict)

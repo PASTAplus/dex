@@ -6,6 +6,7 @@ be used without having an `rid`.
 This module should not require cache access and so, should not import `dex.eml_cache`
 or `dex.cache`.
 """
+import codecs
 import csv
 import datetime
 import enum
@@ -50,16 +51,42 @@ PANDAS_TO_FRIENDLY_DICT = {
 def get_dialect(dt_el):
     text_format_el = first(dt_el, './/physical/dataFormat/textFormat')
 
+    def decode(s):
+        """Decode escape sequences.
+        E.g., "foo\\nbar" -> "foo\nbar"
+        """
+        return bytes(s, "utf-8").decode("unicode_escape")
+
     # https://docs.python.org/3/library/csv.html#csv.Dialect
     class Dialect(csv.Dialect):
-        delimiter = first_str(text_format_el, 'fieldDelimiter', DEFAULT_FIELD_DELIMITER)
+        _delimiter = first_str(
+            text_format_el,
+            'simpleDelimited/fieldDelimiter/text()',
+            DEFAULT_FIELD_DELIMITER,
+        )
+        _lineterminator = first_str(
+            text_format_el,
+            'recordDelimiter/text()',
+            DEFAULT_RECORD_DELIMITER,
+        )
+        _quotechar = first_str(
+            text_format_el,
+            'quoteCharacter/text()',
+            DEFAULT_QUOTE_CHARACTER,
+        )
+
+        delimiter = decode(_delimiter)
+        lineterminator = decode(_lineterminator)
+        quotechar = decode(_quotechar)
+
         doublequote = True
         escapechar = None
-        lineterminator = first_str(text_format_el, 'recordDelimiter', DEFAULT_RECORD_DELIMITER)
-        quotechar = first_str(text_format_el, 'quoteCharacter', DEFAULT_QUOTE_CHARACTER)
         quoting = csv.QUOTE_MINIMAL
         skipinitialspace = True
         strict = False
+
+        def __repr__(self):
+            return f'<Dialect {self.__class__.__name__} {self.__dict__}>'
 
     return Dialect
 
