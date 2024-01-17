@@ -40,7 +40,8 @@ def get_eml_ctx(rid):
         dialect=dex.eml_types.get_dialect(dt_el),
         header_line_count=dex.eml_types.get_header_line_count(dt_el),
         footer_line_count=dex.eml_types.get_footer_line_count(dt_el),
-        parser_dict=(get_parser_dict(column_list)),
+        parser_dict=get_parser_dict(column_list),
+        formatter_dict=get_formatter_dict(column_list),
         col_name_list=[d['col_name'] for d in column_list],
         pandas_type_dict={d['col_name']: d['pandas_type'] for d in column_list},
         missing_code_dict={d['col_idx']: d['missing_code_list'] for d in column_list},
@@ -56,6 +57,9 @@ def get_dialect_as_dict(dialect):
 
 def get_parser_dict(column_list):
     return {eml_dict['col_idx']: get_parser(eml_dict) for eml_dict in column_list}
+
+def get_formatter_dict(column_list):
+    return {eml_dict['col_idx']: get_formatter(eml_dict) for eml_dict in column_list}
 
 
 def get_parser_list(column_list):
@@ -94,7 +98,8 @@ def get_parser(dtype_dict):
         try:
             return int(x)
         except (ValueError, TypeError):
-            return pd.NA
+            # return pd.NA
+            return None
 
     d = N(**dtype_dict)
 
@@ -108,6 +113,35 @@ def get_parser(dtype_dict):
         return d.date_fmt_dict['parser']
     elif d.pandas_type == dex.eml_types.PandasType.STRING:
         return string_parser
+    else:
+        raise AssertionError(f'Invalid PandasType: {d.pandas_type}')
+
+
+def get_formatter(dtype_dict):
+    def string_formatter(x):
+        return str(x)
+
+    def float_formatter(x):
+        try:
+            return '{:.2f}'.format(x)
+        except (ValueError, TypeError):
+            return None
+
+    def int_formatter(x):
+        return str(x)
+
+    d = N(**dtype_dict)
+
+    if d.pandas_type == dex.eml_types.PandasType.FLOAT:
+        return float_formatter
+    elif d.pandas_type == dex.eml_types.PandasType.INT:
+        return int_formatter
+    elif d.pandas_type == dex.eml_types.PandasType.CATEGORY:
+        return string_formatter
+    elif d.pandas_type == dex.eml_types.PandasType.DATETIME:
+        return d.date_fmt_dict['formatter']
+    elif d.pandas_type == dex.eml_types.PandasType.STRING:
+        return string_formatter
     else:
         raise AssertionError(f'Invalid PandasType: {d.pandas_type}')
 

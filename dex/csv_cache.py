@@ -96,9 +96,11 @@ def get_stats(rid):
 # Columns
 
 
-def get_plottable_col_aggregates(df):
+def get_plottable_col_aggregates(df, eml_ctx):
     """Calculate per column aggregates for plottable columns"""
     d = {}
+
+    datetime_col_dict = get_datetime_col_dict(df, eml_ctx)
 
     for i, col_name in enumerate(df.columns):
         if not (
@@ -111,8 +113,8 @@ def get_plottable_col_aggregates(df):
             v_max = df.iloc[:, i].max(skipna=True)
             v_min = df.iloc[:, i].min(skipna=True)
             if pd.api.types.is_datetime64_any_dtype(df[col_name]):
-                v_max = v_max.strftime('%Y-%m-%d')
-                v_min = v_min.strftime('%Y-%m-%d')
+                v_max = datetime_col_dict[col_name]['end_dt']
+                v_min = datetime_col_dict[col_name]['begin_dt']
             d[i] = dict(col_name=col_name, v_max=v_max, v_min=v_min)
         except Exception:
             log.exception(f'Exception when calculating per column aggregate for column: {col_name}')
@@ -120,15 +122,22 @@ def get_plottable_col_aggregates(df):
     return d
 
 
-def get_datetime_col_dict(df):
-    return {
-        col_name: dict(
-            begin_dt=df[col_name].min(skipna=True).strftime('%Y-%m-%d'),
-            end_dt=df[col_name].max(skipna=True).strftime('%Y-%m-%d'),
-        )
-        for col_name in df.columns
-        if pd.api.types.is_datetime64_any_dtype(df[col_name])
-    }
+def get_datetime_col_dict(df, eml_ctx):
+    """Return a dict of column name to begin and end date for columns that contain
+    date-times.
+
+    The begin and end times are formatted according to the format specified in the EML
+    for each column.
+    """
+    col_dict = {}
+    for i, col_name in enumerate(df.columns):
+        date_formatter = eml_ctx['formatter_dict'][i]
+        if pd.api.types.is_datetime64_any_dtype(df[col_name]):
+            col_dict[col_name] = dict(
+                begin_dt=date_formatter(df[col_name].min(skipna=True)),
+                end_dt=date_formatter(df[col_name].max(skipna=True)),
+            )
+    return col_dict
 
 
 # @dex.cache.disk("ref-col", "list")

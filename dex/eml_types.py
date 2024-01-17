@@ -6,7 +6,6 @@ be used without having an `rid`.
 This module should not require cache access and so, should not import `dex.eml_cache`
 or `dex.cache`.
 """
-import codecs
 import csv
 import datetime
 import enum
@@ -39,8 +38,8 @@ class PandasType(str, enum.Enum):
 
 
 PANDAS_TO_FRIENDLY_DICT = {
-    PandasType.FLOAT: 'Numeric',
-    PandasType.INT: 'Numeric',
+    PandasType.FLOAT: 'Rational Numbers',
+    PandasType.INT: 'Integer Numbers',
     PandasType.CATEGORY: "Categorical",
     PandasType.DATETIME: "Time Series",
     PandasType.STRING: "Generic",
@@ -123,7 +122,7 @@ def get_col_attr_list(dt_el):
         date_fmt_dict = None
         if pandas_type == PandasType.DATETIME:
             date_fmt_str = get_date_fmt_str(attr_el, col_name)
-            if dex.eml_date_fmt.has_full_date(date_fmt_str):
+            if dex.eml_date_fmt.has_absolute_time(date_fmt_str):
                 date_fmt_dict = dex.eml_date_fmt.get_datetime_parser_and_formatter(
                     col_name, date_fmt_str
                 )

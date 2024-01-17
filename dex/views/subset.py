@@ -32,7 +32,7 @@ DEFAULT_DISPLAY_ROW_COUNT = 10
 @subset_blueprint.route("/<rid>", methods=["GET"])
 def subset(rid):
     csv_df, raw_df, eml_ctx = dex.csv_parser.get_parsed_csv_with_context(rid)
-    datetime_col_dict = dex.csv_cache.get_datetime_col_dict(csv_df)
+    datetime_col_dict = dex.csv_cache.get_datetime_col_dict(csv_df, eml_ctx)
     cat_col_map = {d['col_name']: d for d in dex.eml_cache.get_categorical_columns(rid)}
     # Copy the fields that we need to transfer to the client, excluding fields that
     # cannot be represented in JSON.
@@ -191,7 +191,7 @@ def csv_fetch(rid):
     j = json.loads(page_df.to_json(orient="split", index=True))
     row_list = [(a, *b) for a, b in zip(j["index"], j["data"])]
 
-    for i in range(len(row_list), 10):
+    for i in range(len(row_list), DEFAULT_DISPLAY_ROW_COUNT):
         row_list.append(('', *[''] * len(raw_df.columns)))
         bad_list.append([False] * len(raw_df.columns))
 
