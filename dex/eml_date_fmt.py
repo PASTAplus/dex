@@ -96,6 +96,38 @@ def iso8601_to_c_format(iso_str):
     return c_format_str
 
 
+def has_absolute_time(iso_str):
+    """Return True if ISO8601-style datetime format string has one of:
+
+    - year
+    - year + month
+    - year + month + day
+    - year + month + day + hour
+    - year + month + day + hour + minute
+    - year + month + day + hour + minute + second
+
+    Datetimes with the above parts are absolute points in time with increasing accuracy.
+    All other combinations of date parts do not represent absolute points in time, and
+    so are normally less useful for plotting and subsetting.
+
+    We don't check for milliseconds and timezone here, as datetimes with only those
+    elements would make little sense, and hopefully are not present in our
+    data.
+    """
+    # Individual format elements in C style time format strings are always on the form,
+    # "%" + a single character, so we don't have to tokenize the string in order to make
+    # safe checks.
+    c_format_str = iso8601_to_c_format(iso_str)
+    is_in_sequence = True
+    for d in ('%Y', '%m', '%d', '%H', '%M', '%S'):
+        if d in c_format_str:
+            if not is_in_sequence:
+                return False
+        else:
+            is_in_sequence = False
+    return True
+
+
 def has_full_date(iso_str):
     """Return True if ISO8601-style datetime format string has a full date component,
     False otherwise.
@@ -103,12 +135,14 @@ def has_full_date(iso_str):
     c_format_str = iso8601_to_c_format(iso_str)
     return '%Y' in c_format_str and '%m' in c_format_str and '%d' in c_format_str
 
+
 def has_full_time(iso_str):
     """Return True if ISO8601-style datetime format string has a full time component,
     False otherwise.
     """
     c_format_str = iso8601_to_c_format(iso_str)
     return '%H' in c_format_str and '%M' in c_format_str and '%S' in c_format_str
+
 
 def has_full_datetime(iso_str):
     """Return True if ISO8601-style datetime format string has a full date and time
