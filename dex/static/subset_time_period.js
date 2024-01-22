@@ -79,7 +79,7 @@ async function update_datepicker_state(col_el, dt_el, is_start)
     dt_el.datepicker('option', {'disabled': false});
     let col_name = time_period_filter_el.val();
     let dt_dict = g.datetime_col_dict[col_name];
-    let date_str = is_start ? dt_dict.begin_dt : dt_dict.end_dt;
+    let date_str = is_start ? dt_dict.begin_yyyy_mm_dd_str : dt_dict.end_yyyy_mm_dd_str;
     dt_el.val(date_str);
     dt_el.attr('disabled', false);
     dt_el.datepicker({

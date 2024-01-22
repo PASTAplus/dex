@@ -1,3 +1,4 @@
+import datetime
 import logging
 import math
 
@@ -110,11 +111,11 @@ def get_plottable_col_aggregates(df, eml_ctx):
             continue
 
         try:
-            v_max = df.iloc[:, i].max(skipna=True)
             v_min = df.iloc[:, i].min(skipna=True)
+            v_max = df.iloc[:, i].max(skipna=True)
             if pd.api.types.is_datetime64_any_dtype(df[col_name]):
-                v_max = datetime_col_dict[col_name]['end_dt']
-                v_min = datetime_col_dict[col_name]['begin_dt']
+                v_min = datetime_col_dict[col_name]['begin_eml_date_str']
+                v_max = datetime_col_dict[col_name]['end_eml_date_str']
             d[i] = dict(col_name=col_name, v_max=v_max, v_min=v_min)
         except Exception:
             log.exception(f'Exception when calculating per column aggregate for column: {col_name}')
@@ -126,16 +127,22 @@ def get_datetime_col_dict(df, eml_ctx):
     """Return a dict of column name to begin and end date for columns that contain
     date-times.
 
-    The begin and end times are formatted according to the format specified in the EML
+    The *_eml_date_str times are formatted according to the format specified in the EML
     for each column.
+
+    The *_yyyy_mm_dd_str times are formatted as YYYY-MM-DD.
     """
     col_dict = {}
     for i, col_name in enumerate(df.columns):
         date_formatter = eml_ctx['formatter_dict'][i]
         if pd.api.types.is_datetime64_any_dtype(df[col_name]):
+            begin_dt = df[col_name].min(skipna=True)
+            end_dt = df[col_name].max(skipna=True)
             col_dict[col_name] = dict(
-                begin_dt=date_formatter(df[col_name].min(skipna=True)),
-                end_dt=date_formatter(df[col_name].max(skipna=True)),
+                begin_eml_date_str=date_formatter(begin_dt),
+                end_eml_date_str=date_formatter(end_dt),
+                begin_yyyy_mm_dd_str=datetime.datetime.strftime(begin_dt, '%Y-%m-%d'),
+                end_yyyy_mm_dd_str=datetime.datetime.strftime(end_dt, '%Y-%m-%d'),
             )
     return col_dict
 
