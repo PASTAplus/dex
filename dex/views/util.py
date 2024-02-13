@@ -1,9 +1,9 @@
 import datetime
 import pprint
 
-import dex.views.subset
-import dex.csv_parser
 import dex.csv_cache
+import dex.csv_parser
+import dex.views.subset
 
 
 def create_subset(rid, csv_df, filter_dict):

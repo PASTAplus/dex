@@ -10,7 +10,7 @@ import dex.db
 import dex.debug
 import dex.eml_cache
 import dex.eml_date_fmt
-import dex.eml_types
+import dex.eml_extract
 import dex.pasta
 import dex.util
 import dex.views.util
@@ -51,7 +51,7 @@ def plot(rid):
 
         d = N(**col_dict)
 
-        friendly_type = dex.eml_types.PANDAS_TO_FRIENDLY_DICT[d.pandas_type]
+        friendly_type = dex.eml_extract.PANDAS_TO_FRIENDLY_DICT[d.pandas_type]
         sel_str = '{} ({}, {} - {})'.format(
             d.col_name,
             friendly_type,
@@ -60,24 +60,23 @@ def plot(rid):
         )
         col_list.append((col_idx, sel_str))
 
-
     # dex.util.logpp(g_dict, msg='Plot g_dict', logger=log.debug)
 
     note_list = []
     if full_row_count == app.config['CSV_MAX_CELLS'] // len(eml_ctx['column_list']):
         note_list.append('Due to size, only the first part of this table is available in DeX')
     if full_row_count > subset_row_count:
-        note_list.append(f'Plotting a subset containing {subset_row_count} of {full_row_count} rows')
+        note_list.append(
+            f'Plotting a subset containing {subset_row_count} of {full_row_count} rows'
+        )
 
     g_dict = dict(
         rid=rid,
-        entity_tup=dex.db.get_entity_as_dict(rid),
+        pkg_id=dex.eml_cache.get_pkg_id_dict(rid),
         col_list=col_list,
-        # cols_y=sel_list_y,
         y_not_applied_str='Not applied',
         subset_dict=subset_dict,
     )
-
     return flask.render_template(
         "plot.html",
         g_dict=g_dict,
@@ -86,9 +85,11 @@ def plot(rid):
         # cols_y=sel_list_y,
         # For the base template, should be included in all render_template() calls.
         rid=rid,
-        entity_tup=dex.db.get_entity_as_dict(rid),
+        data_url=dex.db.get_data_url(rid),
+        pkg_id=dex.eml_cache.get_pkg_id_dict(rid),
         csv_name=dex.eml_cache.get_csv_name(rid),
-        dbg=dex.debug.debug(rid),
-        portal_base=dex.pasta.get_portal_base_by_entity(dex.db.get_entity(rid)),
+        portal_base=dex.pasta.get_portal_base(dex.db.get_dist_url(rid)),
         note_list=note_list,
+        is_on_pasta=dex.pasta.is_on_pasta(dex.db.get_meta_url(rid)),
+        dbg=dex.debug.debug(rid),
     )

@@ -1,21 +1,19 @@
 """Create an EML document that is customized for a subset of the CSV
 """
 
-import datetime
 import logging
-import pathlib
-import pprint
 
 import lxml.etree
 
-import dex.db
+import db
 
 # import dex.cache
 import dex.csv_parser
-import dex.obj_bytes
-import dex.eml_types
+import dex.db
 import dex.eml_cache
+import dex.eml_extract
 import dex.exc
+import dex.obj_bytes
 import dex.pasta
 import dex.util
 
@@ -39,8 +37,8 @@ log = logging.getLogger(__name__)
 #     """
 #     eml_el = dex.eml_cache.get_eml_etree(rid)
 #     entity_tup = dex.db.get_entity(rid)
-#     pkg_id = dex.pasta.get_pkg_id_as_url(entity_tup)
-#     dt_el = dex.eml_types.get_data_table_by_package_id(eml_el, pkg_path)
+#     dist_url = dex.pasta.get_dist_url_as_url(entity_tup)
+#     dt_el = dex.eml_extract.get_data_table_by_dist_url(eml_el, dist_url)
 
 
 def create_subset_eml(
@@ -52,23 +50,22 @@ def create_subset_eml(
 ):
     """Create EML doc representing a CSV subset"""
     eml_el = dex.eml_cache.get_eml_etree(rid)
-    entity_tup = dex.db.get_entity(rid)
-    pkg_id = dex.pasta.get_pkg_id_as_url(entity_tup)
-    _subset_eml(eml_el, pkg_id, row_count, byte_count, md5_checksum, col_list)
+    dist_url = db.get_dist_url(rid)
+    _subset_eml(eml_el, dist_url, row_count, byte_count, md5_checksum, col_list)
     return dex.util.get_etree_as_pretty_printed_xml(eml_el)
 
 
 def _subset_eml(
     eml_el,
-    pkg_id,
+    dist_url,
     row_count,
     byte_count,
     md5_checksum,
     col_list,
 ):
     """Inline modify EML etree to match CSV subset"""
-    _prune_data_table(eml_el, pkg_id)
-    physical_el = dex.eml_types.first(eml_el, './/physical')
+    _prune_data_table(eml_el, dist_url)
+    physical_el = dex.eml_extract.first(eml_el, './/physical')
     assert isinstance(physical_el, lxml.etree._Element)
     _prune_distribution(physical_el)
     _prune_columns(eml_el, col_list)
@@ -76,13 +73,13 @@ def _subset_eml(
     _set_md5_checksum(physical_el, md5_checksum)
 
 
-def _prune_data_table(eml_el, pkg_path):
+def _prune_data_table(eml_el, dist_url):
     """Remove .//dataset/dataTable branches from tree, except for the dataTable
     containing a .//physical/distribution/online/url/text() with the value of
-    'pkg_path'.
+    'dist_url'.
     """
-    keep_dt_el = dex.eml_types.get_data_table_by_package_id(eml_el, pkg_path)
-    dataset_el = dex.eml_types.first(eml_el, './/dataset')
+    keep_dt_el = dex.eml_extract.get_data_table_by_dist_url(eml_el, dist_url)
+    dataset_el = dex.eml_extract.first(eml_el, './/dataset')
     assert dataset_el is not None
     assert isinstance(dataset_el, lxml.etree._Element)
     for dt_el in dataset_el.xpath('.//dataTable'):
@@ -99,10 +96,10 @@ def _prune_columns(eml_el, col_list):
     # Empty column list means keep all columns
     if not col_list:
         return
-    attr_list_el = dex.eml_types.first(eml_el, './/attributeList')
+    attr_list_el = dex.eml_extract.first(eml_el, './/attributeList')
     col_set = set(col_list)
     for attr_el in attr_list_el.xpath(".//attribute"):
-        if dex.eml_types.first(attr_el, 'attributeName/text()') not in col_set:
+        if dex.eml_extract.first(attr_el, 'attributeName/text()') not in col_set:
             attr_list_el.remove(attr_el)
 
 

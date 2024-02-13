@@ -94,7 +94,7 @@ class DexCache:
     def refresh_all(self):
         for row in dex.db.query_db(
             """
-            select id, data_url, base_url, scope, identifier, version, entity
+            select id, dist_url, base_url, scope, identifier, version, entity
             from entity where id = 12
         """,
             tuple(),
@@ -103,8 +103,8 @@ class DexCache:
             pass
 
     def trigger(self, rid):
-        data_url = dex.db.get_data_url(rid)
-        refresh_fn('sample', data_url)
+        dist_url = dex.db.get_dist_url(rid)
+        refresh_fn('sample', dist_url)
         for fn in (
             'dex/profile',
             'dex/profile/doc',

@@ -1,16 +1,15 @@
-import contextlib
-import logging
 import io
+import logging
+
+# from flask import current_app as app
+import flask
 import pandas as pd
 
 import dex.csv_cache
 import dex.csv_parser
 import dex.eml_cache
-import dex.eml_types
+import dex.eml_extract
 import dex.util
-
-# from flask import current_app as app
-import flask
 
 log = logging.getLogger(__name__)
 
@@ -93,10 +92,9 @@ def debug(rid):
             'dialect': to_html(
                 dialect=dex.csv_parser.get_dialect_as_dict(ctx.dialect),
             ),
-            'derived_dtype_html': pd.DataFrame.from_dict(
-                {d['col_name']: d for d in column_list}
-            )
-            .style.applymap(highlight_types).to_html(),
+            'derived_dtype_html': pd.DataFrame.from_dict({d['col_name']: d for d in column_list})
+            .style.applymap(highlight_types)
+            .to_html(),
             'type_count_html': dict_to_html(type_count, 'Type', 'Count'),
             # 'number_type_count_html': dict_to_html(number_type_count, 'Type', 'Count'),
             'csv_row_count': dict_to_html(csv_row_count, 'Value', 'Count'),

@@ -1,4 +1,4 @@
-{% macro dexnavbar(entity_tup, rid, csv_name, portal_base, note_list ) %}
+{% macro dexnavbar(rid, data_url, pkg_id, csv_name, portal_base, note_list, is_on_pasta ) %}
   <script>
   let $ = jQuery.noConflict();
   </script>
@@ -27,7 +27,7 @@
       </div>
       <div class="navbar-collapse collapse" id="top-navbar">
         <ul class="nav navbar-nav">
-          {% if entity_tup and rid %}
+          {% if rid %}
             <li>
               <a id='nav_profile' class="nav-item nav-link nav-"
                  href="/dex/profile/{{ rid }}">Profile</a>
@@ -42,28 +42,40 @@
             </li>
             <li>
               <a id='nav_eml' class="nav-item nav-link"
-                 href="{{ portal_base }}/metadataviewer?packageid={{ entity_tup.scope_str }}.{{ entity_tup.identifier_int }}.{{ entity_tup.version_int }}">
-                EML
+                {% if is_on_pasta %}
+                  href="{{ portal_base }}/metadataviewer?packageid={{ [pkg_id.scope_str, pkg_id.id_str, pkg_id.ver_str] | join('.') }}"
+                {% else %}
+                  href="/dex/eml/{{ rid }}"
+                {% endif %}
+              >
+              EML
               </a>
             </li>
           {% endif %}
         </ul>
-        {% if entity_tup and rid %}
+        {% if rid %}
           <ul class="nav navbar-nav navbar-right">
             <li class="nav-tooltip">
-              <a href="{{ entity_tup.data_url }}" class="nav-item nav-link nav-download">
+              <a href="{{ data_url }}" class="nav-item nav-link nav-download">
                 Table:
                 {{ csv_name }}
               </a>
               <span class="nav-tooltip-text">Download this table</span>
             </li>
             <li class="nav-tooltip">
-              <a href="{{ portal_base }}/mapbrowse?scope={{ entity_tup.scope_str }}&identifier={{ entity_tup.identifier_int }}&revision={{ entity_tup.version_int }}"
-                 class="nav-item nav-link nav-download">
-                Package ID:
-                {{ [entity_tup.scope_str, entity_tup.identifier_int, entity_tup.version_int] | join('.') }}
-              </a>
-              <span class="nav-tooltip-text">View package in PASTA</span>
+              {% if is_on_pasta %}
+                <a href="{{ portal_base }}/mapbrowse?scope={{ pkg_id.scope_str }}&identifier={{ pkg_id.id_str }}&revision={{ pkg_id.ver_str }}"
+                   class="nav-item nav-link nav-download">
+                  Package ID:
+                  {{ [pkg_id.scope_str, pkg_id.id_str, pkg_id.ver_str] | join('.') }}
+                </a>
+                <span class="nav-tooltip-text">View package in PASTA</span>
+              {% else %}
+                <a class="nav-item nav-link nav-download">
+                  Package ID:
+                  {{ [pkg_id.scope_str, pkg_id.id_str, pkg_id.ver_str] | join('.') }}
+                </a>
+              {% endif %}
             </li>
           </ul>
         {% endif %}

@@ -2,12 +2,11 @@
 """
 
 import logging
-import pprint
 
 import flask
 
-import dex.db
 import dex.csv_cache
+import dex.db
 import dex.debug
 import dex.eml_cache
 import dex.pasta
@@ -52,9 +51,11 @@ def view(rid):
         eml_css=eml_css,
         # For the base template, should be included in all render_template() calls.
         rid=rid,
-        entity_tup=dex.db.get_entity_as_dict(rid),
+        data_url=dex.db.get_data_url(rid),
+        pkg_id=dex.eml_cache.get_pkg_id_dict(rid),
         csv_name=dex.eml_cache.get_csv_name(rid),
-        dbg=dex.debug.debug(rid),
         portal_base=None,
         note_list=[],
+        is_on_pasta=dex.pasta.is_on_pasta(dex.db.get_meta_url(rid)),
+        dbg=None,
     )

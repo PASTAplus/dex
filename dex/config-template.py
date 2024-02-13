@@ -126,7 +126,7 @@ CACHE_ROOT_DIR = first_existing(
 )
 
 # Paths to search for sample CSV files.
-CSV_ROOT_DIR = first_existing(
+LOCAL_PACKAGE_ROOT_DIR = first_existing(
     # Production
     '/pasta/data/backup/data1',
     # Dev / Staging

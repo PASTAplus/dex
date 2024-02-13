@@ -190,8 +190,8 @@ def save_gen(rid, key, obj_type, obj):
 
 
 def get_tag_str(rid, key, obj_type):
-    t = dex.db.get_entity(rid)
-    return f'{t.scope_str}.{t.identifier_int}.{t.version_int} ' f'key="{key}" type="{obj_type}"'
+    dist_url = dex.db.get_dist_url(rid)
+    return f'dist_url="{dist_url}" key="{key}" type="{obj_type}"'
 
 
 @contextlib.contextmanager
@@ -226,10 +226,12 @@ def delete_cache_file(rid, key, obj_type):
             log.debug(f"Deleting cache file: {cache_path.as_posix()}")
             cache_path.unlink()
 
+
 def flush_cache(rid):
     """Delete all cache files for the given rid"""
     cache_entity_root_path = _get_cache_entity_root_path(rid)
     shutil.rmtree(cache_entity_root_path.as_posix(), ignore_errors=True)
+
 
 def get_cache_path(rid, key, obj_type):
     """
@@ -256,7 +258,7 @@ def _get_cache_entity_root_path(rid):
     return pathlib.Path(
         flask.current_app.config['CACHE_ROOT_DIR'],
         dex.filesystem.get_safe_lossy_path_element(
-            dex.db.get_data_url(rid) if rid is not None else 'global'
+            dex.db.get_dist_url(rid) if rid is not None else 'global'
         ),
     ).resolve()
 

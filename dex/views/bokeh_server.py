@@ -2,12 +2,11 @@ import json
 import logging
 
 import bokeh.colors
+import bokeh.core.enums
 import bokeh.embed
 import bokeh.models
 import bokeh.palettes
 import bokeh.plotting
-import bokeh.core.enums
-
 import flask
 
 import dex.cache
@@ -30,6 +29,7 @@ THEME_DICT = {
 MARKER_TYPE_TUP = tuple(bokeh.core.enums.MarkerType)
 
 # TODO: Check if these functions can use the regular disk caching now.
+
 
 @bokeh_server.route("/xy-plot/<rid>/<width>/<parm_uri>")
 def xy_plot(rid, width, parm_uri):
@@ -77,7 +77,7 @@ def xy_plot(rid, width, parm_uri):
         tooltips=[
             ("Row", "$index"),
             ("(x,y)", "($x, $y)"),
-        ]
+        ],
     )
 
     # color_list = bokeh.palettes.inferno(len(parm_dict['y']))
@@ -91,15 +91,21 @@ def xy_plot(rid, width, parm_uri):
         color_str = color_list[y_idx]
 
         # All the markers in a scatter plot is a single glyph
-        glyph = bokeh.models.Scatter(x=csv_df.columns[x_col_idx], y=csv_df.columns[y_col_idx],
-                                     size=7, fill_color=color_str, marker=MARKER_TYPE_TUP[y_idx])
+        glyph = bokeh.models.Scatter(
+            x=csv_df.columns[x_col_idx],
+            y=csv_df.columns[y_col_idx],
+            size=7,
+            fill_color=color_str,
+            marker=MARKER_TYPE_TUP[y_idx],
+        )
         glyph_renderer = fig.add_glyph(source, glyph)
         legend_list = [glyph_renderer]
 
         if draw_lines_bool:
             # All the line segments in a plot is a single glyph
-            glyph = bokeh.models.Line(x=csv_df.columns[x_col_idx], y=csv_df.columns[y_col_idx],
-                                      line_color=color_str)
+            glyph = bokeh.models.Line(
+                x=csv_df.columns[x_col_idx], y=csv_df.columns[y_col_idx], line_color=color_str
+            )
             glyph_renderer = fig.add_glyph(source, glyph)
             legend_list.append(glyph_renderer)
 

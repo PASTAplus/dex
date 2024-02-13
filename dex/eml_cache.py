@@ -5,13 +5,12 @@ import logging
 
 import lxml.etree
 
-import dex.db
 import dex.cache
 import dex.csv_parser
-import dex.obj_bytes
-import dex.eml_types
-import dex.eml_types
+import dex.db
+import dex.eml_extract
 import dex.exc
+import dex.obj_bytes
 import dex.pasta
 import dex.util
 
@@ -55,7 +54,7 @@ def get_datetime_columns(rid):
     type_list = dex.csv_parser.get_derived_dtypes_from_eml(rid)
     dt_col_list = []
     for col_idx, dtype_dict in enumerate(type_list):
-        if dtype_dict['pandas_type'] == dex.eml_types.PandasType.DATETIME:
+        if dtype_dict['pandas_type'] == dex.eml_extract.PandasType.DATETIME:
             dt_col_list.append(dtype_dict)
     return dt_col_list
 
@@ -64,7 +63,7 @@ def get_categorical_columns(rid):
     type_list = dex.csv_parser.get_derived_dtypes_from_eml(rid)
     dt_col_list = []
     for col_idx, dtype_dict in enumerate(type_list):
-        if dtype_dict['pandas_type'] == dex.eml_types.PandasType.CATEGORY:
+        if dtype_dict['pandas_type'] == dex.eml_extract.PandasType.CATEGORY:
             dt_col_list.append(dtype_dict)
     return dt_col_list
 
@@ -101,11 +100,12 @@ def get_eml_as_highlighted_html(rid):
 # Read the EML attribute fragments that declare the types and other information for each
 # column in the CSV documents.
 
+
 # noinspection PyUnresolvedReferences
 # @dex.cache.disk('attributes-tree', 'etree')
 # TODO: Find best way to cache dict of etree.
 def get_attributes_as_etree(rid):
-    dt_el = get_data_table(rid)
+    dt_el = get_data_table_el(rid)
     return {
         # Using this pattern, of creating a dict with the column index as the key
         # since we can't be sure that the attributes will always be stored in column
@@ -117,40 +117,45 @@ def get_attributes_as_etree(rid):
 
 @dex.cache.disk('csv_name', 'text')
 def get_csv_name(rid):
-    dt_el = get_data_table(rid)
-    return dex.eml_types.first_str_orig(dt_el, './/physical/objectName/text()')
+    dt_el = get_data_table_el(rid)
+    return dex.eml_extract.first_str_orig(dt_el, './/physical/objectName/text()')
+
+
+# @dex.cache.disk('pkg_id_str', 'text')
+def get_pkg_id_str(rid):
+    """Return the Package ID for the given rid.
+
+    E.g., 'knb-lter-pie.41.4'
+    """
+    eml_el = get_eml_etree(rid)
+    return dex.eml_extract.first_str_orig(eml_el, '/eml:eml/@packageId')
+
+
+def get_pkg_id_dict(rid):
+    """Return the Package ID for the given rid as a dict.
+
+    E.g., {
+        scope_str: 'knb-lter-pie
+        id_str: 41
+        ver_str: 4
+    }
+    """
+    id_str = get_pkg_id_str(rid)
+    scope_str, id_str, ver_str = id_str.split('.')
+    return {
+        'scope_str': scope_str,
+        'id_str': id_str,
+        'ver_str': ver_str,
+    }
 
 
 # @dex.cache.disk('datatable', 'etree')
-def get_data_table(rid):
-    entity_tup = dex.db.get_entity(rid)
-    pkg_path = dex.pasta.get_pkg_id_as_url(entity_tup)
+def get_data_table_el(rid):
+    dist_url = dex.db.get_dist_url(rid)
     eml_el = get_eml_etree(rid)
-    dt_el = dex.eml_types.get_data_table_by_package_id(eml_el, pkg_path)
-    log.debug(f'dt_el="{dex.util.get_etree_as_pretty_printed_xml(dt_el)}"')
+    dt_el = dex.eml_extract.get_data_table_by_dist_url(eml_el, dist_url)
+    # log.debug(f'dt_el="{dex.util.get_etree_as_pretty_printed_xml(dt_el)}"')
     return dt_el
-
-
-def is_local_csv_with_eml(entity_tup):
-    """Return True if {entity_tup} is for a data object that has an associated
-    EML doc in the local filesystem package store, and the EML doc has a description
-    for the data object, and the description includes a dataTable section.
-    """
-    eml_path = dex.pasta.get_eml_path(entity_tup)
-    pkg_path = dex.pasta.get_pkg_id_as_url(entity_tup)
-    try:
-        eml_el = lxml.etree.parse(eml_path.as_posix())
-    except Exception as e:
-        log.error(f'Invalid EML doc in local store: {eml_path}. error: {e}')
-        return False
-    try:
-        dex.eml_types.get_data_table_by_package_id(eml_el, pkg_path)
-    except dex.exc.EMLError:
-        return False
-    return True
-
-
-# Full EML
 
 
 @dex.cache.disk('eml', 'xml')
@@ -161,8 +166,10 @@ def get_eml_xml(rid):
 
 @dex.cache.disk('eml', 'etree')
 def get_eml_etree(rid):
-    # if isinstance(rid, pathlib.Path):
-    #     eml_path = rid
-    # else:
     eml_path = dex.obj_bytes.open_eml(rid)
-    return lxml.etree.parse(eml_path.as_posix())
+    try:
+        return lxml.etree.parse(eml_path.as_posix())
+    except lxml.etree.LxmlError as e:
+        raise dex.exc.EMLError(
+            f'Unable to parse EML. error="{str(e)}". path="{eml_path.as_posix()}"'
+        )

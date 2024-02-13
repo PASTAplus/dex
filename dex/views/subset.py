@@ -8,7 +8,6 @@ import re
 import zipfile
 
 import flask
-import json
 import pandas as pd
 
 import dex.csv_cache
@@ -16,8 +15,8 @@ import dex.csv_parser
 import dex.db
 import dex.debug
 import dex.eml_cache
+import dex.eml_extract
 import dex.eml_subset
-import dex.eml_types
 import dex.pasta
 import dex.util
 import dex.views.util
@@ -63,10 +62,10 @@ def subset(rid):
     )
     return flask.render_template(
         "subset.html",
-        data_url=dex.db.get_entity(rid).data_url,
+        dist_url=dex.db.get_entity(rid).dist_url,
         g_dict=dict(
             rid=rid,
-            entity_tup=dex.db.get_entity_as_dict(rid),
+            pkg_id=dex.eml_cache.get_pkg_id_dict(rid),
             row_count=len(csv_df),
             column_list=column_list,
             cat_col_map=cat_col_map,
@@ -82,11 +81,13 @@ def subset(rid):
         cat_col_map=cat_col_map,
         # For the base template, should be included in all render_template() calls.
         rid=rid,
-        entity_tup=dex.db.get_entity_as_dict(rid),
+        data_url=dex.db.get_data_url(rid),
+        pkg_id=dex.eml_cache.get_pkg_id_dict(rid),
         csv_name=dex.eml_cache.get_csv_name(rid),
-        dbg=dex.debug.debug(rid),
-        portal_base=dex.pasta.get_portal_base_by_entity(dex.db.get_entity(rid)),
+        portal_base=dex.pasta.get_portal_base(dex.db.get_dist_url(rid)),
         note_list=note_list,
+        is_on_pasta=dex.pasta.is_on_pasta(dex.db.get_meta_url(rid)),
+        dbg=dex.debug.debug(rid),
     )
 
 
@@ -265,7 +266,7 @@ def download(rid):
     safe_base_path = pathlib.Path(safe_name_str)
 
     return send_zip(
-        zip_name=dex.db.get_entity_as_package_id(rid),
+        zip_name=dex.eml_cache.get_pkg_id_str(rid),
         zip_dict={
             safe_base_path.with_suffix('.csv').name: csv_bytes,
             safe_base_path.with_suffix('.subset.json').name: json_bytes,

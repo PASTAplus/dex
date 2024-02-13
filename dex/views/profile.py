@@ -1,18 +1,17 @@
 import logging
 
 import flask
-import json
+import ydata_profiling
 from flask import current_app as app
 
-import ydata_profiling
-
-import dex.db
 import dex.cache
 import dex.csv_cache
 import dex.csv_parser
-import dex.obj_bytes
+import dex.db
 import dex.debug
 import dex.eml_cache
+import dex.obj_bytes
+import dex.pasta
 import dex.util
 
 log = logging.getLogger(__name__)
@@ -46,11 +45,13 @@ def profile(rid):
         ),
         # For the base template, should be included in all render_template() calls.
         rid=rid,
-        entity_tup=dex.db.get_entity_as_dict(rid),
+        data_url=dex.db.get_data_url(rid),
+        pkg_id=dex.eml_cache.get_pkg_id_dict(rid),
         csv_name=dex.eml_cache.get_csv_name(rid),
-        dbg=dex.debug.debug(rid),
-        portal_base=dex.pasta.get_portal_base_by_entity(dex.db.get_entity(rid)),
+        portal_base=dex.pasta.get_portal_base(dex.db.get_dist_url(rid)),
         note_list=note_list,
+        is_on_pasta=dex.pasta.is_on_pasta(dex.db.get_meta_url(rid)),
+        # dbg=dex.debug.debug(rid),
     )
 
 

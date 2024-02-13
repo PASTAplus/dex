@@ -103,17 +103,17 @@
               {{ '{:,}'.format(csv_dict.size) }}
             </td>
             <td>
-              {{ csv_dict.entity.scope_str }}
+              {{ csv_dict.scope_str }}
             </td>
             <td>
-              {{ csv_dict.entity.identifier_int }}
+              {{ csv_dict.id_str }}
             </td>
             <td>
-              {{ csv_dict.entity.version_int }}
+              {{ csv_dict.ver_str }}
             </td>
             <td class='mono'>
-              <a href='/{{ csv_dict.entity.data_url|urlencode }}'>
-                {{ csv_dict.entity.entity_str }}
+              <a href='/sample/{{ csv_dict.dist_url | urlencode }}'>
+                {{ csv_dict.entity_str }}
               </a>
             </td>
           </tr>

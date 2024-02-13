@@ -1,7 +1,7 @@
 """EML type utils
 
-This module works directly with EML XML objects in the lxml.etree domain, and so can
-be used without having an `rid`.
+This module works contains methods to extract values directly with EML XML objects in
+the lxml.etree domain, and so can be used without having an `rid`.
 
 This module should not require cache access and so, should not import `dex.eml_cache`
 or `dex.cache`.
@@ -10,6 +10,8 @@ import csv
 import datetime
 import enum
 import logging
+
+import lxml.etree
 
 import dex.eml_date_fmt
 import dex.exc
@@ -193,8 +195,35 @@ def get_date_fmt_str(attr_el, col_name):
     return first_str(attr_el, './/measurementScale/dateTime/formatString/text()')
 
 
-def is_numeric(pandas_type):
-    return pandas_type in (PandasType.FLOAT, PandasType.INT)
+def get_data_table_list(root_el):
+    """Return list of dataTable elements in EML doc"""
+    if not root_el:
+        return []
+    return root_el.xpath('//dataset/dataTable')
+
+
+def get_data_table_by_dist_url(eml_el, dist_url):
+    # Each version of EML has a different namespace, so we skip the root element, and
+    # perform a relative search.
+    xpath = lxml.etree.XPath(
+        # The function attribute is not always included, so we don't check for it.
+        '//dataset/dataTable/physical/distribution/online/url[text()=$url]/ancestor::dataTable',
+    )
+    dt_el = xpath(eml_el, url=dist_url)
+    if dt_el:
+        return dt_el[0]
+    raise dex.exc.EMLError(f'Missing DataTable in EML. dist_url="{dist_url}"')
+
+
+def get_dist_url_list(eml_el):
+    """Return a list of distribution URLs in the EML doc"""
+    el = eml_el.xpath('//dataset/dataTable/physical/distribution/online/url/text()')
+    return [str(x) for x in el] if el else []
+
+
+#
+# Xpath utils
+#
 
 
 def has_el(el, el_name):
@@ -205,9 +234,12 @@ def has_el(el, el_name):
 def first(el, xpath):
     """Return the first match to the xpath if there was a match, else None. Can this be
     done directly in xpath 1.0?
+
+    Namespaces are supported in the xpath if el is the root element of the EML doc.
     """
     # log.debug(f'first() xpath={xpath} ...')
-    res_el = el.xpath(f'({xpath})[1]')
+    nsmap = el.getroot().nsmap if hasattr(el, 'getroot') else {}
+    res_el = el.xpath(f'({xpath})[1]', namespaces=nsmap)
     try:
         el = res_el[0]
     except IndexError:
@@ -253,20 +285,3 @@ def multiple_str(el, text_xpath):
 
 def has(el, xpath):
     return first(el, xpath) is not None
-
-
-def get_data_table_list(root_el):
-    """Return list of dataTable elements in EML doc"""
-    if not root_el:
-        return []
-    return root_el.xpath('.//dataset/dataTable')
-
-
-def get_data_table_by_package_id(el, pkg_path):
-    for dt_el in el.xpath('.//dataset/dataTable'):
-        url = first_str(dt_el, './/physical/distribution/online/url/text()')
-        # log.debug(f'{url}')
-        # log.debug(f'{pkg_path}')
-        if url and url.lower().endswith(pkg_path.lower()):
-            return dt_el
-    raise dex.exc.EMLError(f'Missing DataTable in EML. pkg_path="{pkg_path}"')

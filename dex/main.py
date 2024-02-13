@@ -7,8 +7,6 @@ import logging.config
 import mimetypes
 import os
 import pathlib
-import random
-import time
 
 import flask
 import flask.logging
@@ -21,7 +19,9 @@ import dex.db
 import dex.eml_cache
 import dex.exc
 import dex.pasta
+import dex.sample
 import dex.util
+import dex.views.api
 import dex.views.bokeh_server
 import dex.views.eml
 import dex.views.plot
@@ -60,6 +60,7 @@ def create_app():
     _app.register_blueprint(dex.views.subset.subset_blueprint)
     _app.register_blueprint(dex.views.plot.plot_blueprint)
     _app.register_blueprint(dex.views.eml.eml_blueprint)
+    _app.register_blueprint(dex.views.api.api_blueprint)
 
     def handle_redirect_to_index(_):
         return flask.redirect("/", 302)
@@ -103,6 +104,11 @@ def create_app():
             response = flask.make_response(flask.redirect(flask.request.base_url))
             response.set_cookie('debug-panel', str(debug_is_enabled).lower())
 
+        # Add CORS headers to all responses
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+
         return response
 
     @_app.route("/favicon.ico")
@@ -114,23 +120,25 @@ def create_app():
 
     @_app.route("/", methods=["GET"])
     def index_get():
-        log.debug('Rendering index page')
         return flask.render_template(
             'index.html',
             g_dict={},
-            csv_list=get_sample_data_entity_list(None),
+            csv_list=dex.sample.get_sample_data_entity_list(None),
             # For the base template, should be included in all render_template() calls.
             rid=None,
-            entity_tup=None,
+            data_url=None,
+            pkg_id=None,
             csv_name=None,
-            dbg=None,
             portal_base=None,
             note_list=[],
+            is_on_pasta=None,
+            dbg=None,
         )
 
-    @_app.route("/<path:data_url>", methods=["GET"])
-    def index_get_url(data_url):
-        rid = dex.db.add_entity(data_url)
+    @_app.route("/<path:dist_url>", methods=["GET"])
+    def index_get_url(dist_url):
+        meta_url = dex.pasta.get_meta_url(dist_url)
+        rid = dex.db.add_entity(dist_url, meta_url, dist_url)
         return flask.redirect(f'/dex/profile/{rid}')
 
     @_app.route("/<path:package_id>", methods=["DELETE"])
@@ -157,64 +165,9 @@ def create_app():
         log.info(msg)
         return msg, status_code
 
-    @dex.cache.disk("sample_data_entity_list", "list")
-    def get_sample_data_entity_list(_rid, k=200):
-        # return []
-        entity_list = get_data_entity_list(None)
-        if len(entity_list) >= k:
-            return sorted(random.sample(entity_list, k), key=lambda d: d['size'])
-        return entity_list
-
-    @dex.cache.disk("data_entity_list", "list")
-    def get_data_entity_list(_rid):
-        data_entity_list = []
-        csv_path = _app.config['CSV_ROOT_DIR']
-        log.debug(f'Looking for local packages to use as samples at: {csv_path.as_posix()}')
-
-        file_count = 0
-
-        last_ts = time.time()
-        for abs_path in csv_path.glob('**/*'):
-            abs_path: pathlib.Path
-            # rel_path = abs_path.relative_to(csv_path)
-            if time.time() - last_ts > 1.0:
-                last_ts = time.time()
-                log.debug(
-                    f'Local CSV discovery: '
-                    f'Files checked: {file_count}  Found CSVs: {len(data_entity_list)}'
-                )
-            if not abs_path.is_file():
-                # log.debug('Rejected, not a regular file')
-                continue
-            file_count += 1
-            if not abs_path.stat().st_size >= 10000:
-                # log.debug('Rejected, too small to make for an interesting demo')
-                continue
-            try:
-                entity_tup = dex.pasta.get_entity_by_local_path(abs_path)
-            except dex.exc.DexError:
-                continue
-            if not dex.eml_cache.is_local_csv_with_eml(entity_tup):
-                # log.debug('Rejected, not a CSV')
-                continue
-            data_entity_list.append(
-                dict(
-                    entity=entity_tup,
-                    size=abs_path.stat().st_size,
-                    abs_path=abs_path,
-                )
-            )
-
-        log.info(
-            f'Local CSV discovery: '
-            f'Files checked: {file_count}  Found CSVs: {len(data_entity_list)}'
-        )
-
-        return sorted(data_entity_list, key=lambda d: d['size'])
-
-    @_app.route("/sample/<path:data_url>", methods=["GET"])
-    def sample_get(data_url):
-        rid = dex.db.add_entity(data_url)
+    @_app.route("/sample/<path:dist_url>", methods=["GET"])
+    def sample_get(dist_url):
+        rid = dex.db.add_entity(dist_url, None, None)
         return flask.redirect(f'/dex/profile/{rid}')
 
     @_app.route("/", methods=["POST"])

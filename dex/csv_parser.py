@@ -12,7 +12,7 @@ from flask import current_app as app
 
 import dex.db
 import dex.eml_cache
-import dex.eml_types
+import dex.eml_extract
 import dex.exc
 import dex.obj_bytes
 import dex.pasta
@@ -33,13 +33,13 @@ def get_parsed_csv_with_context(rid):
 # @dex.cache.disk("eml-ctx", "pickle")
 def get_eml_ctx(rid):
     """Get the EML information that is required for parsing and processing the CSV."""
-    dt_el = dex.eml_cache.get_data_table(rid)
-    column_list = dex.eml_types.get_col_attr_list(dt_el)
+    dt_el = dex.eml_cache.get_data_table_el(rid)
+    column_list = dex.eml_extract.get_col_attr_list(dt_el)
     ctx = dict(
         column_list=column_list,
-        dialect=dex.eml_types.get_dialect(dt_el),
-        header_line_count=dex.eml_types.get_header_line_count(dt_el),
-        footer_line_count=dex.eml_types.get_footer_line_count(dt_el),
+        dialect=dex.eml_extract.get_dialect(dt_el),
+        header_line_count=dex.eml_extract.get_header_line_count(dt_el),
+        footer_line_count=dex.eml_extract.get_footer_line_count(dt_el),
         parser_dict=get_parser_dict(column_list),
         formatter_dict=get_formatter_dict(column_list),
         col_name_list=[d['col_name'] for d in column_list],
@@ -57,6 +57,7 @@ def get_dialect_as_dict(dialect):
 
 def get_parser_dict(column_list):
     return {eml_dict['col_idx']: get_parser(eml_dict) for eml_dict in column_list}
+
 
 def get_formatter_dict(column_list):
     return {eml_dict['col_idx']: get_formatter(eml_dict) for eml_dict in column_list}
@@ -103,15 +104,15 @@ def get_parser(dtype_dict):
 
     d = N(**dtype_dict)
 
-    if d.pandas_type == dex.eml_types.PandasType.FLOAT:
+    if d.pandas_type == dex.eml_extract.PandasType.FLOAT:
         return float_parser
-    elif d.pandas_type == dex.eml_types.PandasType.INT:
+    elif d.pandas_type == dex.eml_extract.PandasType.INT:
         return int_parser
-    elif d.pandas_type == dex.eml_types.PandasType.CATEGORY:
+    elif d.pandas_type == dex.eml_extract.PandasType.CATEGORY:
         return string_parser
-    elif d.pandas_type == dex.eml_types.PandasType.DATETIME:
+    elif d.pandas_type == dex.eml_extract.PandasType.DATETIME:
         return d.date_fmt_dict['parser']
-    elif d.pandas_type == dex.eml_types.PandasType.STRING:
+    elif d.pandas_type == dex.eml_extract.PandasType.STRING:
         return string_parser
     else:
         raise AssertionError(f'Invalid PandasType: {d.pandas_type}')
@@ -132,23 +133,23 @@ def get_formatter(dtype_dict):
 
     d = N(**dtype_dict)
 
-    if d.pandas_type == dex.eml_types.PandasType.FLOAT:
+    if d.pandas_type == dex.eml_extract.PandasType.FLOAT:
         return float_formatter
-    elif d.pandas_type == dex.eml_types.PandasType.INT:
+    elif d.pandas_type == dex.eml_extract.PandasType.INT:
         return int_formatter
-    elif d.pandas_type == dex.eml_types.PandasType.CATEGORY:
+    elif d.pandas_type == dex.eml_extract.PandasType.CATEGORY:
         return string_formatter
-    elif d.pandas_type == dex.eml_types.PandasType.DATETIME:
+    elif d.pandas_type == dex.eml_extract.PandasType.DATETIME:
         return d.date_fmt_dict['formatter']
-    elif d.pandas_type == dex.eml_types.PandasType.STRING:
+    elif d.pandas_type == dex.eml_extract.PandasType.STRING:
         return string_formatter
     else:
         raise AssertionError(f'Invalid PandasType: {d.pandas_type}')
 
 
 def get_derived_dtypes_from_eml(rid):
-    dt_el = dex.eml_cache.get_data_table(rid)
-    return dex.eml_types.get_col_attr_list(dt_el)
+    dt_el = dex.eml_cache.get_data_table_el(rid)
+    return dex.eml_extract.get_col_attr_list(dt_el)
 
 
 # @dex.cache.disk("parsed-csv", "df")
@@ -243,19 +244,21 @@ def _get_csv(rid, eml_ctx, do_parse):
 
     # Parse the CSV
     if do_parse:
-        arg_dict.update(dict(
-            converters=eml_ctx['parser_dict'],
-            # true_values=None,
-            # false_values=None,
-            # Not required when setting skiprows and skipfooter. Read the number of rows declared in the EML
-            # nrows=max_rows,
-            na_filter=True,
-            na_values=eml_ctx['missing_code_dict'],
-            # Add common NaNs:
-            # ‘’, ‘#N/A’, ‘#N/A N/A’, ‘#NA’, ‘-1.#IND’, ‘-1.#QNAN’, ‘-NaN’, ‘-nan’, ‘1.#IND’, ‘1.#QNAN’,
-            # ‘<NA>’, ‘N/A’, ‘NA’, ‘NULL’, ‘NaN’, ‘n/a’, ‘nan’, ‘null’
-            keep_default_na=True,
-        ))
+        arg_dict.update(
+            dict(
+                converters=eml_ctx['parser_dict'],
+                # true_values=None,
+                # false_values=None,
+                # Not required when setting skiprows and skipfooter. Read the number of rows declared in the EML
+                # nrows=max_rows,
+                na_filter=True,
+                na_values=eml_ctx['missing_code_dict'],
+                # Add common NaNs:
+                # ‘’, ‘#N/A’, ‘#N/A N/A’, ‘#NA’, ‘-1.#IND’, ‘-1.#QNAN’, ‘-NaN’, ‘-nan’, ‘1.#IND’, ‘1.#QNAN’,
+                # ‘<NA>’, ‘N/A’, ‘NA’, ‘NULL’, ‘NaN’, ‘n/a’, ‘nan’, ‘null’
+                keep_default_na=True,
+            )
+        )
 
     # Raw CSV
     else:
@@ -267,7 +270,6 @@ def _get_csv(rid, eml_ctx, do_parse):
                 dtype=str,
                 na_filter=False,
                 na_values=[],
-
             )
         )
 
@@ -298,7 +300,6 @@ def _get_csv(rid, eml_ctx, do_parse):
     # The initially generated DF is fragmented and may cause performance warnings.
     # Returning a copy creates a defragmented version of the DF.
     return csv_df.copy()
-
 
 
 def apply_nan(df, nan_set: set):

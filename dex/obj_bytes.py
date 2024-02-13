@@ -3,7 +3,7 @@ read.
 
 The CSV and EML bytes may be available at different source locations, to which bandwidth
 and access methods differ (typically, local temporary filesystem cache, local filesystem
-package store, and the PASTA web service, each for either a production or test instance
+package store, and the PASTA web service), each for either a production or test instance
 of the PASTA service. We also support compressed objects, which variations in naming and
 compression algorithms. This module abstracts those differences out by handling the
 initial search through the possible sources, performing downloads and caching, and on
@@ -54,96 +54,96 @@ import dex.pasta
 log = logging.getLogger(__name__)
 
 
-def open_csv(rid):
-    """Given a PASTA entity tuple for a CSV in the form of a Row ID, return a stream
-    of object bytes.
-
-    The returned value is always a seekable stream holding the bytes of the CSV,
-    regardless of where the bytes are located, accessed, decoded or decompressed.
-
-    If the object bytes cannot be found, raises `dex.exc.CacheError`.
-    """
-    entity_tup = dex.db.get_entity(rid)
-    _log(entity_tup, False, f'Resolving location for object bytes')
-    return _open_obj(entity_tup, is_eml=False)
-
-
 def open_eml(rid):
-    """Given a PASTA entity tuple for a CSV in the form of a Row ID, return a stream
-    of object bytes.
+    """Given a Row ID, return a pathlib.Path to the EML file.
 
-    The returned value is always a seekable stream holding the bytes of the CSV,
-    regardless of where the bytes are located, how they are accessed, decoded or
-    decompressed.
+    The Path is always a valid path to a local file. If the bytes are not already
+    available locally, they are downloaded to a temporary cache, and the return Path
+    points to that location.
 
     If the object bytes cannot be found, raises `dex.exc.CacheError`.
     """
     entity_tup = dex.db.get_entity(rid)
-    _log(entity_tup, True, 'Resolving location for object bytes')
-    return _open_obj(entity_tup, is_eml=True)
+    _log(entity_tup.dist_url, 'Resolving location for metadata object bytes')
+    return _open_obj(entity_tup.dist_url, entity_tup.meta_url, is_eml=True)
 
 
-def _open_obj(entity_tup, is_eml):
+def open_csv(rid):
+    """Like open_eml(), only for a data (CSV) object instead of a metadata (EML) object."""
+    entity_tup = dex.db.get_entity(rid)
+    _log(entity_tup.dist_url, f'Resolving location for data object bytes')
+    return _open_obj(entity_tup.dist_url, entity_tup.data_url, is_eml=False)
+
+
+def _open_obj(dist_url, obj_url, is_eml):
     """Search for object in locations going from fastest to slowest access to the object
     bytes.
     """
-    obj = _filesystem_cache(entity_tup, is_eml)
-    if obj:
-        return obj
-    obj = _local_package_store(entity_tup, is_eml)
-    if obj:
-        return obj
-    obj = _pasta_service(entity_tup, is_eml)
-    if obj:
-        return obj
+    if not obj_url:
+        obj_path = _local_sample_store(dist_url, is_eml)
+        if obj_path:
+            return obj_path
+    else:
+        obj_path = _filesystem_cache(dist_url, obj_url)
+        if obj_path:
+            return obj_path
+        obj_path = _local_package_store(dist_url, obj_url, is_eml)
+        if obj_path:
+            return obj_path
+        obj_path = _remote_url(dist_url, obj_url)
+        if obj_path:
+            return obj_path
     raise dex.exc.CacheError(
-        f'Cannot find bytes for object. entity_tup="{entity_tup}" is_eml="{is_eml}"'
+        f'Cannot find bytes for object. dist_url, obj_url="{dist_url, obj_url}""'
     )
 
 
-def _filesystem_cache(entity_tup, is_eml):
-    _log(entity_tup, is_eml, 'Checking filesystem cache')
-    return _get_existing_path(_get_cache_path(entity_tup, is_eml))
-
-
-def _local_package_store(entity_tup, is_eml):
-    if entity_tup.base_url != app.config['PASTA_BASE_URL']:
-        _log(entity_tup, is_eml, 'Skipped local file lookup')
-        return
-    _log(entity_tup, is_eml, 'Checking filesystem package store')
-    return _get_existing_path(_get_package_store_path(entity_tup, is_eml))
-
-
-def _pasta_service(entity_tup, is_eml):
-    _log(entity_tup, is_eml, 'Checking PASTA web service')
-    return _download_through_cache(entity_tup, is_eml)
-
-
-def _download_through_cache(entity_tup, is_eml):
-    """Download object and return opened stream."""
-    _log(entity_tup, is_eml, 'Downloading from PASTA service')
-
-    obj_path = _get_cache_path(entity_tup, is_eml)
-    if _exists_and_non_zero(obj_path):
+def _filesystem_cache(dist_url, obj_url):
+    _log(obj_url, 'Checking filesystem cache')
+    obj_path = _get_cache_path(dist_url, obj_url)
+    if _is_valid(obj_path):
         return obj_path
 
+
+def _local_package_store(dist_url, obj_url, is_eml):
+    if not dex.pasta.get_portal_base(dist_url) != app.config['PASTA_BASE_URL']:
+        _log(
+            obj_url,
+            'Skipped local package store lookup (package is in another environment)',
+        )
+        return
+    _log(obj_url, 'Checking local package store')
+    fn = dex.pasta.get_local_package_meta_path if is_eml else dex.pasta.get_local_package_data_path
+    obj_path = fn(dist_url)
+    if _is_valid(obj_path):
+        return obj_path
+
+
+def _local_sample_store(dist_url, is_eml):
+    _log(dist_url, 'Checking local sample store')
+    fn = dex.pasta.get_local_sample_meta_path if is_eml else dex.pasta.get_local_sample_data_path
+    obj_path = fn(dist_url)
+    if _is_valid(obj_path):
+        return obj_path
+
+
+def _remote_url(dist_url, obj_url):
+    _log(obj_url, 'Downloading object bytes')
+    obj_path = _get_cache_path(dist_url, obj_url)
     _limit_cache_size()
-
-    obj_tmp_path = _get_cache_path(entity_tup, is_eml)
-    obj_tmp_path.parent.mkdir(0o755, parents=True, exist_ok=True)
-    obj_url = _get_obj_url(entity_tup, is_eml)
-
+    obj_path.parent.mkdir(0o755, parents=True, exist_ok=True)
+    obj_tmp_path = _get_cache_tmp_path(dist_url, obj_url)
     with obj_tmp_path.open('wb') as f:
         with requests.get(obj_url, stream=True) as r:
             r.raise_for_status()
             # This is a high performance way of copying a stream.
             shutil.copyfileobj(r.raw, f)
-
     if not r.ok:
-        raise dex.exc.CacheError(f"Unable to download: {obj_url}")
-
+        msg_str = f'Failed to download object bytes: {r.status_code} {r.reason}'
+        _log(obj_url, msg_str)
+        raise dex.exc.CacheError(msg_str)
+    obj_path.unlink(missing_ok=True)
     obj_tmp_path.rename(obj_path)
-
     return obj_path
 
 
@@ -158,42 +158,20 @@ def _limit_cache_size():
         path_list.remove(oldest_path)
 
 
-def _log(entity_tup, is_eml, msg_str):
-    log.debug(f'{entity_tup.data_url} {"EML" if is_eml else "CSV"}: {msg_str}')
+def _get_cache_path(dist_url, obj_url):
+    return app.config["TMP_CACHE_ROOT"] / dex.filesystem.get_safe_lossy_path(dist_url, obj_url)
 
 
-def _get_obj_url(entity_tup, is_eml):
-    if is_eml:
-        return dex.pasta.get_eml_url(entity_tup)
-    else:
-        return dex.pasta.get_data_url(entity_tup)
+def _get_cache_tmp_path(dist_url, obj_url):
+    return pathlib.Path(_get_cache_path(dist_url, obj_url).as_posix() + '.tmp')
 
 
-def _get_cache_path(entity_tup, is_eml):
-    return app.config["TMP_CACHE_ROOT"] / pathlib.Path(
-        dex.filesystem.get_safe_reversible_path_element(
-            entity_tup.data_url + ('.eml' if is_eml else '.csv')
-        )
-    )
-
-
-def _get_cache_tmp_path(entity_tup, is_eml):
-    return _get_cache_path(entity_tup, is_eml) + '.csv'
-
-
-def _get_package_store_path(entity_tup, is_eml):
-    if is_eml:
-        return dex.pasta.get_eml_path(entity_tup)
-    else:
-        return dex.pasta.get_data_path(entity_tup)
-
-
-def _get_existing_path(obj_path):
-    if _exists_and_non_zero(obj_path):
-        return obj_path
-
-
-def _exists_and_non_zero(obj_path):
+def _is_valid(obj_path):
     is_found = obj_path.exists() and obj_path.stat().st_size
-    log.debug(f'{"Found object bytes" if is_found else "Invalid path"}: {obj_path.as_posix()}')
+    if is_found:
+        _log(obj_path.as_posix(), 'Found object bytes')
     return is_found
+
+
+def _log(obj_url, msg_str):
+    log.debug(f'{msg_str}: {obj_url}')

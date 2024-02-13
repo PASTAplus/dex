@@ -15,7 +15,7 @@ import dex.db
 import dex.main
 import dex.pasta
 import dex.csv_parser
-import dex.eml_types
+import dex.eml_extract
 
 DATA_URL_1 = 'https://pasta-d.lternet.edu/package/data/eml/knb-lter-cce/72/2/f12ac76be131821d245316854f7ddf44'
 
@@ -97,8 +97,8 @@ def csv_root(docs_path, config):
     """Set the root path for the CSV samples to the tests/test_docs dir, and return the
     dir.
     """
-    config['CSV_ROOT_DIR'] = docs_path
-    return config['CSV_ROOT_DIR']
+    config['LOCAL_PACKAGE_ROOT_DIR'] = docs_path
+    return config['LOCAL_PACKAGE_ROOT_DIR']
 
 
 @pytest.fixture
@@ -110,17 +110,12 @@ def rid(enable_cache, csv_root):
 
 @pytest.fixture
 def csv_path(entity_tup):
-    return dex.pasta.get_data_path(entity_tup)
+    return dex.pasta.get_local_package_data_path(entity_tup)
 
 
 @pytest.fixture
 def dialect(csv_path):
-    return dex.eml_types.get_dialect(csv_path)
-
-
-@pytest.fixture
-def entity_tup():
-    return dex.pasta.get_entity_by_data_url(DATA_URL_1)
+    return dex.eml_extract.get_dialect(csv_path)
 
 
 @pytest.fixture

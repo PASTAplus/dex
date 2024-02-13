@@ -8,7 +8,7 @@ from flask import current_app as app
 import dex.cache
 import dex.csv_parser
 import dex.eml_cache
-import dex.eml_types
+import dex.eml_extract
 import dex.exc
 import dex.obj_bytes
 import dex.pasta

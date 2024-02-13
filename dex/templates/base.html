@@ -80,6 +80,7 @@
    * @property {Object} table_id
    * @property {Object} ver_str
    * @property {Object} note_list
+   * @property {Object} is_on_pasta
    */
   const g = JSON.parse('{{ g_dict | tojson }}')
   </script>
@@ -124,7 +125,7 @@
 {#<script type='module' src='./util.js'></script>#}
 
 <div id='sticky-section'>
-  {{ navbar.dexnavbar(entity_tup, rid, csv_name, portal_base, note_list ) }}
+  {{ navbar.dexnavbar(rid, data_url, pkg_id, csv_name, portal_base, note_list, is_on_pasta ) }}
   {% if g.debug_panel and dbg %}
     {{ debug.debug_panel(dbg) }}
   {% endif %}

@@ -6,9 +6,9 @@ let $ = jQuery.noConflict();
 async function post_form(v)
 {
   let filename = (
-      `${g.entity_tup.scope_str}.` +
-      `${g.entity_tup.identifier_int}.` +
-      `${g.entity_tup.version_int}.csv`
+      `${g.pkg_id.scope_str}.` +
+      `${g.pkg_id.id_str}.` +
+      `${g.pkg_id.ver_str}.csv`
   );
   fetch(`#`, {
     mode: 'no-cors',
