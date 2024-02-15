@@ -43,3 +43,50 @@ curl -X DELETE https://dex-d.edirepository.org/https%3A%2F%2Fpasta-d.lternet.edu
 ```
 
 Note that the package ID is URL-encoded and that package scope, identifier and revision are all required, and separated by slashes.
+
+
+### Open DeX with external data and metadata
+
+DeX can be opened by providing links to a data table in CSV format, along with its associated metadata in EML format. DeX will download the data and metadata from the provided locations.
+
+This API is used by posting a JSON document with the required information to `dex/api/preview`. DeX will return an identifier, which the browser can then use to form the complete URL to open.
+
+Example JavaScript event handler for a button that opens DeX:
+
+```javascript
+window.onload = function () {
+  document.getElementById('open-dex').addEventListener('click', function () {
+    // Base URL for the DeX instance to use
+    let dexBaseUrl = 'https://dex-d.edirepository.org';
+    let data = {
+      // Link to metadata document in EML format
+      eml: 'https://pasta-s.lternet.edu/package/metadata/eml/edi/5/1',
+      // Link to data table in CSV (or closely related) format
+      csv: 'https://pasta-s.lternet.edu/package/data/eml/edi/5/1/88e508f7d25a90aa25b0159608187076',
+      // As a single EML may contain metadata for multiple CSVs, this value is required and must
+      // match the physical/distribution/online/url of the section in the EML which describes the
+      // table.
+      dist: 'https://pasta-s.lternet.edu/package/data/eml/edi/5/1/88e508f7d25a90aa25b0159608187076',
+    };
+
+    let options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data),
+    };
+
+    fetch(`${dexBaseUrl}/dex/api/preview`, options)
+        .then(response => {
+          return response.text()
+        })
+        .then(body => {
+          // Open DeX in new tab
+          window.open(`${dexBaseUrl}/dex/profile/${body}`);
+        })
+        .catch(error => alert(error))
+    ;
+  });
+};
+```
