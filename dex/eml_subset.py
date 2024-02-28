@@ -5,9 +5,6 @@ import logging
 
 import lxml.etree
 
-import db
-
-# import dex.cache
 import dex.csv_parser
 import dex.db
 import dex.eml_cache
@@ -50,7 +47,7 @@ def create_subset_eml(
 ):
     """Create EML doc representing a CSV subset"""
     eml_el = dex.eml_cache.get_eml_etree(rid)
-    dist_url = db.get_dist_url(rid)
+    dist_url = dex.db.get_dist_url(rid)
     _subset_eml(eml_el, dist_url, row_count, byte_count, md5_checksum, col_list)
     return dex.util.get_etree_as_pretty_printed_xml(eml_el)
 

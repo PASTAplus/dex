@@ -3,28 +3,27 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - py-cpuinfo
-  - flask
-  - cython
-  - pip
-  - regex
-  - matplotlib
-  - lxml
-  - pytest
-  - python
   - bokeh
+  - chardet
+  - cython
+  - fasteners
+  - flask
+  - gunicorn
+  - jinja2
+  - lxml
+  - matplotlib
   - msgpack-python
   - numexpr
-  - chardet
-  - ydata-profiling
   - pandas
-  - pydantic
-  - fasteners
-  - pygments
-  - jinja2
-  - setuptools
-  - gunicorn
   - pip
+  - py-cpuinfo
+  - pydantic
+  - pygments
+  - pytest
+  - python=3.11
+  - regex
+  - requests
+  - setuptools
+  - ydata-profiling
   - pip:
     - clevercsv
-prefix: /home/servilla/anaconda3/envs/dex
