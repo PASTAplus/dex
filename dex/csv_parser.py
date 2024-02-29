@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from flask import current_app as app
 
+import dex.cache
 import dex.db
 import dex.eml_cache
 import dex.eml_extract
@@ -152,12 +153,12 @@ def get_derived_dtypes_from_eml(rid):
     return dex.eml_extract.get_col_attr_list(dt_el)
 
 
-# @dex.cache.disk("parsed-csv", "df")
+@dex.cache.disk("parsed-csv", "df")
 def get_parsed_csv(rid, eml_ctx):
     return _get_csv(rid, eml_ctx, do_parse=True)
 
 
-# @dex.cache.disk("raw-csv", "df")
+@dex.cache.disk("raw-csv", "df")
 def get_raw_csv(rid, eml_ctx):
     return _get_csv(rid, eml_ctx, do_parse=False)
 

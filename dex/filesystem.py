@@ -68,7 +68,7 @@ def get_safe_lossy_path_element(s):
     """Like :func:`get_safe_reversible_path_element`, but generates a string that is not
     reversible, instead prioritizing readability.
     """
-    return pathlib.Path(re.sub("[^\w\d]+", "-", s.strip(" .\n\t/\\")))
+    return pathlib.Path(re.sub("[^\w.]+", "-", s.strip(" .\n\t/\\")))
 
 
 def get_safe_lossy_path(*path_list):

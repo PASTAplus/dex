@@ -139,9 +139,14 @@ def get_pkg_id_dict(rid):
         id_str: 41
         ver_str: 4
     }
+
+    Return None if the Package ID is missing or not in the expected format.
     """
     id_str = get_pkg_id_str(rid)
-    scope_str, id_str, ver_str = id_str.split('.')
+    try:
+        scope_str, id_str, ver_str = id_str.split('.')
+    except ValueError:
+        return None
     return {
         'scope_str': scope_str,
         'id_str': id_str,

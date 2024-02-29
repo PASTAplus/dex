@@ -11,6 +11,7 @@ import dex.db
 import dex.debug
 import dex.eml_cache
 import dex.filesystem
+import dex.obj_bytes
 import dex.pasta
 
 log = logging.getLogger(__name__)
@@ -43,25 +44,38 @@ def preview():
     if not _check_url(d['csv']):
         return f'CSV URL is not accessible: {d["csv"]}', 400
 
-    # preview_key = gen_preview_key(d)
     rid = dex.db.add_entity(d['dist'], d['eml'], d['csv'])
 
-    dex.cache.flush_cache(rid)
+    # For testing, flush cache before processing the new preview
+    # dex.cache.flush_cache(rid)
 
-    log.error(f'rid="{rid}"')
+    log.debug(f'Registered new preview. rid="{rid}"')
 
     return str(rid), 200
-    # return flask.redirect(f'/dex/profile/{rid}')
+
+
+@api_blueprint.route("/preview", methods=['DELETE'])
+def invalidate_cache_for_entity():
+    if not flask.request.is_json:
+        return "Request must be JSON", 400
+    d = flask.request.json
+    if 'dist' not in d.keys():
+        return 'Request JSON must contain a "dist" key', 400
+    dist_url = d['dist']
+
+    rid = dex.db.get_rid_by_dist_url(dist_url)
+    if not rid:
+        return f'Unknown distribution URL: {dist_url}', 200
+
+    dex.cache.flush_cache(rid)
+    dex.obj_bytes.invalidate(rid)
+
+    log.debug(f'Invalidated cache for dist_url. dist_url="{dist_url}"')
+
+    return f'Invalidated caches for distribution URL: {dist_url}', 200
 
 
 def _check_url(url):
     """Check if we can access the provided URL"""
     response = requests.head(url)
     return response.status_code == 200
-
-
-# def gen_preview_key(preview_dict):
-#     hasher = hashlib.sha1()
-#     for s in 'eml', 'csv', 'entity':
-#         hasher.update(preview_dict[s].encode('utf-8'))
-#     return 'preview-' + hasher.hexdigest()

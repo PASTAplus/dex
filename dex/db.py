@@ -112,20 +112,28 @@ def clear_entities():
 
 def get_rid_list_by_package_id(package_id):
     """Return a list of PASTA identifiers for a given PackageID (scope.identifier.version)."""
-    (
-        package_url,
-        base_url,
-        scope_str,
-        identifier_int,
-        version_int,
-    ) = dex.pasta.get_package_tup_by_package_url(package_id)
+    if not dex.pasta.is_package_id(package_id):
+        raise dex.exc.DexError(f"Invalid PackageID: {package_id}")
     row_list = query_db(
         """select id
-        from entity where scope = ? and identifier = ? and version = ?;""",
-        (scope_str, identifier_int, version_int),
+        from entity where dist_url like ? || '%';""",
+        (package_id,),
         one=False,
     )
     return [row.id for row in row_list]
+
+
+def get_rid_by_dist_url(dist_url):
+    """Return the row_id for the given dist_url.
+    If the dist_url does not exist, return None.
+    """
+    row_id = query_db(
+        """select id from entity e where dist_url = ?""",
+        (dist_url,),
+        db=get_db(),
+    )
+    if row_id:
+        return row_id[0].id
 
 
 def query_db(query, args=(), one=False, db=None):

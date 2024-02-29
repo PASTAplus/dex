@@ -71,10 +71,12 @@
                 </a>
                 <span class="nav-tooltip-text">View package in PASTA</span>
               {% else %}
-                <a class="nav-item nav-link nav-download">
-                  Package ID:
-                  {{ [pkg_id.scope_str, pkg_id.id_str, pkg_id.ver_str] | join('.') }}
-                </a>
+                {% if pkg_id %}
+                  <a class="nav-item nav-link nav-download">
+                    Package ID:
+                    {{ [pkg_id.scope_str, pkg_id.id_str, pkg_id.ver_str] | join('.') }}
+                  </a>
+                {% endif %}
               {% endif %}
             </li>
           </ul>

@@ -90,6 +90,11 @@ def is_on_pasta(meta_url):
         return False
 
 
+def is_package_id(pkg_id):
+    """Return True if the given string is on the form of a valid PASTA package ID."""
+    return re.match('https://.*/package/data/eml/[a-z-]+/\d+/\d+/?$', pkg_id) is not None
+
+
 def _get_local_meta_path(base_path, dist_url):
     d = parse_dist_url(dist_url)
     return (base_path / get_pkg_id(d, '.') / 'Level-1-EML.xml').resolve()
@@ -109,7 +114,13 @@ def get_pkg_id(dist_dict, sep_str):
 
 
 def get_portal_base(dist_url):
-    d = parse_dist_url(dist_url)
+    """Get the base URL for the PASTA portal that the given distribution URL points to.
+    If the distribution URL is not a PASTA URL, return None.
+    """
+    try:
+        d = parse_dist_url(dist_url)
+    except dex.exc.DexError:
+        return None
     return PASTA_PORTAL_DICT.get(d["base_url"])
 
 

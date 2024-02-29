@@ -39,10 +39,12 @@ acquires the lock. While the single download occurs, subsequent processes are bl
 When they in turn acquire the lock, high bandwidth access to the object is already
 available.
 """
+import contextlib
 import logging
-import pathlib
 import shutil
+import time
 
+import fasteners
 import requests
 from flask import current_app as app
 
@@ -63,19 +65,51 @@ def open_eml(rid):
 
     If the object bytes cannot be found, raises `dex.exc.CacheError`.
     """
-    entity_tup = dex.db.get_entity(rid)
-    _log(entity_tup.dist_url, 'Resolving location for metadata object bytes')
-    return _open_obj(entity_tup.dist_url, entity_tup.meta_url, is_eml=True)
+    dist_url, meta_url, data_url = dex.db.get_entity(rid)
+    return _open_obj(dist_url, meta_url, is_eml=True)
 
 
 def open_csv(rid):
-    """Like open_eml(), only for a data (CSV) object instead of a metadata (EML) object."""
-    entity_tup = dex.db.get_entity(rid)
-    _log(entity_tup.dist_url, f'Resolving location for data object bytes')
-    return _open_obj(entity_tup.dist_url, entity_tup.data_url, is_eml=False)
+    """Like open_eml(), only for a data (CSV) object instead of a metadata (EML)
+    object.
+    """
+    dist_url, meta_url, data_url = dex.db.get_entity(rid)
+    return _open_obj(dist_url, data_url, is_eml=False)
+
+
+def invalidate(rid):
+    """Delete locally cached object bytes for the given Row ID."""
+    dist_url = dex.db.get_dist_url(rid)
+    _log(dist_url, 'Invalidating cache')
+    dist_path = _get_cache_dist_path(dist_url)
+    _delete_cache_dist_path(dist_path)
 
 
 def _open_obj(dist_url, obj_url, is_eml):
+    """Search for object in locations going from fastest to slowest access to the object
+    bytes.
+    """
+    log.debug(f'##### START resolving location for object bytes')
+    log.debug(f'dist_url: "{dist_url}"')
+    log.debug(f'obj_url: "{obj_url}"')
+    log.debug(f'is_eml: {is_eml}')
+    with _lock(dist_url, obj_url, is_eml):
+        obj_path = _open_obj_locked(dist_url, obj_url, is_eml)
+    log.debug(f'##### END resolving location for object bytes')
+    return obj_path
+
+
+@contextlib.contextmanager
+def _lock(dist_url, obj_url, is_eml):
+    start_ts = time.time()
+    lock_path = _get_lock_path(dist_url, obj_url, is_eml)
+    _log(lock_path.as_posix(), f'Acquiring lock')
+    with fasteners.InterProcessLock(lock_path.as_posix()):
+        _log(lock_path.as_posix(), f'Acquired lock after {time.time() - start_ts : .02f}s')
+        yield
+
+
+def _open_obj_locked(dist_url, obj_url, is_eml):
     """Search for object in locations going from fastest to slowest access to the object
     bytes.
     """
@@ -84,13 +118,14 @@ def _open_obj(dist_url, obj_url, is_eml):
         if obj_path:
             return obj_path
     else:
-        obj_path = _filesystem_cache(dist_url, obj_url)
+        obj_path = _filesystem_cache(dist_url, obj_url, is_eml)
         if obj_path:
             return obj_path
-        obj_path = _local_package_store(dist_url, obj_url, is_eml)
-        if obj_path:
-            return obj_path
-        obj_path = _remote_url(dist_url, obj_url)
+        # obj_path = _local_package_store(dist_url, obj_url, is_eml)
+        # if obj_path:
+        #    return obj_path
+        _limit_cache_size()
+        obj_path = _remote_url(dist_url, obj_url, is_eml)
         if obj_path:
             return obj_path
     raise dex.exc.CacheError(
@@ -98,9 +133,9 @@ def _open_obj(dist_url, obj_url, is_eml):
     )
 
 
-def _filesystem_cache(dist_url, obj_url):
+def _filesystem_cache(dist_url, obj_url, is_eml):
     _log(obj_url, 'Checking filesystem cache')
-    obj_path = _get_cache_path(dist_url, obj_url)
+    obj_path = _get_cache_obj_path(dist_url, obj_url, is_eml)
     if _is_valid(obj_path):
         return obj_path
 
@@ -127,21 +162,21 @@ def _local_sample_store(dist_url, is_eml):
         return obj_path
 
 
-def _remote_url(dist_url, obj_url):
+def _remote_url(dist_url, obj_url, is_eml):
     _log(obj_url, 'Downloading object bytes')
-    obj_path = _get_cache_path(dist_url, obj_url)
-    _limit_cache_size()
-    obj_path.parent.mkdir(0o755, parents=True, exist_ok=True)
-    obj_tmp_path = _get_cache_tmp_path(dist_url, obj_url)
+    obj_tmp_path = _get_cache_tmp_path(dist_url, obj_url, is_eml)
     with obj_tmp_path.open('wb') as f:
         with requests.get(obj_url, stream=True) as r:
-            r.raise_for_status()
-            # This is a high performance way of copying a stream.
-            shutil.copyfileobj(r.raw, f)
-    if not r.ok:
-        msg_str = f'Failed to download object bytes: {r.status_code} {r.reason}'
-        _log(obj_url, msg_str)
-        raise dex.exc.CacheError(msg_str)
+            if r.status_code != 200:
+                msg_str = f'Failed to download object bytes: {r.status_code} {r.reason}'
+                _log(obj_url, msg_str)
+                raise dex.exc.CacheError(msg_str)
+            try:
+                # This is a high performance way of copying a stream.
+                shutil.copyfileobj(r.raw, f)
+            except IOError as e:
+                raise dex.exc.CacheError(f'Failed to download object bytes: {e}')
+    obj_path = _get_cache_obj_path(dist_url, obj_url, is_eml)
     obj_path.unlink(missing_ok=True)
     obj_tmp_path.rename(obj_path)
     return obj_path
@@ -151,25 +186,54 @@ def _limit_cache_size():
     """Delete the oldest cached file(s) if number of cached files has exceeded the
     limit.
     """
-    path_list = list(app.config['TMP_CACHE_ROOT'].iterdir())
-    while len(path_list) > app.config['TMP_CACHE_LIMIT']:
-        oldest_path = min(path_list, key=lambda p: p.stat().st_mtime)
-        oldest_path.unlink()
-        path_list.remove(oldest_path)
+    dist_path_list = list(app.config['TMP_CACHE_ROOT'].iterdir())
+    while len(dist_path_list) > app.config['TMP_CACHE_LIMIT']:
+        oldest_dist_path = min(dist_path_list, key=lambda p: p.stat().st_mtime)
+        _delete_cache_dist_path(oldest_dist_path)
+        dist_path_list.remove(oldest_dist_path)
 
 
-def _get_cache_path(dist_url, obj_url):
-    return app.config["TMP_CACHE_ROOT"] / dex.filesystem.get_safe_lossy_path(dist_url, obj_url)
+def _get_lock_path(dist_url, obj_url, is_eml):
+    return _get_cache_dist_path(dist_url) / (_get_cache_obj_name(obj_url, is_eml) + '.lock')
 
 
-def _get_cache_tmp_path(dist_url, obj_url):
-    return pathlib.Path(_get_cache_path(dist_url, obj_url).as_posix() + '.tmp')
+def _get_cache_obj_path(dist_url, obj_url, is_eml):
+    """Return the path to the file where the object bytes are cached."""
+    return _get_cache_dist_path(dist_url) / _get_cache_obj_name(obj_url, is_eml)
+
+
+def _get_cache_tmp_path(dist_url, obj_url, is_eml):
+    """Return the path to the temporary file where the object bytes are downloaded."""
+    return _get_cache_dist_path(dist_url) / (_get_cache_obj_name(obj_url, is_eml) + '.tmp')
+
+
+def _get_cache_obj_name(obj_url, is_eml):
+    """Return the name of the file where the object bytes are cached."""
+    return dex.filesystem.get_safe_lossy_path(f"{obj_url}.{('eml' if is_eml else 'csv')}")
+
+
+def _get_cache_dist_path(dist_url):
+    """Return the path to the directory where the object bytes are cached.
+    If the directory does not exist, it is created.
+    """
+    dist_path = app.config['TMP_CACHE_ROOT'] / dex.filesystem.get_safe_lossy_path(dist_url)
+    dist_path.mkdir(0o755, parents=True, exist_ok=True)
+    return dist_path
+
+
+def _delete_cache_dist_path(dist_path):
+    """Delete all cached items for a dist_url."""
+    for file_path in list(dist_path.iterdir()):
+        file_path.unlink()
+    dist_path.rmdir()
 
 
 def _is_valid(obj_path):
     is_found = obj_path.exists() and obj_path.stat().st_size
     if is_found:
-        _log(obj_path.as_posix(), 'Found object bytes')
+        _log(obj_path.as_posix(), 'Object bytes FOUND')
+    else:
+        _log(obj_path.as_posix(), 'Object bytes NOT FOUND')
     return is_found
 
 

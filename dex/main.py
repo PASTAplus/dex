@@ -118,6 +118,11 @@ def create_app():
             mimetype="image/x-icon",
         )
 
+    @_app.route("/robots.txt")
+    def robots_txt():
+        """Deny all well behaved web crawlers"""
+        return flask.Response("User-agent: *\nDisallow: /", mimetype="text/plain")
+
     @_app.route("/", methods=["GET"])
     def index_get():
         return flask.render_template(
@@ -141,7 +146,7 @@ def create_app():
         rid = dex.db.add_entity(dist_url, meta_url, dist_url)
         return flask.redirect(f'/dex/profile/{rid}')
 
-    @_app.route("/<path:package_id>", methods=["DELETE"])
+    # @_app.route("/<path:package_id>", methods=["DELETE"])
     def flush_cache_for_package(package_id):
         package_deleted = False
         try:
@@ -151,7 +156,7 @@ def create_app():
                     f'package_id="{package_id}" rid="{rid}"'
                 )
                 dex.cache.flush_cache(rid)
-                dex.db.drop_entity(rid)
+                # dex.db.drop_entity(rid)
                 package_deleted = True
         except dex.exc.DexError as e:
             log.error(f'Error when flushing cache for package. package_id="{package_id}": {str(e)}')
