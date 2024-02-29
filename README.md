@@ -26,6 +26,43 @@ objects which are cashed on disk. Only these derived objects are required for se
 later requests, so there is no longer a need for the original files.
 
 
+## Conda
+
+### Managing the Conda environment in a production environment
+
+Start and stop the dex service as root:
+
+    # systemctl start dex.service
+    # systemctl stop dex.service
+
+Remove and rebuild the dex venv:
+
+    $ conda env remove --name dex
+    $ conda env create --file environment-min.yml
+
+Update the dex venv in place:
+
+    $ conda env update --file environment-min.yml --prune
+
+Activate and deactivate the dex venv:
+
+    $ conda activate dex
+    $ conda deactivate
+
+### Managing the Conda environment in a development environment
+
+Update the environment-min.yml:
+
+    $ conda env export --no-builds
+
+Update Conda itself:
+
+    $ conda update --name base conda
+
+Update all packages in environment:
+
+    $ conda update --all
+
 ## API
 
 ### Flush cached objects for a given PackageID 
