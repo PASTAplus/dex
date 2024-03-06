@@ -67,6 +67,11 @@ def create_app():
 
     _app.register_error_handler(dex.exc.RedirectToIndex, handle_redirect_to_index)
 
+    def log_exception(e):
+        log.exception('Exception')
+
+    _app.register_error_handler(Exception, log_exception)
+
     # @_app.before_first_request
     # def before_first_request():
     #     def handle_redirect_to_index(_):
