@@ -117,7 +117,7 @@ def has_absolute_time(iso_str):
     # Individual format elements in C style time format strings are always on the form,
     # "%" + a single character, so we don't have to tokenize the string in order to make
     # safe checks.
-    c_format_str = iso8601_to_c_format(iso_str)
+    c_format_str = iso8601_to_c_format(iso_str) or ''
     is_in_sequence = True
     for d in ('%Y', '%m', '%d', '%H', '%M', '%S'):
         if d in c_format_str:
