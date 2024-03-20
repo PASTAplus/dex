@@ -63,6 +63,11 @@ Update all packages in environment:
 
     $ conda update --all
 
+Create or update the `requirements.txt` file (for use by GitHub Dependabot, and for pip based manual installs):
+
+    $ pip list --format freeze > requirements.txt
+
+
 ## API
 
 ### Flush cached objects for a given PackageID 
