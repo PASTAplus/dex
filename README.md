@@ -32,41 +32,71 @@ later requests, so there is no longer a need for the original files.
 
 Start and stop the dex service as root:
 
-    # systemctl start dex.service
-    # systemctl stop dex.service
+```shell
+# systemctl start dex.service
+# systemctl stop dex.service
+```
 
 Remove and rebuild the dex venv:
 
-    $ conda env remove --name dex
-    $ conda env create --file environment-min.yml
+```shell
+conda env remove --name dex
+conda env create --file environment-min.yml
+```
 
 Update the dex venv in place:
 
-    $ conda env update --file environment-min.yml --prune
+```shell
+conda env update --file environment-min.yml --prune
+```
 
 Activate and deactivate the dex venv:
 
-    $ conda activate dex
-    $ conda deactivate
+```shell
+conda activate dex
+conda deactivate
+```
 
 ### Managing the Conda environment in a development environment
 
 Update the environment-min.yml:
 
-    $ conda env export --no-builds
-
+```shell
+conda env export --no-builds > environment-min.yml
+```
 Update Conda itself:
 
-    $ conda update --name base conda
+```shell
+conda update --name base conda
+```
 
 Update all packages in environment:
 
-    $ conda update --all
+```shell
+conda update --all
+```
 
 Create or update the `requirements.txt` file (for use by GitHub Dependabot, and for pip based manual installs):
 
-    $ pip list --format freeze > requirements.txt
+```shell
+pip list --format freeze > requirements.txt
+```
 
+### Procedure for updating the Conda environment and all dependencies
+
+```shell
+conda update -n base -c conda-forge conda
+conda activate dex
+conda update --all
+conda env export --no-builds > environment.yml
+pip list --format freeze > requirements.txt
+```
+
+### If Conda base won't update to latest version, try:
+
+```shell
+conda update -n base -c defaults conda --repodata-fn=repodata.json
+``` 
 
 ## API
 
