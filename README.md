@@ -85,13 +85,14 @@ pip list --format freeze > requirements.txt
 ### Procedure for updating the Conda environment and all dependencies
 
 ```shell
+conda activate base
+conda env remove --name dex
 conda update -n base -c conda-forge conda
+conda env create --file environment-min.yml
 conda activate dex
-conda update --all
 conda env export --no-builds > environment.yml
 pip list --format freeze > requirements.txt
 ```
-
 ### If Conda base won't update to latest version, try:
 
 ```shell
