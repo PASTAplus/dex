@@ -151,30 +151,6 @@ def create_app():
         rid = dex.db.add_entity(dist_url, meta_url, dist_url)
         return flask.redirect(f'/dex/profile/{rid}')
 
-    # @_app.route("/<path:package_id>", methods=["DELETE"])
-    def flush_cache_for_package(package_id):
-        package_deleted = False
-        try:
-            for rid in dex.db.get_rid_list_by_package_id(package_id):
-                log.info(
-                    f'Flushing cache files and DB for package. '
-                    f'package_id="{package_id}" rid="{rid}"'
-                )
-                dex.cache.flush_cache(rid)
-                # dex.db.drop_entity(rid)
-                package_deleted = True
-        except dex.exc.DexError as e:
-            log.error(f'Error when flushing cache for package. package_id="{package_id}": {str(e)}')
-            return str(e), 400
-        if not package_deleted:
-            msg, status_code = f'Package not found. package_id="{package_id}"', 404
-        else:
-            msg, status_code = (
-                f'Successfully flushed cache for package. package_id="{package_id}"'
-            ), 200
-        log.info(msg)
-        return msg, status_code
-
     @_app.route("/sample/<path:dist_url>", methods=["GET"])
     def sample_get(dist_url):
         rid = dex.db.add_entity(dist_url, None, None)

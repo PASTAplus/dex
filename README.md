@@ -40,8 +40,11 @@ Start and stop the dex service as root:
 Remove and rebuild the dex venv:
 
 ```shell
+conda activate base
 conda env remove --name dex
+conda update -n base -c conda-forge conda
 conda env create --file environment-min.yml
+conda activate dex
 ```
 
 Update the dex venv in place:
@@ -50,49 +53,23 @@ Update the dex venv in place:
 conda env update --file environment-min.yml --prune
 ```
 
-Activate and deactivate the dex venv:
-
-```shell
-conda activate dex
-conda deactivate
-```
-
 ### Managing the Conda environment in a development environment
 
-Update the environment-min.yml:
+Update Conda itself, and the files that hold dependency information.
 
-```shell
-conda env export --no-builds > environment-min.yml
-```
-Update Conda itself:
-
-```shell
-conda update --name base conda
-```
-
-Update all packages in environment:
-
-```shell
-conda update --all
-```
-
-Create or update the `requirements.txt` file (for use by GitHub Dependabot, and for pip based manual installs):
-
-```shell
-pip list --format freeze > requirements.txt
-```
-
-### Procedure for updating the Conda environment and all dependencies
+- `environment-min.yml`: This file is manually maintained and used updating dependencies to latest in production and development.
+- `environment.yml`: We don't normally use this file, but it serves as a reference and can be used for recreating an exact copy of the environment for testing and troubleshooting. 
+- `requirements.txt`: Used by GitHub Dependabot and for pip based manual installs.
 
 ```shell
 conda activate base
-conda env remove --name dex
 conda update -n base -c conda-forge conda
-conda env create --file environment-min.yml
 conda activate dex
+conda update --all
 conda env export --no-builds > environment.yml
 pip list --format freeze > requirements.txt
 ```
+
 ### If Conda base won't update to latest version, try:
 
 ```shell
@@ -104,7 +81,7 @@ conda update -n base -c defaults conda --repodata-fn=repodata.json
 ### Flush cached objects for a given PackageID 
 
 ```shell
-DELETE /<packageId>
+DELETE /dex/api/package/<packageId>
 ```
 
 #### Example:
@@ -112,7 +89,7 @@ DELETE /<packageId>
 Flush all cached objects for the package with the ID `https://pasta-d.lternet.edu/package/data/eml/edi/748/2`:
 
 ```shell
-curl -X DELETE https://dex-d.edirepository.org/https%3A%2F%2Fpasta-d.lternet.edu%2Fpackage%2Fdata%2Feml%2Fedi%2F748%2F2
+curl -X DELETE https://dex-d.edirepository.org/dex/api/package/https%3A%2F%2Fpasta-d.lternet.edu%2Fpackage%2Fdata%2Feml%2Fedi%2F748%2F2
 ```
 
 Note that the package ID is URL-encoded and that package scope, identifier and revision are all required, and separated by slashes.

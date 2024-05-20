@@ -10,6 +10,7 @@ import dex.csv_cache
 import dex.db
 import dex.debug
 import dex.eml_cache
+import dex.exc
 import dex.filesystem
 import dex.obj_bytes
 import dex.pasta
@@ -73,6 +74,31 @@ def invalidate_cache_for_entity():
     log.debug(f'Invalidated cache for dist_url. dist_url="{dist_url}"')
 
     return f'Invalidated caches for distribution URL: {dist_url}', 200
+
+
+@api_blueprint.route("/package/<path:package_id>", methods=["DELETE"])
+def flush_cache_for_package(package_id):
+    package_deleted = False
+    try:
+        for rid in dex.db.get_rid_list_by_package_id(package_id):
+            log.info(
+                f'Flushing cache files and DB for package. '
+                f'package_id="{package_id}" rid="{rid}"'
+            )
+            dex.cache.flush_cache(rid)
+            # dex.db.drop_entity(rid)
+            package_deleted = True
+    except dex.exc.DexError as e:
+        log.error(f'Error when flushing cache for package. package_id="{package_id}": {str(e)}')
+        return str(e), 400
+    if not package_deleted:
+        msg, status_code = f'Package not found. package_id="{package_id}"', 404
+    else:
+        msg, status_code = (
+            f'Successfully flushed cache for package. package_id="{package_id}"'
+        ), 200
+    log.info(msg)
+    return msg, status_code
 
 
 def _check_url(url):
