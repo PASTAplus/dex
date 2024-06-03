@@ -90,6 +90,6 @@ def plot(rid):
         csv_name=dex.eml_cache.get_csv_name(rid),
         portal_base=dex.pasta.get_portal_base(dex.db.get_dist_url(rid)),
         note_list=note_list,
-        is_on_pasta=dex.pasta.is_on_pasta(dex.db.get_meta_url(rid)),
+        is_on_pasta=dex.pasta.is_on_pasta(dex.db.get_dist_url(rid)),
         dbg=dex.debug.debug(rid),
     )

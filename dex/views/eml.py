@@ -56,6 +56,6 @@ def view(rid):
         csv_name=dex.eml_cache.get_csv_name(rid),
         portal_base=None,
         note_list=[],
-        is_on_pasta=dex.pasta.is_on_pasta(dex.db.get_meta_url(rid)),
+        is_on_pasta=dex.pasta.is_on_pasta(dex.db.get_dist_url(rid)),
         dbg=None,
     )
