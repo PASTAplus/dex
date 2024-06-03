@@ -57,7 +57,7 @@
           <ul class="nav navbar-nav navbar-right">
             <li class="nav-tooltip">
               <a href="{{ data_url }}" class="nav-item nav-link nav-download">
-                Table:
+                <u>Table:</u>
                 {{ csv_name }}
               </a>
               <span class="nav-tooltip-text">Download this table</span>
@@ -66,14 +66,14 @@
               {% if is_on_pasta %}
                 <a href="{{ portal_base }}/mapbrowse?scope={{ pkg_id.scope_str }}&identifier={{ pkg_id.id_str }}&revision={{ pkg_id.ver_str }}"
                    class="nav-item nav-link nav-download">
-                  Package ID:
+                  <u>Package ID:</u>
                   {{ [pkg_id.scope_str, pkg_id.id_str, pkg_id.ver_str] | join('.') }}
                 </a>
                 <span class="nav-tooltip-text">View package in PASTA</span>
               {% else %}
                 {% if pkg_id %}
                   <a class="nav-item nav-link nav-download">
-                    Package ID:
+                    <u>Package ID:</u>
                     {{ [pkg_id.scope_str, pkg_id.id_str, pkg_id.ver_str] | join('.') }}
                   </a>
                 {% endif %}

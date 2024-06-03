@@ -82,8 +82,6 @@ def get_local_sample_data_path(dist_url):
 
 def is_on_pasta(meta_url):
     """Return True if the meta_url points to PASTA."""
-    # TODO: This returns True for samples.
-    return meta_url is None
     try:
         return get_portal_base(meta_url) is not None
     except dex.exc.DexError:
