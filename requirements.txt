@@ -35,7 +35,7 @@ lxml==6.0.0
 MarkupSafe==3.0.2
 matplotlib==3.10.3
 msgpack==1.1.1
-multimethod==1.12
+multimethod==1.4
 munkres==1.1.4
 narwhals==1.46.0
 networkx==3.4.2

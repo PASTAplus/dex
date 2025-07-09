@@ -117,7 +117,7 @@ dependencies:
   - matplotlib=3.10.3
   - matplotlib-base=3.10.3
   - msgpack-python=1.1.1
-  - multimethod=1.12
+  - multimethod=1.4
   - munkres=1.1.4
   - narwhals=1.46.0
   - ncurses=6.5
@@ -146,7 +146,7 @@ dependencies:
   - pyside6=6.9.1
   - pysocks=1.7.1
   - pytest=8.4.1
-  - python=3.11.13
+  - python=3.11.12
   - python-dateutil=2.9.0.post0
   - python-tzdata=2025.2
   - python_abi=3.11
@@ -210,4 +210,4 @@ dependencies:
   - zstd=1.5.7
   - pip:
       - clevercsv==0.8.3
-prefix: /home/servilla/miniconda3/envs/dex
+prefix: /home/pasta/miniconda3/envs/dex
