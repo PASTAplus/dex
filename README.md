@@ -61,11 +61,21 @@ Update Conda itself, and the files that hold dependency information.
 - `environment.yml`: We don't normally use this file, but it serves as a reference and can be used for recreating an exact copy of the environment for testing and troubleshooting. 
 - `requirements.txt`: Used by GitHub Dependabot and for pip based manual installs.
 
+#### Server: Procedure for updating the Conda environment and all dependencies
+
 ```shell
-conda activate base
-conda update -n base -c conda-forge conda
+conda deactivate
+conda update -n base -c defaults conda conda-forge
+conda env remove --name dex
+conda env create --file environment-min.yml
 conda activate dex
-conda update --all
+```
+
+#### Dev: Procedure for updating the Conda environment and all dependencies
+
+Full "Server" procedure, plus update the `environment.yml` and `requirements.txt` files:
+
+```shell
 conda env export --no-builds > environment.yml
 pip list --format freeze > requirements.txt
 ```
