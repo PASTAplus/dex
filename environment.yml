@@ -93,7 +93,7 @@ dependencies:
   - liblapack=3.11.0
   - libllvm21=21.1.8
   - liblzma=5.8.2
-  - libnsl=2.0.1
+  - libmpdec=4.0.0
   - libntlm=1.8
   - libopenblas=0.3.30
   - libopengl=1.7.0
@@ -152,10 +152,10 @@ dependencies:
   - pyside6=6.10.2
   - pysocks=1.7.1
   - pytest=9.0.2
-  - python=3.11.14
+  - python=3.13.12
   - python-dateutil=2.9.0.post0
   - python-tzdata=2025.3
-  - python_abi=3.11
+  - python_abi=3.13
   - pytz=2025.2
   - pywavelets=1.9.0
   - pyyaml=6.0.3
@@ -167,7 +167,7 @@ dependencies:
   - scipy=1.16.3
   - seaborn=0.13.2
   - seaborn-base=0.13.2
-  - setuptools=82.0.0
+  - setuptools=80.10.2
   - six=1.17.0
   - statsmodels=0.14.6
   - tk=8.6.13
@@ -179,12 +179,10 @@ dependencies:
   - typing-inspection=0.4.2
   - typing_extensions=4.15.0
   - tzdata=2025c
-  - unicodedata2=17.0.0
   - urllib3=2.6.3
   - visions=0.8.1
   - wayland=1.24.0
   - werkzeug=3.1.5
-  - wheel=0.46.3
   - wordcloud=1.9.6
   - xcb-util=0.4.1
   - xcb-util-cursor=0.1.6
